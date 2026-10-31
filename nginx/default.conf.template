@@ -2,7 +2,7 @@
 # Only ${BACKEND_URL} is substituted (it is the only variable defined in the
 # environment); nginx's own $variables pass through untouched.
 #
-# Mirrors the dev proxy in vite.config.ts: serve the built SPA, forward every
+# Mirrors the dev proxy in webpack.config.cjs: serve the built SPA, forward every
 # backend prefix the app calls to the FastAPI backend, same origin, so auth
 # cookies and SSE work without CORS.
 
@@ -30,7 +30,7 @@ server {
 
     # Shared prefixes: a page navigation gets the SPA, an API call (Accept:
     # application/json) goes to the backend. Keep in sync with ROUTES in
-    # src/router.tsx and the bypass entries in vite.config.ts.
+    # src/config/routes.ts and the proxy context filter in webpack.config.cjs.
     location ~ ^/(chat|search|tools)(/|$) {
         if ($spa_navigation) {
             rewrite ^ /index.html last;

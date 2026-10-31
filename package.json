@@ -4,34 +4,46 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1 --port 5173",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview --host 127.0.0.1 --port 4173",
+    "dev": "webpack serve --mode development",
+    "build": "tsc -b && webpack --mode production",
+    "preview": "serve -s dist -l tcp://127.0.0.1:4173",
     "typecheck": "tsc -b --pretty false",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
-    "test": "yarn typecheck && yarn test:unit",
-    "test:ci": "yarn typecheck && yarn build && yarn test:unit"
+    "test": "yarn typecheck && yarn test:build-config && yarn test:unit",
+    "test:ci": "yarn typecheck && yarn build && yarn test:build-config && yarn test:unit",
+    "test:build-config": "node --test tests/webpack.test.cjs"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^6.1.2",
     "lucide-react": "^1.59.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-markdown": "^10.1.0",
-    "typescript": "^7.0.2",
-    "vite": "^8.3.4"
+    "typescript": "^7.0.2"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
+    "@swc/core": "^1.16.21",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.8",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "css-loader": "^7.1.5",
+    "dotenv": "^18.0.9",
+    "html-webpack-plugin": "^5.6.8",
     "jsdom": "^30.1.3",
-    "vitest": "^5.0.5"
+    "mini-css-extract-plugin": "^2.10.2",
+    "serve": "^14.2.6",
+    "style-loader": "^4.0.0",
+    "swc-loader": "^0.2.7",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5",
+    "webpack": "^5",
+    "webpack-cli": "^6",
+    "webpack-dev-server": "^5"
   },
   "packageManager": "yarn@1.22.22"
 }

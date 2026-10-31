@@ -1,6 +1,6 @@
 # Agentic Search UI
 
-The React 19 + Vite + TypeScript frontend for
+The React 19 + Webpack + TypeScript frontend for
 [Agentic Search](https://github.com/lingduoduo/Agentic-Search-GRPO). It's a
 single-page app with four routes: **Assistant** (`/assist`), **Search**
 (`/search`), **Chat** (`/chat`), and **Tools** (`/tools`). It talks to the
@@ -25,6 +25,47 @@ BACKEND_URL=http://127.0.0.1:7861 yarn dev
 ```
 
 For a dev login, open `http://127.0.0.1:5173/dev-login.html` (dev server only).
+
+Webpack compiles TypeScript and React with SWC, generates `index.html`, and
+extracts production CSS into hashed assets in `dist/`. Configure the build and
+dev server in `webpack.config.cjs`. Vitest uses `vitest.config.ts`; Vite and
+its React plugin are retained only as test tooling.
+
+For a production build and local static preview:
+
+```bash
+yarn build           # TypeScript check, then Webpack output → dist/
+yarn preview         # http://127.0.0.1:4173, serves the existing dist/
+```
+
+The preview has SPA route fallback but no backend proxy. Use `yarn dev` or the
+nginx container to exercise authenticated requests and streaming against the
+backend. `dev-login.html` is available only through `yarn dev` and is excluded
+from the production bundle.
+
+Webpack configuration lives in `webpack.config.cjs`; `index.html` is the HTML
+template and Webpack injects the generated scripts and stylesheet links.
+Development uses hot module replacement and source maps. Production cleans
+`dist/`, extracts CSS, and splits React, icons, and dynamically imported code
+into hashed assets without source maps.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `BACKEND_URL` | `http://127.0.0.1:7860` in development | Backend proxy target; nginx uses `http://web:7860` by default. |
+| `VITE_DEBUG_PANELS` | Disabled | Set to `1` to enable debug panels; the existing name is preserved for compatibility. |
+
+For example:
+
+```bash
+VITE_DEBUG_PANELS=1 BACKEND_URL=http://127.0.0.1:7861 yarn dev
+```
+
+Webpack reads environment values in this order, with the first value taking
+priority: shell variables, `.env.<mode>.local`, `.env.local`, `.env.<mode>`,
+then `.env`. The mode is `development` for `yarn dev` and `production` for
+`yarn build`. The debug flag is embedded during compilation, so restart the
+dev server or rebuild after changing it. Only the explicitly configured debug
+flag is exposed to browser code.
 
 ## Source layout
 
@@ -52,7 +93,8 @@ defines the allowed paths, `routes/navigation.ts` handles browser history,
 `hooks/useRoute.ts` subscribes to route changes, and `components/NavLink.tsx`
 renders navigation links. `routes/index.ts` exports the routing API.
 
-Tests live in `__tests__/` directories alongside the code they cover.
+UI and service tests live in `__tests__/` directories alongside the code they
+cover. Webpack configuration checks live in `tests/webpack.test.cjs`.
 Component state stays with its owning page or component. `store/`, `static/`,
 and `storybook/` are empty placeholders in the local layout; Git will track
 them once files are added.
@@ -65,12 +107,12 @@ Route screens in `pages/` compose these pieces, while `apps/` owns the shell.
 ## Check
 
 ```bash
-yarn typecheck       # TypeScript
-yarn test:unit       # Vitest
-yarn test:unit:watch # Vitest in watch mode
-yarn test            # typecheck and unit tests
-yarn build           # production bundle → dist/
-yarn test:ci         # all three, as CI runs them
+yarn typecheck         # TypeScript
+yarn test:build-config # Webpack proxy and production configuration
+yarn test:unit         # Vitest
+yarn test:unit:watch   # Vitest in watch mode
+yarn test              # typecheck, build configuration, and unit tests
+yarn test:ci           # typecheck, production build, and all tests
 ```
 
 ## Deploy
@@ -113,11 +155,7 @@ To add a route screen:
 1. Create the screen in `src/pages/` and its tests in `src/pages/__tests__/`.
 2. Add the pathname to `ROUTES` in `src/config/routes.ts` and render the screen
    from `src/apps/App.tsx`. Navigation helpers live in `src/routes/index.ts`.
-3. Keep page serving aligned with the backend: update the `bypass` entries in
-   `vite.config.ts` and the shared-prefix location in
+3. Keep page serving aligned with the backend: update the proxy context filter in
+   `webpack.config.cjs` and the shared-prefix location in
    `nginx/default.conf.template` when the route shares a backend API prefix,
    and update `spa_page` in the backend's `src/internal/servers/web/app.py`.
-
-The Vite development server and nginx deployment handle backend proxying.
-`yarn preview` serves the production bundle on `http://127.0.0.1:4173` for
-static inspection; it does not configure the backend proxy.

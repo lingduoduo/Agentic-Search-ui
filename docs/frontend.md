@@ -2,11 +2,11 @@
 
 [← Back to README](../README.md)
 
-This guide covers the React/Vite development workflow and local administration and observability surfaces.
+This guide covers the React/Webpack development workflow and local administration and observability surfaces.
 
 ## Development workflow
 
-This repository contains the React 19 + Vite + TypeScript single-page app for [Agentic Search](https://github.com/lingduoduo/Agentic-Search-GRPO). It runs against the FastAPI backend at port 7860 and, in development, Vite proxies the backend routes it calls — `/api/*`, `/health`, `/auth/*`, `/me`, `/admin/*`, `/analytics/*`, `/chat/*`, `/search/*`, `/tool/*` — through to port 7860. Set `BACKEND_URL` to point the proxy elsewhere (default `http://127.0.0.1:7860`). A prefix missing from that list is the usual cause of a panel or page that fails only in dev: the request hits the Vite dev server and 404s instead of reaching FastAPI. The `/chat`, `/search` and `/tools` proxies carry a `bypass` so a page navigation (`Accept: text/html`) is served the SPA instead of being forwarded to FastAPI — without it, a refresh on those pages 404s in dev only. `/tools` needs its own entry because proxy keys match by prefix and `/tool` would otherwise swallow it.
+This repository contains the React 19 + Webpack + TypeScript single-page app for [Agentic Search](https://github.com/lingduoduo/Agentic-Search-GRPO). It runs against the FastAPI backend at port 7860 and, in development, Webpack proxies the backend routes it calls — `/api/*`, `/health`, `/auth/*`, `/me`, `/admin/*`, `/analytics/*`, `/chat/*`, `/search/*`, `/tool/*` — through to port 7860. Set `BACKEND_URL` to point the proxy elsewhere (default `http://127.0.0.1:7860`). A prefix missing from that list is the usual cause of a panel or page that fails only in dev: the request hits the Webpack dev server and 404s instead of reaching FastAPI. The `/chat`, `/search` and `/tools` proxies use a context filter so a page navigation (`Accept: text/html`) is served the SPA instead of being forwarded to FastAPI — without it, a refresh on those pages 404s in dev only. The context filter matches complete path segments so `/tool` and `/tools` remain distinct.
 
 ### Pages
 
@@ -16,8 +16,8 @@ topbar, the global panels, and whichever page the route selects. Each page owns
 its state, so navigating away discards it.
 
 `ROUTES` in `src/config/routes.ts` is mirrored in three other places, and all four
-must be changed together to add a page: the `bypass` entries in
-`vite.config.ts` and the SPA-navigation location in `nginx/default.conf.template`
+must be changed together to add a page: the proxy context filter in
+`webpack.config.cjs` and the SPA-navigation location in `nginx/default.conf.template`
 (both only for prefixes the backend also serves), and the `spa_page` handler in
 the backend's `src/internal/servers/web/app.py`.
 
@@ -28,7 +28,7 @@ yarn typecheck               # TypeScript check
 yarn test:unit               # Vitest unit tests
 ```
 
-> **Open the Vite dev server at `http://127.0.0.1:5173`, not `:7860`.** Port 7860
+> **Open the Webpack dev server at `http://127.0.0.1:5173`, not `:7860`.** Port 7860
 > is the backend: it serves a minimal inline fallback page, or a bundle you pointed
 > it at with `AGENTIC_SEARCH_FRONTEND_DIST` (stale until you rebuild). `:5173` is
 > the live source with hot-reload.
@@ -57,7 +57,7 @@ Two caveats:
 - `AGENTIC_SEARCH_WEB_DB_PATH` defaults to `:memory:`, so the user disappears when
   the backend restarts — click **Log in** again, or start the backend with a file
   DB (`AGENTIC_SEARCH_WEB_DB_PATH=data/web.db`) to make it stick.
-- `dev-login.html` is served by the Vite dev server only. It is not a build input,
+- `dev-login.html` is served by the Webpack dev server only. It is not a build input,
   so `yarn build` does not emit it into `dist/`, and the nginx image never serves it. Keep it that way: the first
   registered user becomes an **admin**, so a self-registering page must never be
   reachable from a real deployment.
@@ -76,7 +76,7 @@ tool-agent page instead, and the two used to share a label. They call the
 `/admin/*` and `/analytics/*` routers, which are **admin-authenticated**. Two
 things make them work locally:
 
-1. **Proxy** — the Vite dev server already forwards `/admin` and `/analytics` to
+1. **Proxy** — the Webpack dev server already forwards `/admin` and `/analytics` to
    the backend (above), so requests reach FastAPI on `:7860`.
 2. **Auth** — the panels are gated by `make_require_admin`. For local dev, set
    `AGENTIC_SEARCH_DEV_ADMIN=1` (default off) so every admin endpoint accepts the

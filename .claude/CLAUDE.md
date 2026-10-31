@@ -77,7 +77,7 @@ owns the FastAPI backend. No component library — custom components only.
 ### Commands
 
 ```bash
-corepack enable      # once per Node install: provides the pinned Yarn
+npm install -g corepack && corepack enable  # once per Node install: provides the pinned Yarn
 yarn install
 yarn dev             # http://127.0.0.1:5173; proxies backend routes to BACKEND_URL (default :7860)
 yarn typecheck       # TypeScript check
@@ -86,7 +86,8 @@ yarn build           # production bundle → dist/
 yarn test:ci         # typecheck + build + unit tests, as CI runs them
 ```
 
-Node 24 (CI's version). jsdom's dependencies reject Node 23, so the tests fail there.
+Node 26 (CI's version). jsdom's dependencies reject Node 23, so the tests fail there.
+Node 25+ no longer bundles Corepack, hence the `npm install -g corepack`.
 
 ### Running against the backend
 

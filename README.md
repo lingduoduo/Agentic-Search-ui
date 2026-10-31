@@ -12,7 +12,7 @@ Start the backend first (see the backend README): retrieval server plus web
 backend on port 7860. Then:
 
 ```bash
-corepack enable      # once per Node install: provides the pinned Yarn
+npm install -g corepack && corepack enable  # once per Node install: provides the pinned Yarn
 yarn install
 yarn dev             # http://127.0.0.1:5173, proxies backend routes to :7860
 ```

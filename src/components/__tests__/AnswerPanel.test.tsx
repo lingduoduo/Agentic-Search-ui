@@ -201,39 +201,39 @@ it("renders nothing for progress when both arrays are empty", () => {
 // Markdown rendering
 // ---------------------------------------------------------------------------
 
-it("renders bold text from markdown", () => {
+it("renders bold text from markdown", async () => {
   render(
     <AnswerPanel
       answer="See **bold** text here."
       citations={[]}
     />
   );
-  expect(screen.getByText("bold")).toBeInTheDocument();
+  expect(await screen.findByText("bold")).toBeInTheDocument();
   const strong = document.querySelector("strong");
   expect(strong).not.toBeNull();
   expect(strong?.textContent).toBe("bold");
 });
 
-it("renders citation [D1] as an anchor link", () => {
+it("renders citation [D1] as an anchor link", async () => {
   render(
     <AnswerPanel
       answer="See [D1] for details."
       citations={[]}
     />
   );
-  const link = screen.getByRole("link", { name: "[D1]" });
+  const link = await screen.findByRole("link", { name: "[D1]" });
   expect(link).toHaveAttribute("href", "#source-[D1]");
   expect(link).toHaveClass("citation-link");
 });
 
-it("renders citation [R1Q1D1] as an anchor link", () => {
+it("renders citation [R1Q1D1] as an anchor link", async () => {
   render(
     <AnswerPanel
       answer="See [R1Q1D1] for details."
       citations={[]}
     />
   );
-  const link = screen.getByRole("link", { name: "[R1Q1D1]" });
+  const link = await screen.findByRole("link", { name: "[R1Q1D1]" });
   expect(link).toHaveAttribute("href", "#source-[R1Q1D1]");
   expect(link).toHaveClass("citation-link");
 });

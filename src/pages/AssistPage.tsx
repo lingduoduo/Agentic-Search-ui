@@ -296,6 +296,13 @@ export function AssistPage() {
     setIsLoading(false);
   }, []);
 
+  // Stable while an answer streams in, so the memoized composer skips the
+  // re-render each streamed claim would otherwise cause.
+  const handleExampleSelect = useCallback((q: string) => {
+    setQuery(q);
+    handleSubmit(q);
+  }, [handleSubmit]);
+
   const handleTopKChange = useCallback((value: number) => {
     setTopK(Math.min(20, Math.max(1, value || 1)));
   }, []);
@@ -366,10 +373,7 @@ export function AssistPage() {
         domainOptions={domainOptions}
         onDomainsChange={setDomains}
         onSubmit={handleSubmit}
-        onExampleSelect={(q) => {
-          setQuery(q);
-          handleSubmit(q);
-        }}
+        onExampleSelect={handleExampleSelect}
       />
 
       {autoDomains && (

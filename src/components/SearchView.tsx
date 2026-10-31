@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { sendSearchMessage } from "../api";
 import type { SearchDocView, SourceDocumentView } from "../types";
 import { SourceGrid } from "./SourceGrid";
@@ -24,7 +24,9 @@ export function SearchView() {
     }
   }
 
-  const documents: SourceDocumentView[] = docs.map((d, i) => ({
+  // Memoized so typing in the query box doesn't hand the memoized SourceGrid a
+  // fresh array, and re-render every card, on each keystroke.
+  const documents: SourceDocumentView[] = useMemo(() => docs.map((d, i) => ({
     id: `D${i + 1}`,
     citation: d.title ?? `D${i + 1}`,
     title: d.title ?? "",
@@ -32,7 +34,7 @@ export function SearchView() {
     url: d.url,
     score: d.score,
     metadata: d.metadata,
-  }));
+  })), [docs]);
 
   return (
     <section className="search-view" aria-label="Search">

@@ -22,10 +22,10 @@ must be changed together to add a page: the `bypass` entries in
 the backend's `src/internal/servers/web/app.py`.
 
 ```bash
-npm install && npm run dev   # dev server at http://127.0.0.1:5173
-npm run build                # production bundle → dist/ (served by the nginx image)
-npm run typecheck            # TypeScript check
-npm run test -- --run        # Vitest unit tests
+yarn install && yarn dev     # dev server at http://127.0.0.1:5173
+yarn build                   # production bundle → dist/ (served by the nginx image)
+yarn typecheck               # TypeScript check
+yarn test:unit               # Vitest unit tests
 ```
 
 > **Open the Vite dev server at `http://127.0.0.1:5173`, not `:7860`.** Port 7860
@@ -58,7 +58,7 @@ Two caveats:
   the backend restarts — click **Log in** again, or start the backend with a file
   DB (`AGENTIC_SEARCH_WEB_DB_PATH=data/web.db`) to make it stick.
 - `dev-login.html` is served by the Vite dev server only. It is not a build input,
-  so `npm run build` does not emit it into `dist/`, and the nginx image never serves it. Keep it that way: the first
+  so `yarn build` does not emit it into `dist/`, and the nginx image never serves it. Keep it that way: the first
   registered user becomes an **admin**, so a self-registering page must never be
   reachable from a real deployment.
 
@@ -104,7 +104,7 @@ A gated, dev-only console for inspecting the backend servers from the web UI. **
 AGENTIC_SEARCH_DEBUG_PANELS=1 PYTHONPATH=src:. \
   uvicorn src.internal.servers.web.app:app --host 127.0.0.1 --port 7860
   # frontend: reveal the "Console" toggle in the top bar
-VITE_DEBUG_PANELS=1 npm run dev
+VITE_DEBUG_PANELS=1 yarn dev
 ```
 
 Click **Console** in the top bar to open it. **Retrieval Lab** runs a query against each per-mode endpoint (`sparse` / `dense` / `hybrid` / `graph`) via the `POST /api/debug/retrieval/{mode}` proxy and shows results side by side, surfacing **503** (dense not configured → hybrid collapses to sparse) and **404** (endpoint not mounted, e.g. against `demo.py`) explicitly instead of as a generic error. The console also hosts the Request Inspector, Request Trace, Server Health, Query Transform Inspector, Evaluation Results and Tool Catalog panels. **Route Latency** (`LatencyPanel.tsx`, from `GET /api/debug/latency`) lists calls, errors and p50/p95/max ms per route, slowest p95 first, plus a retrieval-vs-generation stage table (auxiliary LLM calls listed apart). **Evaluation Results** groups each file's numbers into retrieval / generation / reward / latency / other.
@@ -193,10 +193,10 @@ API client functions live in `src/api.ts`: `runAgent` / `streamAgent` (SSE), `cr
 ## Tests
 
 ```bash
-npm run typecheck            # TypeScript check
-npm run build                # production bundle → dist/ (served by the nginx image)
-npm run test:unit            # Vitest unit tests (vitest run)
-npm run test                 # typecheck, then the unit tests
+yarn typecheck               # TypeScript check
+yarn build                   # production bundle → dist/ (served by the nginx image)
+yarn test:unit               # Vitest unit tests (vitest run)
+yarn test                    # typecheck, then the unit tests
 ```
 
 Frontend tests (33 files) live under `src/__tests__/`, `src/components/__tests__/`,

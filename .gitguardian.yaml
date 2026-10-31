@@ -1,5 +1,5 @@
 version: 2
 
-# package-lock.json contains npm sha512 integrity hashes — these are not secrets.
+# yarn.lock contains sha512 integrity hashes — these are not secrets.
 ignored_paths:
-  - "**/package-lock.json"
+  - "**/yarn.lock"

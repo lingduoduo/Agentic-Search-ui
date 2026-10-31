@@ -1,10 +1,10 @@
 # --- Stage 1: build the bundle ---
 FROM node:24-slim AS build
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
+COPY package.json yarn.lock ./
+RUN corepack enable && yarn install --frozen-lockfile
 COPY . .
-RUN npm run build
+RUN yarn build
 
 # --- Stage 2: serve it, proxying the API to the backend ---
 # Unprivileged variant: runs as a non-root user and listens on 8080.

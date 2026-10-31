@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { ControlFlowEventView } from "../../types";
+import type { ControlFlowEventView } from "../../interfaces";
 
 interface Props {
   events: ControlFlowEventView[];

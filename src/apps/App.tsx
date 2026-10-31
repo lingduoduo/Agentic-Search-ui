@@ -5,17 +5,17 @@ import {
   getAnalyticsByFlow,
   getAnalyticsByLLM,
   getAnalyticsByPersona,
-} from "./services/api";
-import { AdminOverview } from "./components/AdminOverview";
-import { AnalyticsDashboard } from "./components/AnalyticsDashboard";
-import { ChatView } from "./views/ChatView";
-import { QueryHistoryPanel } from "./components/QueryHistoryPanel";
-import { SearchView } from "./views/SearchView";
-import { ToolAgentView } from "./views/ToolAgentView";
-import { ToolAdminPanel } from "./components/ToolAdminPanel";
-import { AssistPage } from "./views/AssistPage";
-import { NavLink, useCanonicalRoute } from "./router";
-import type { AdminSurfaceSummary, BreakdownAnalytics } from "./types";
+} from "../services/api";
+import { AdminOverview } from "../components/AdminOverview";
+import { AnalyticsDashboard } from "../components/AnalyticsDashboard";
+import { ChatView } from "../pages/ChatView";
+import { QueryHistoryPanel } from "../components/QueryHistoryPanel";
+import { SearchView } from "../pages/SearchView";
+import { ToolAgentView } from "../pages/ToolAgentView";
+import { ToolAdminPanel } from "../components/ToolAdminPanel";
+import { AssistPage } from "../pages/AssistPage";
+import { NavLink, useCanonicalRoute } from "../routes";
+import type { AdminSurfaceSummary, BreakdownAnalytics } from "../interfaces";
 
 export function App() {
   const [adminSummary, setAdminSummary] = useState<AdminSurfaceSummary | null>(null);

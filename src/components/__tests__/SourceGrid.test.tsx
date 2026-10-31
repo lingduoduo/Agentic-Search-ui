@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { SourceGrid } from "../SourceGrid";
-import type { SourceDocumentView } from "../../types";
+import type { SourceDocumentView } from "../../interfaces";
 
 const doc: SourceDocumentView = {
   id: "D1",

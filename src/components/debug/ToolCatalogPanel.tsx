@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { discoverTools, getDebugTools } from "../../services/api";
-import type { CatalogServer, ToolDiscoverResult } from "../../types";
+import type { CatalogServer, ToolDiscoverResult } from "../../interfaces";
 import { ToolCatalog } from "../ToolCatalog";
 
 /**

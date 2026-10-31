@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Wrench } from "lucide-react";
-import type { ToolCallTraceView } from "../types";
+import type { ToolCallTraceView } from "../interfaces";
 
 interface ToolCallTracePanelProps {
   calls: ToolCallTraceView[];

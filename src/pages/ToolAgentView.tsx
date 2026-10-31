@@ -14,7 +14,7 @@ import type {
   ToolApprovalView,
   ToolDiscoverResult,
   ToolEscalationView,
-} from "../types";
+} from "../interfaces";
 import { ToolApprovalCard } from "../components/ToolApprovalCard";
 import { ToolCatalog } from "../components/ToolCatalog";
 import { ToolEscalationCard } from "../components/ToolEscalationCard";

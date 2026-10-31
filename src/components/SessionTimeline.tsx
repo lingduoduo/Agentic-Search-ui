@@ -1,5 +1,5 @@
 import { memo } from "react";
-import type { ChatMessageView } from "../types";
+import type { ChatMessageView } from "../interfaces";
 
 interface SessionTimelineProps {
   messages: ChatMessageView[];

@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { App } from "../../App";
+import { App } from "../App";
 
 vi.mock("../../services/api", () => ({
   createSession: vi.fn().mockResolvedValue({ id: "s1", messages: [], title: null, user_id: null }),

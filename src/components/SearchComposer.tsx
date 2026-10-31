@@ -2,7 +2,7 @@
 import { memo } from "react";
 import type { FormEvent } from "react";
 import { Loader2, Search } from "lucide-react";
-import type { SearchDomainOption, SearchSourceProvider } from "../types";
+import type { SearchDomainOption, SearchSourceProvider } from "../interfaces";
 import { AUTO, MAX_SEARCH_DOMAINS } from "../config/search";
 import { toggleDomain } from "../utils/domains";
 

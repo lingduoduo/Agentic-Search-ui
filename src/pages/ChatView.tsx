@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { sendChatMessage } from "../services/api";
-import type { ConversationTurn } from "../types";
+import type { ConversationTurn } from "../interfaces";
 import { Transcript } from "../components/Transcript";
 
 export function ChatView() {

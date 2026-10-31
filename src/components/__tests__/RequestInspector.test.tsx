@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { RequestInspector } from "../debug/RequestInspector";
-import type { RequestSnapshot } from "../../types";
+import type { RequestSnapshot } from "../../interfaces";
 
 vi.mock("../../services/api", () => ({
   listDebugRequests: vi.fn(),

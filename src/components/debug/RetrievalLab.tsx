@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { runDebugRetrieval } from "../../services/api";
-import type { DebugRetrievalOutcome, RetrievalMode } from "../../types";
+import type { DebugRetrievalOutcome, RetrievalMode } from "../../interfaces";
 
 const MODES: RetrievalMode[] = ["sparse", "dense", "hybrid", "graph"];
 

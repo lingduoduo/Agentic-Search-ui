@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ClarificationPrompt } from "../ClarificationPrompt";
-import type { ClarificationView } from "../../types";
+import type { ClarificationView } from "../../interfaces";
 
 describe("ClarificationPrompt", () => {
   const clarification: ClarificationView = {

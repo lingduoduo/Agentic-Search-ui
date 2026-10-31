@@ -2,7 +2,7 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ToolApprovalCard } from "../ToolApprovalCard";
-import type { ToolApprovalView } from "../../types";
+import type { ToolApprovalView } from "../../interfaces";
 
 const approval: ToolApprovalView = {
   id: "a1",

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Transcript } from "../Transcript";
-import type { ConversationTurn } from "../../types";
+import type { ConversationTurn } from "../../interfaces";
 
 describe("Transcript", () => {
   it("renders user and assistant turns in order", () => {

@@ -1,0 +1,49 @@
+# Rendered by the nginx image's envsubst entrypoint into /etc/nginx/conf.d/.
+# Only ${BACKEND_URL} is substituted (it is the only variable defined in the
+# environment); nginx's own $variables pass through untouched.
+#
+# Mirrors the dev proxy in vite.config.ts: serve the built SPA, forward every
+# backend prefix the app calls to the FastAPI backend, same origin, so auth
+# cookies and SSE work without CORS.
+
+map $http_accept $spa_navigation {
+    default     0;
+    "~text/html" 1;
+}
+
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+
+    # Hashed build output: cache forever.
+    location /assets/ {
+        try_files $uri =404;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Backend-only prefixes. /tool(/|$) does not match /tools.
+    location ~ ^/(api|health|ready|auth|me|admin|analytics|tool)(/|$) {
+        include /etc/nginx/conf.d/snippets/backend-proxy.conf;
+    }
+
+    # Shared prefixes: a page navigation gets the SPA, an API call (Accept:
+    # application/json) goes to the backend. Keep in sync with ROUTES in
+    # src/router.tsx and the bypass entries in vite.config.ts.
+    location ~ ^/(chat|search|tools)(/|$) {
+        if ($spa_navigation) {
+            rewrite ^ /index.html last;
+        }
+        include /etc/nginx/conf.d/snippets/backend-proxy.conf;
+    }
+
+    # Everything else is the SPA; router.tsx maps unknown paths to /assist.
+    location / {
+        try_files $uri /index.html;
+    }
+
+    location = /index.html {
+        add_header Cache-Control "no-cache";
+    }
+}

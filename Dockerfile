@@ -1,8 +1,9 @@
 # --- Stage 1: build the bundle ---
-FROM node:24-slim AS build
+FROM node:26-slim AS build
 WORKDIR /app
 COPY package.json yarn.lock ./
-RUN corepack enable && yarn install --frozen-lockfile
+# Node 25+ no longer bundles Corepack, which provides the pinned Yarn.
+RUN npm install -g corepack@0.36.0 && corepack enable && yarn install --frozen-lockfile
 COPY . .
 RUN yarn build
 

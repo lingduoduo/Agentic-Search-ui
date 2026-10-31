@@ -1,6 +1,4 @@
-import React, { memo, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import type { Components } from "react-markdown";
+import { lazy, memo, Suspense, useState } from "react";
 import { submitSessionFeedback } from "../api";
 import type { FeedbackSignal, FeedbackTarget, ProgressStep } from "../types";
 
@@ -96,42 +94,12 @@ function FeedbackBar({ sessionId }: { sessionId: string }) {
   );
 }
 
-const CITATION_RE = /(\[(?:R\d+Q\d+)?D\d+\])/;
-
-function linkifyCitations(children: React.ReactNode): React.ReactNode {
-  if (Array.isArray(children)) {
-    return (children as React.ReactNode[]).flatMap((child, i) => {
-      if (typeof child !== "string") return [child];
-      const parts = child.split(CITATION_RE);
-      if (parts.length === 1) return [child];
-      return parts.map((part, j) =>
-        /^\[(?:R\d+Q\d+)?D\d+\]$/.test(part)
-          ? React.createElement("a", { key: `${i}-${j}`, href: `#source-${part}`, className: "citation-link" }, part)
-          : part
-      );
-    });
-  }
-  if (typeof children !== "string") return children;
-  const parts = children.split(CITATION_RE);
-  if (parts.length === 1) return children;
-  return parts.map((part, i) =>
-    /^\[(?:R\d+Q\d+)?D\d+\]$/.test(part)
-      ? React.createElement("a", { key: i, href: `#source-${part}`, className: "citation-link" }, part)
-      : part
-  );
-}
-
-const markdownComponents: Components = {
-  p({ children }) {
-    return <p>{linkifyCitations(children as React.ReactNode)}</p>;
-  },
-  code({ className, children }) {
-    const isBlock = Boolean(className);
-    return isBlock
-      ? <pre><code className={className}>{children}</code></pre>
-      : <code>{children}</code>;
-  },
-};
+// react-markdown is most of the answer path's weight and nothing needs it until
+// an answer arrives, so it loads as its own chunk. The import starts with this
+// module rather than on first render, so it is normally ready before the first
+// answer; until then the raw text stands in.
+const markdownModule = import("./Markdown");
+const Markdown = lazy(() => markdownModule);
 
 function IntentBadge({ intent, citations, documentCount, toolCallCount }: {
   intent: "search" | "chat" | "tool";
@@ -244,7 +212,9 @@ export const AnswerPanel = memo(function AnswerPanel({
           toolCallCount={toolCallCount}
         />
       )}
-      <ReactMarkdown components={markdownComponents}>{answer}</ReactMarkdown>
+      <Suspense fallback={<p>{answer}</p>}>
+        <Markdown>{answer}</Markdown>
+      </Suspense>
       {answer && sessionId && progressSteps.length === 0 && (
         // Keyed by session and answer so a new answer gets a fresh, un-sent bar.
         <FeedbackBar key={`${sessionId}:${answer}`} sessionId={sessionId} />

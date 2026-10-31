@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { SessionTimeline } from "../SessionTimeline";
-import type { ChatMessageView } from "../../types";
+import type { ChatMessageView } from "../../interfaces";
 
 const userMsg: ChatMessageView = { role: "user", content: "Hello" };
 const assistantMsg: ChatMessageView = { role: "assistant", content: "Hi there" };

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { getDebugRequest, listDebugRequests } from "../../services/api";
-import type { RequestSnapshot, RequestSummary } from "../../types";
+import type { RequestSnapshot, RequestSummary } from "../../interfaces";
 
 const STAGE_ORDER = ["intent", "search", "tool", "llm", "final"] as const;
 

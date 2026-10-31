@@ -31,25 +31,36 @@ For a dev login, open `http://127.0.0.1:5173/dev-login.html` (dev server only).
 ```text
 src/
 ├── main.tsx          # React entry point and shared stylesheet import
-├── App.tsx           # Application shell, navigation, and global panels
-├── assets/           # Shared styles (styles.css)
+├── apps/             # App.tsx shell, navigation, global panels, and tests
 ├── components/       # Reusable UI, admin panels, and debug inspectors
 ├── config/           # Route definitions and search constants
-├── router/           # Browser history navigation, links, and route hooks
+├── hooks/            # Route subscriptions and canonical URL hooks
+├── interfaces/       # Shared API and UI types (index.ts)
+├── pages/            # Assistant, Search, Chat, and Tools route screens
+├── routes/           # Browser history navigation and routing exports
 ├── services/         # Backend HTTP and SSE client (api.ts)
-├── utils/            # Domain selection, tool grouping, and schema helpers
-├── views/            # Assistant, Search, Chat, and Tools route screens
-└── types.ts          # Shared API and UI types
+├── static/           # Reserved for static assets
+├── store/            # Reserved for shared application state
+├── storybook/        # Reserved for component stories
+├── styles/           # Shared styles (styles.css)
+└── utils/            # Domain selection, tool grouping, and schema helpers
 ```
 
+`main.tsx` loads `styles/styles.css` and mounts `apps/App.tsx`. The app shell
+selects a screen from `pages/` using the current route. `config/routes.ts`
+defines the allowed paths, `routes/navigation.ts` handles browser history,
+`hooks/useRoute.ts` subscribes to route changes, and `components/NavLink.tsx`
+renders navigation links. `routes/index.ts` exports the routing API.
+
 Tests live in `__tests__/` directories alongside the code they cover.
-Component state stays with its owning view or component; the local
-`src/stores/` directory is reserved for shared state when needed and currently
-contains no implementation.
+Component state stays with its owning page or component. `store/`, `static/`,
+and `storybook/` are empty placeholders in the local layout; Git will track
+them once files are added.
 
 When extending the app, put backend requests in `services/api.ts`, shared
-constants in `config/`, pure helpers in `utils/`, and reusable UI in
-`components/`. Route screens in `views/` compose these pieces.
+constants in `config/`, shared data contracts in `interfaces/`, React hooks
+in `hooks/`, pure helpers in `utils/`, and reusable UI in `components/`.
+Route screens in `pages/` compose these pieces, while `apps/` owns the shell.
 
 ## Check
 
@@ -70,7 +81,12 @@ The `Dockerfile` builds the bundle and serves it from nginx (non-root, port
 `/search`, `/tools`) to `BACKEND_URL`. Browser and backend stay on one origin,
 so cookies and streaming work without CORS.
 
+On macOS with Colima installed, start it and select its Docker context before
+building the image:
+
 ```bash
+colima start
+docker context use colima
 docker build -t agentic-search-ui:local .
 docker run -p 8080:8080 -e BACKEND_URL=http://host.docker.internal:7860 agentic-search-ui:local
 ```
@@ -94,9 +110,9 @@ panels, the dev console, and the UI features.
 
 To add a route screen:
 
-1. Create the screen in `src/views/` and its tests in `src/views/__tests__/`.
+1. Create the screen in `src/pages/` and its tests in `src/pages/__tests__/`.
 2. Add the pathname to `ROUTES` in `src/config/routes.ts` and render the screen
-   from `src/App.tsx`. Navigation helpers live in `src/router/index.tsx`.
+   from `src/apps/App.tsx`. Navigation helpers live in `src/routes/index.ts`.
 3. Keep page serving aligned with the backend: update the `bypass` entries in
    `vite.config.ts` and the shared-prefix location in
    `nginx/default.conf.template` when the route shares a backend API prefix,

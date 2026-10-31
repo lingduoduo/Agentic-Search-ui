@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { sendSearchMessage } from "../services/api";
-import type { SearchDocView, SourceDocumentView } from "../types";
+import type { SearchDocView, SourceDocumentView } from "../interfaces";
 import { SourceGrid } from "../components/SourceGrid";
 
 export function SearchView() {

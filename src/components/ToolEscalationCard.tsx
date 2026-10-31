@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { ToolEscalationView } from "../types";
+import type { ToolEscalationView } from "../interfaces";
 
 type Decision = "retry" | "skip" | "cancel";
 type DecisionState = "idle" | "submitting" | "decided" | "error";

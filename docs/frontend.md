@@ -11,7 +11,7 @@ This repository contains the React 19 + Vite + TypeScript single-page app for [A
 ### Pages
 
 The four surfaces are routes, not tabs. `src/config/routes.ts` holds the route
-list and `src/router/index.tsx` implements the history router; `App.tsx` is a shell that renders the
+list and `src/routes/navigation.ts` implements the history router; `src/apps/App.tsx` is a shell that renders the
 topbar, the global panels, and whichever page the route selects. Each page owns
 its state, so navigating away discards it.
 
@@ -199,9 +199,9 @@ yarn test:unit               # Vitest unit tests (vitest run)
 yarn test                    # typecheck, then the unit tests
 ```
 
-Frontend tests live under `src/components/__tests__/`,
-`src/components/debug/__tests__/`, `src/views/__tests__/`,
-`src/services/__tests__/`, `src/router/__tests__/`, and `src/utils/__tests__/`. A few of the
+Frontend tests live under `src/apps/__tests__/`, `src/components/__tests__/`,
+`src/components/debug/__tests__/`, `src/pages/__tests__/`,
+`src/services/__tests__/`, `src/routes/__tests__/`, and `src/utils/__tests__/`. A few of the
 component tests:
 
 | Test file | What is tested |

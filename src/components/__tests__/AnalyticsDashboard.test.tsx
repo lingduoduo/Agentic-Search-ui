@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { AnalyticsDashboard } from "../AnalyticsDashboard";
-import type { BreakdownAnalytics } from "../../types";
+import type { BreakdownAnalytics } from "../../interfaces";
 
 const llmData: BreakdownAnalytics = {
   dimension: "llm",

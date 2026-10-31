@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { groupToolsByServer } from "../toolCatalog";
-import type { ToolView } from "../../types";
+import type { ToolView } from "../../interfaces";
 
 function tool(over: Partial<ToolView>): ToolView {
   return {

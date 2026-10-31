@@ -1,4 +1,4 @@
-import type { BreakdownAnalytics, BreakdownItem } from "../types";
+import type { BreakdownAnalytics, BreakdownItem } from "../interfaces";
 
 interface AnalyticsDashboardProps {
   byLLM: BreakdownAnalytics | null;

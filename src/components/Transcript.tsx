@@ -1,4 +1,4 @@
-import type { ConversationTurn } from "../types";
+import type { ConversationTurn } from "../interfaces";
 import { ToolCallTracePanel } from "./ToolCallTracePanel";
 
 export function Transcript({ turns }: { turns: ConversationTurn[] }) {

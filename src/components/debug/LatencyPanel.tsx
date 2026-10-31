@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getRouteLatency } from "../../services/api";
-import type { RouteLatencyRow, StageLatency, StageLatencyResponse } from "../../types";
+import type { RouteLatencyRow, StageLatency, StageLatencyResponse } from "../../interfaces";
 
 /**
  * Milliseconds, or a dash.

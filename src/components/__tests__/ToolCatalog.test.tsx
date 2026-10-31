@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import { ToolCatalog } from "../ToolCatalog";
-import type { CatalogServer } from "../../types";
+import type { CatalogServer } from "../../interfaces";
 
 const servers: CatalogServer[] = [
   {

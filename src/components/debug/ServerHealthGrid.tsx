@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getServerHealth } from "../../services/api";
-import type { ServerHealth } from "../../types";
+import type { ServerHealth } from "../../interfaces";
 
 interface Props {
   /** Last agent run's answer text + citations — for the grounding debug. */

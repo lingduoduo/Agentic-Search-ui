@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { ToolApprovalView } from "../types";
+import type { ToolApprovalView } from "../interfaces";
 
 type Decision = "approve" | "deny";
 type DecisionState = "idle" | "submitting" | "decided" | "error";

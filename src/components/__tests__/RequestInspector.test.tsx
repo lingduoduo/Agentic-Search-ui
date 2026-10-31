@@ -4,12 +4,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { RequestInspector } from "../debug/RequestInspector";
 import type { RequestSnapshot } from "../../types";
 
-vi.mock("../../api", () => ({
+vi.mock("../../services/api", () => ({
   listDebugRequests: vi.fn(),
   getDebugRequest: vi.fn(),
 }));
 
-import * as api from "../../api";
+import * as api from "../../services/api";
 
 const mockList = api.listDebugRequests as ReturnType<typeof vi.fn>;
 const mockGet = api.getDebugRequest as ReturnType<typeof vi.fn>;

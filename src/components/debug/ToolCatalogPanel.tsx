@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { discoverTools, getDebugTools } from "../../api";
+import { discoverTools, getDebugTools } from "../../services/api";
 import type { CatalogServer, ToolDiscoverResult } from "../../types";
 import { ToolCatalog } from "../ToolCatalog";
 

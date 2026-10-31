@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getServerHealth } from "../../api";
+import { getServerHealth } from "../../services/api";
 import type { ServerHealth } from "../../types";
 
 interface Props {

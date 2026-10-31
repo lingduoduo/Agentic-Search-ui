@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { sendToolMessage } from "../../api";
+import { sendToolMessage } from "../api";
 
 function sseStream(chunks: string[]): ReadableStream<Uint8Array> {
   const enc = new TextEncoder();

@@ -4,15 +4,15 @@ import {
   invokeTool,
   listTools,
   registerOpenAPITools,
-} from "../api";
+} from "../services/api";
 import type { ToolInvokeResponse, ToolView } from "../types";
 import {
   buildArguments,
   initialValues,
   toolFormFromSchema,
   validate,
-} from "../toolSchema";
-import type { ToolField } from "../toolSchema";
+} from "../utils/toolSchema";
+import type { ToolField } from "../utils/toolSchema";
 
 // ── Source badge ──────────────────────────────────────────────────────────────
 

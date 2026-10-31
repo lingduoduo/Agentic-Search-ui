@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { AssistPage } from "../AssistPage";
-import * as api from "../../api";
+import * as api from "../../services/api";
 
 describe("AssistPage claim streaming", () => {
   it("renders claim text as it streams in, joined with a space", async () => {

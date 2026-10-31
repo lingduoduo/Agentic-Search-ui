@@ -7,8 +7,8 @@ import {
   streamAgent,
   submitToolApproval,
   submitToolEscalation,
-} from "../api";
-import { AUTO } from "../domains";
+} from "../services/api";
+import { AUTO } from "../config/search";
 import { AnswerPanel } from "../components/AnswerPanel";
 import { ClarificationPrompt } from "../components/ClarificationPrompt";
 import { DevConsole } from "../components/debug/DevConsole";

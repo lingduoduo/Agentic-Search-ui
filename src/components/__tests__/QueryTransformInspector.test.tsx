@@ -3,8 +3,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { QueryTransformInspector } from "../debug/QueryTransformInspector";
 import type { QueryTransformResult } from "../../types";
 
-vi.mock("../../api", () => ({ runQueryTransform: vi.fn() }));
-import { runQueryTransform } from "../../api";
+vi.mock("../../services/api", () => ({ runQueryTransform: vi.fn() }));
+import { runQueryTransform } from "../../services/api";
 const mockRun = vi.mocked(runQueryTransform);
 
 beforeEach(() => mockRun.mockReset());

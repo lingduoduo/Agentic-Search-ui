@@ -2,8 +2,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ServerHealthGrid } from "../debug/ServerHealthGrid";
 
-vi.mock("../../api", () => ({ getServerHealth: vi.fn() }));
-import { getServerHealth } from "../../api";
+vi.mock("../../services/api", () => ({ getServerHealth: vi.fn() }));
+import { getServerHealth } from "../../services/api";
 const mockHealth = vi.mocked(getServerHealth);
 
 beforeEach(() => mockHealth.mockReset());

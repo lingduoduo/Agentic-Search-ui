@@ -3,7 +3,8 @@ import { memo } from "react";
 import type { FormEvent } from "react";
 import { Loader2, Search } from "lucide-react";
 import type { SearchDomainOption, SearchSourceProvider } from "../types";
-import { AUTO, MAX_SEARCH_DOMAINS, toggleDomain } from "../domains";
+import { AUTO, MAX_SEARCH_DOMAINS } from "../config/search";
+import { toggleDomain } from "../utils/domains";
 
 const SOURCE_OPTIONS: Array<{
   value: SearchSourceProvider;

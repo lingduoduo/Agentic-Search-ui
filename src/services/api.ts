@@ -35,7 +35,7 @@ import type {
   SendSearchMessageBody,
   SearchFullResponse,
   SearchDomainOption,
-} from "./types";
+} from "../types";
 
 /**
  * Run one per-mode retrieval against the dev-console proxy.

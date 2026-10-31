@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import { ToolCatalogPanel } from "../ToolCatalogPanel";
-import * as api from "../../../api";
+import * as api from "../../../services/api";
 
 describe("ToolCatalogPanel", () => {
   it("renders the registered count and catalog grouped by server", async () => {

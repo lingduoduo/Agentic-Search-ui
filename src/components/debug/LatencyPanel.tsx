@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getRouteLatency } from "../../api";
+import { getRouteLatency } from "../../services/api";
 import type { RouteLatencyRow, StageLatency, StageLatencyResponse } from "../../types";
 
 /**

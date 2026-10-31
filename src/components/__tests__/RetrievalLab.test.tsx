@@ -3,8 +3,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { RetrievalLab } from "../debug/RetrievalLab";
 import type { DebugRetrievalOutcome, RetrievalMode } from "../../types";
 
-vi.mock("../../api", () => ({ runDebugRetrieval: vi.fn() }));
-import { runDebugRetrieval } from "../../api";
+vi.mock("../../services/api", () => ({ runDebugRetrieval: vi.fn() }));
+import { runDebugRetrieval } from "../../services/api";
 const mockRun = vi.mocked(runDebugRetrieval);
 
 function ok(mode: string, docId: string): DebugRetrievalOutcome {

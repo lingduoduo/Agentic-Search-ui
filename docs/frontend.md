@@ -10,12 +10,12 @@ This repository contains the React 19 + Vite + TypeScript single-page app for [A
 
 ### Pages
 
-The four surfaces are routes, not tabs. `src/router.tsx` holds the route
-list and a ~70-line history router; `App.tsx` is a shell that renders the
+The four surfaces are routes, not tabs. `src/config/routes.ts` holds the route
+list and `src/router/index.tsx` implements the history router; `App.tsx` is a shell that renders the
 topbar, the global panels, and whichever page the route selects. Each page owns
 its state, so navigating away discards it.
 
-`ROUTES` in `src/router.tsx` is mirrored in three other places, and all four
+`ROUTES` in `src/config/routes.ts` is mirrored in three other places, and all four
 must be changed together to add a page: the `bypass` entries in
 `vite.config.ts` and the SPA-navigation location in `nginx/default.conf.template`
 (both only for prefixes the backend also serves), and the `spa_page` handler in
@@ -111,7 +111,7 @@ Click **Console** in the top bar to open it. **Retrieval Lab** runs a query agai
 
 ## UI features
 
-**Streaming answers** (`AnswerPanel.tsx` → `ProgressLog`) — every query streams over SSE; `streamAgent` (`src/api.ts`) drives the UI from the `progress` / `claim` / `trace` / `approval_required` / `escalation_required` / `answer` / `done` events (full schema in the [SSE event table](https://github.com/lingduoduo/Agentic-Search-GRPO/blob/main/docs/architecture.md#intent-routing)). While the agent runs, a live **Agent reasoning** log renders one row per turn (`⟳ Turn N · writing answer…` active, `✓ Turn N · <tool> · N docs` completed) and answer tokens stream in as markdown; on `done` the log collapses to a one-line summary (`✓ 3 turns`) with a **show reasoning ▸** toggle that re-expands the full trace. Backend side, each turn fires the `on_turn` callback (`OnTurnCallback`) → a `progress` event on the `AgentRunDriver` queue (`src/internal/servers/web/run_driver.py`), which also carries `claim` / `trace` events and closes the run with the `answer` / `done` pair. The **New** button (`handleNewSession`, on the Assistant page) aborts any in-flight request and clears answer / citations / documents / messages / intent and any pending approval or escalation cards; the backend cancels the run when the stream's client disconnects.
+**Streaming answers** (`AnswerPanel.tsx` → `ProgressLog`) — every query streams over SSE; `streamAgent` (`src/services/api.ts`) drives the UI from the `progress` / `claim` / `trace` / `approval_required` / `escalation_required` / `answer` / `done` events (full schema in the [SSE event table](https://github.com/lingduoduo/Agentic-Search-GRPO/blob/main/docs/architecture.md#intent-routing)). While the agent runs, a live **Agent reasoning** log renders one row per turn (`⟳ Turn N · writing answer…` active, `✓ Turn N · <tool> · N docs` completed) and answer tokens stream in as markdown; on `done` the log collapses to a one-line summary (`✓ 3 turns`) with a **show reasoning ▸** toggle that re-expands the full trace. Backend side, each turn fires the `on_turn` callback (`OnTurnCallback`) → a `progress` event on the `AgentRunDriver` queue (`src/internal/servers/web/run_driver.py`), which also carries `claim` / `trace` events and closes the run with the `answer` / `done` pair. The **New** button (`handleNewSession`, on the Assistant page) aborts any in-flight request and clears answer / citations / documents / messages / intent and any pending approval or escalation cards; the backend cancels the run when the stream's client disconnects.
 
 **On the Assistant page the answer arrives claim by claim, not token by token**
 (`AssistPage.tsx`). The grounded path's answer *is* the join of the claims it has
@@ -186,7 +186,7 @@ The intent itself comes from the backend's routing decision — see the `respons
 | `QueryHistoryPanel` | Per-user query history with CSV export (`getQueryHistory`) |
 | `ToolAdminPanel` | Admin view of MCP/OpenAPI tools registered via `tool_registry` |
 
-API client functions live in `src/api.ts`: `runAgent` / `streamAgent` (SSE), `createSession` / `getSession`, `getAdminSummary`, `getAnalyticsByLLM` / `getAnalyticsByPersona` / `getAnalyticsByFlow`, `getQueryHistory`, `getAuditSummary`, `submitFeedback`.
+API client functions live in `src/services/api.ts`: `runAgent` / `streamAgent` (SSE), `createSession` / `getSession`, `getAdminSummary`, `getAnalyticsByLLM` / `getAnalyticsByPersona` / `getAnalyticsByFlow`, `getQueryHistory`, `getAuditSummary`, `submitFeedback`.
 
 **Feedback loop (UI → fine-tuning)** — the thumbs bar under the answer (`AnswerPanel`) posts session thumbs to `POST /api/feedback` via `submitSessionFeedback(sessionId, signal, target)`: a thumbs-up goes as `overall`, a thumbs-down first asks whether the *Sources* (`retrieval`), the *Answer* (`generation`) or *Both* (`overall`) were at fault. `submitFeedback(chatMessageId, isPositive, feedbackText?)` posts per-message like/dislike to `POST /chat/create-chat-message-feedback` (exported; no component calls it today); `QueryHistoryPanel` can filter sessions by `feedback_type` (`like` / `dislike`). These ratings are exactly what `load_feedback_examples` reads back into [feedback-driven GRPO](https://github.com/lingduoduo/Agentic-Search-GRPO/blob/main/docs/training-and-evaluation.md#fine-tune-from-user-feedback) — the human-feedback signal that fine-tunes the policy.
 
@@ -199,8 +199,9 @@ yarn test:unit               # Vitest unit tests (vitest run)
 yarn test                    # typecheck, then the unit tests
 ```
 
-Frontend tests (33 files) live under `src/__tests__/`, `src/components/__tests__/`,
-`src/components/debug/__tests__/`, and `src/pages/__tests__/`. A few of the
+Frontend tests live under `src/components/__tests__/`,
+`src/components/debug/__tests__/`, `src/views/__tests__/`,
+`src/services/__tests__/`, `src/router/__tests__/`, and `src/utils/__tests__/`. A few of the
 component tests:
 
 | Test file | What is tested |

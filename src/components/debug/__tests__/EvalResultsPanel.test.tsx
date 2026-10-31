@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { EvalResultsPanel } from "../EvalResultsPanel";
-import * as api from "../../../api";
+import * as api from "../../../services/api";
 
 describe("EvalResultsPanel", () => {
   it("renders a card with metric rows per result file", async () => {

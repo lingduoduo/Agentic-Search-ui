@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import type { MouseEvent, ReactNode } from "react";
 
-export const ROUTES = ["/assist", "/search", "/chat", "/tools"] as const;
+import { DEFAULT_ROUTE, ROUTES } from "../config/routes";
+import type { Route } from "../config/routes";
 
-export type Route = (typeof ROUTES)[number];
-
-export const DEFAULT_ROUTE: Route = "/assist";
+export { DEFAULT_ROUTE, ROUTES } from "../config/routes";
+export type { Route } from "../config/routes";
 
 /**
  * Resolve any pathname onto one of the four pages. The navigation is a closed

@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { App } from "../../App";
 
-vi.mock("../../api", () => ({
+vi.mock("../../services/api", () => ({
   createSession: vi.fn().mockResolvedValue({ id: "s1", messages: [], title: null, user_id: null }),
   runAgent: vi.fn(),
   streamAgent: vi.fn(),
@@ -20,7 +20,7 @@ vi.mock("../../api", () => ({
   errorStatus: vi.fn().mockReturnValue(undefined),
 }));
 
-import * as api from "../../api";
+import * as api from "../../services/api";
 
 const mockStreamAgent = api.streamAgent as ReturnType<typeof vi.fn>;
 const mockSubmitToolApproval = api.submitToolApproval as ReturnType<typeof vi.fn>;

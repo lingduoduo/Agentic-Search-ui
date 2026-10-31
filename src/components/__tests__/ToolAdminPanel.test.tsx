@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolAdminPanel } from "../ToolAdminPanel";
-import * as api from "../../api";
+import * as api from "../../services/api";
 import type { ToolView } from "../../types";
 
 const WEB_SEARCH: ToolView = {

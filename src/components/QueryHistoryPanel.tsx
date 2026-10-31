@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAuditSummary, getQueryHistory } from "../api";
+import { getAuditSummary, getQueryHistory } from "../services/api";
 import type { AuditSummary, QueryHistoryItem, QueryHistoryPage } from "../types";
 
 const PAGE_SIZE = 20;

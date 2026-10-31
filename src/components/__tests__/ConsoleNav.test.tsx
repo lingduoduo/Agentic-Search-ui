@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { App } from "../../App";
 
-vi.mock("../../api", () => ({
+vi.mock("../../services/api", () => ({
   createSession: vi
     .fn()
     .mockResolvedValue({ id: "s1", messages: [], title: null, user_id: null }),

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { sendSearchMessage } from "../api";
+import { sendSearchMessage } from "../services/api";
 import type { SearchDocView, SourceDocumentView } from "../types";
-import { SourceGrid } from "./SourceGrid";
+import { SourceGrid } from "../components/SourceGrid";
 
 export function SearchView() {
   const [query, setQuery] = useState("");

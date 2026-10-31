@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { runQueryTransform } from "../../api";
+import { runQueryTransform } from "../../services/api";
 import type { QueryTransformResult } from "../../types";
 
 const LEG_LABELS: Record<string, string> = {

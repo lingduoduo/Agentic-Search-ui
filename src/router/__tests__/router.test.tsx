@@ -1,7 +1,7 @@
 import { render, renderHook, screen, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach } from "vitest";
-import { NavLink, navigate, normalizeRoute, useCanonicalRoute, useRoute } from "../router";
+import { NavLink, navigate, normalizeRoute, useCanonicalRoute, useRoute } from "..";
 
 beforeEach(() => {
   window.history.replaceState({}, "", "/");

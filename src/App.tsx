@@ -5,15 +5,15 @@ import {
   getAnalyticsByFlow,
   getAnalyticsByLLM,
   getAnalyticsByPersona,
-} from "./api";
+} from "./services/api";
 import { AdminOverview } from "./components/AdminOverview";
 import { AnalyticsDashboard } from "./components/AnalyticsDashboard";
-import { ChatView } from "./components/ChatView";
+import { ChatView } from "./views/ChatView";
 import { QueryHistoryPanel } from "./components/QueryHistoryPanel";
-import { SearchView } from "./components/SearchView";
-import { ToolAgentView } from "./components/ToolAgentView";
+import { SearchView } from "./views/SearchView";
+import { ToolAgentView } from "./views/ToolAgentView";
 import { ToolAdminPanel } from "./components/ToolAdminPanel";
-import { AssistPage } from "./pages/AssistPage";
+import { AssistPage } from "./views/AssistPage";
 import { NavLink, useCanonicalRoute } from "./router";
 import type { AdminSurfaceSummary, BreakdownAnalytics } from "./types";
 

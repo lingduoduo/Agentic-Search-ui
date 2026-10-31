@@ -1,8 +1,6 @@
-// Mirrors MAX_SEARCH_DOMAINS in src/internal/tools/search.py.
-export const MAX_SEARCH_DOMAINS = 3;
+import { AUTO, MAX_SEARCH_DOMAINS } from "../config/search";
 
-// Let the backend pick up to three categories for the query.
-export const AUTO = "auto";
+export { AUTO, MAX_SEARCH_DOMAINS } from "../config/search";
 
 // One click on a "Search source" checkbox. "web" is the empty selection:
 // choosing a real category replaces it, and clearing everything returns to it.

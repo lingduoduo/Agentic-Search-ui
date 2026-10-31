@@ -8,8 +8,9 @@ FastAPI backend over same-origin HTTP and SSE.
 
 ## Develop
 
-Start the backend first (see the backend README): retrieval server plus web
-backend on port 7860. Then:
+Use Node.js 26 (the version used by CI and Docker) and Yarn 1.22.22
+(pinned in `package.json`). Start the backend first (see the backend README):
+retrieval server plus web backend on port 7860. Then:
 
 ```bash
 npm install -g corepack && corepack enable  # once per Node install: provides the pinned Yarn
@@ -25,11 +26,38 @@ BACKEND_URL=http://127.0.0.1:7861 yarn dev
 
 For a dev login, open `http://127.0.0.1:5173/dev-login.html` (dev server only).
 
+## Source layout
+
+```text
+src/
+├── main.tsx          # React entry point and shared stylesheet import
+├── App.tsx           # Application shell, navigation, and global panels
+├── assets/           # Shared styles (styles.css)
+├── components/       # Reusable UI, admin panels, and debug inspectors
+├── config/           # Route definitions and search constants
+├── router/           # Browser history navigation, links, and route hooks
+├── services/         # Backend HTTP and SSE client (api.ts)
+├── utils/            # Domain selection, tool grouping, and schema helpers
+├── views/            # Assistant, Search, Chat, and Tools route screens
+└── types.ts          # Shared API and UI types
+```
+
+Tests live in `__tests__/` directories alongside the code they cover.
+Component state stays with its owning view or component; the local
+`src/stores/` directory is reserved for shared state when needed and currently
+contains no implementation.
+
+When extending the app, put backend requests in `services/api.ts`, shared
+constants in `config/`, pure helpers in `utils/`, and reusable UI in
+`components/`. Route screens in `views/` compose these pieces.
+
 ## Check
 
 ```bash
 yarn typecheck       # TypeScript
 yarn test:unit       # Vitest
+yarn test:unit:watch # Vitest in watch mode
+yarn test            # typecheck and unit tests
 yarn build           # production bundle → dist/
 yarn test:ci         # all three, as CI runs them
 ```
@@ -64,7 +92,16 @@ docker compose -f docker/docker-compose.yml --profile frontend up --build
 [docs/frontend.md](docs/frontend.md) covers pages and routing, dev login, admin
 panels, the dev console, and the UI features.
 
-Adding a page touches four places that must stay in sync: `ROUTES` in
-`src/router.tsx`, the `bypass` entries in `vite.config.ts`, the shared-prefix
-location in `nginx/default.conf.template`, and `spa_page` in the backend's
-`src/internal/servers/web/app.py`.
+To add a route screen:
+
+1. Create the screen in `src/views/` and its tests in `src/views/__tests__/`.
+2. Add the pathname to `ROUTES` in `src/config/routes.ts` and render the screen
+   from `src/App.tsx`. Navigation helpers live in `src/router/index.tsx`.
+3. Keep page serving aligned with the backend: update the `bypass` entries in
+   `vite.config.ts` and the shared-prefix location in
+   `nginx/default.conf.template` when the route shares a backend API prefix,
+   and update `spa_page` in the backend's `src/internal/servers/web/app.py`.
+
+The Vite development server and nginx deployment handle backend proxying.
+`yarn preview` serves the production bundle on `http://127.0.0.1:4173` for
+static inspection; it does not configure the backend proxy.

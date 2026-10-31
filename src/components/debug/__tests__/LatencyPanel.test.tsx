@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { LatencyPanel } from "../LatencyPanel";
-import * as api from "../../../api";
+import * as api from "../../../services/api";
 
 const row = {
   method: "POST",

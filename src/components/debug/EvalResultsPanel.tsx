@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getEvalResults } from "../../api";
+import { getEvalResults } from "../../services/api";
 import { METRIC_GROUPS } from "../../types";
 import type { EvalResultFile, MetricGroup } from "../../types";
 

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ChatView } from "../ChatView";
-import * as api from "../../api";
+import * as api from "../../services/api";
 
 describe("ChatView", () => {
   beforeEach(() => vi.restoreAllMocks());

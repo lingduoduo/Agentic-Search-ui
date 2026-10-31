@@ -35,6 +35,9 @@ jobs:
       - name: Build production assets
         run: yarn build
 
+      - name: Check Webpack configuration
+        run: yarn test:build-config
+
       - name: Run unit tests
         run: yarn test:unit
 
@@ -51,8 +54,8 @@ jobs:
         run: |
           docker run -d --name web -p 8080:8080 -e BACKEND_URL=http://127.0.0.1:9 agentic-search-ui:ci
           for i in $(seq 1 20); do curl -fsS -o /dev/null http://127.0.0.1:8080/ && break; sleep 1; done
-          curl -fsS http://127.0.0.1:8080/ | grep -q '<div id="root">'
-          curl -fsS -H 'Accept: text/html' http://127.0.0.1:8080/chat | grep -q '<div id="root">'
+          curl -fsS http://127.0.0.1:8080/ | grep -Eq '<div id="?root"?>'
+          curl -fsS -H 'Accept: text/html' http://127.0.0.1:8080/chat | grep -Eq '<div id="?root"?>'
           # No backend is running, so a proxied path must fail upstream (502), not serve HTML.
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/search-domains)" = 502
 

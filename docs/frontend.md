@@ -6,7 +6,7 @@ This guide covers the React/Webpack development workflow and local administratio
 
 ## Development workflow
 
-This repository contains the React 19 + Webpack + TypeScript single-page app for [Agentic Search](https://github.com/lingduoduo/Agentic-Search-GRPO). It runs against the FastAPI backend at port 7860 and, in development, Webpack proxies the backend routes it calls — `/api/*`, `/health`, `/auth/*`, `/me`, `/admin/*`, `/analytics/*`, `/chat/*`, `/search/*`, `/tool/*` — through to port 7860. Set `BACKEND_URL` to point the proxy elsewhere (default `http://127.0.0.1:7860`). A prefix missing from that list is the usual cause of a panel or page that fails only in dev: the request hits the Webpack dev server and 404s instead of reaching FastAPI. The `/chat`, `/search` and `/tools` proxies use a context filter so a page navigation (`Accept: text/html`) is served the SPA instead of being forwarded to FastAPI — without it, a refresh on those pages 404s in dev only. The context filter matches complete path segments so `/tool` and `/tools` remain distinct.
+This repository contains the React 19.1 + Webpack + TypeScript + SCSS single-page app for [Agentic Search](https://github.com/lingduoduo/Agentic-Search-GRPO). It runs against the FastAPI backend at port 7860 and, in development, Webpack proxies the backend routes it calls — `/api/*`, `/health`, `/auth/*`, `/me`, `/admin/*`, `/analytics/*`, `/chat/*`, `/search/*`, `/tool/*` — through to port 7860. Set `BACKEND_URL` to point the proxy elsewhere (default `http://127.0.0.1:7860`). A prefix missing from that list is the usual cause of a panel or page that fails only in dev: the request hits the Webpack dev server and 404s instead of reaching FastAPI. The `/chat`, `/search` and `/tools` proxies use a context filter so a page navigation (`Accept: text/html`) is served the SPA instead of being forwarded to FastAPI — without it, a refresh on those pages 404s in dev only. The context filter matches complete path segments so `/tool` and `/tools` remain distinct.
 
 ### Pages
 
@@ -155,7 +155,7 @@ curl -s -X POST http://localhost:7860/api/agent \
 
 **Tool Call Trace Panel** — When the agent runs in `tool` mode, a panel below the answer shows every tool call: name, status (✓ / ✗), arguments as JSON, result summary (first 200 chars or "N items" for lists), and latency in ms. Failed calls render with a red border and the error message.
 
-**Intent-adaptive layout** — `AssistPage.tsx` reads `response.intent` (set from the `done` SSE event via `setIntent`) and applies `intent-${intent}` to the `.results-layout` container; when `intent` is undefined no class is added and the layout falls back to the default single-column stack. The behaviour is **CSS-only** — `styles.css` rules consume the class to reflow the existing panels (no extra components), keyed off stable hooks `.answer-column`, `.sources-panel`, `.session-panel`, and `.tool-trace-panel`:
+**Intent-adaptive layout** — `AssistPage.tsx` reads `response.intent` (set from the `done` SSE event via `setIntent`) and applies `intent-${intent}` to the `.results-layout` container; when `intent` is undefined no class is added and the layout falls back to the default single-column stack. The behaviour is **CSS-only** — `styles.scss` rules consume the class to reflow the existing panels (no extra components), keyed off stable hooks `.answer-column`, `.sources-panel`, `.session-panel`, and `.tool-trace-panel`:
 
 | Intent | `.results-layout` class | Layout |
 |--------|--------|--------|

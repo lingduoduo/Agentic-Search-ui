@@ -1,6 +1,6 @@
 # Agentic Search UI
 
-The React 19 + Webpack + TypeScript frontend for
+The React 19.1 + Webpack + TypeScript + SCSS frontend for
 [Agentic Search](https://github.com/lingduoduo/Agentic-Search-GRPO). It's a
 single-page app with four routes: **Assistant** (`/assist`), **Search**
 (`/search`), **Chat** (`/chat`), and **Tools** (`/tools`). It talks to the
@@ -9,8 +9,9 @@ FastAPI backend over same-origin HTTP and SSE.
 ## Develop
 
 Use Node.js 26 (the version used by CI and Docker) and Yarn 1.22.22
-(pinned in `package.json`). Start the backend first (see the backend README):
-retrieval server plus web backend on port 7860. Then:
+(pinned in `package.json`). For live API calls, start the retrieval server and
+web backend on port 7860 (see the backend README). For the sample mocked flows,
+you can start without a backend using `yarn start:mock`. Install and run:
 
 ```bash
 npm install -g corepack && corepack enable  # once per Node install: provides the pinned Yarn
@@ -24,10 +25,22 @@ If the backend runs somewhere else, point the dev proxy at it:
 BACKEND_URL=http://127.0.0.1:7861 yarn dev
 ```
 
+To start with a named environment:
+
+```bash
+yarn start:app --env keepghost
+```
+
+Set `BACKEND_URL` in `.env.keepghost.local` or `.env.keepghost` for that
+backend. Named environments still run in development mode on port 5173.
+`--env name=keepghost` is also supported. Without a backend override, the
+proxy uses `http://127.0.0.1:7860`.
+
 For a dev login, open `http://127.0.0.1:5173/dev-login.html` (dev server only).
 
-Webpack compiles TypeScript and React with SWC, generates `index.html`, and
-extracts production CSS into hashed assets in `dist/`. Configure the build and
+Webpack compiles TypeScript and React with SWC, compiles SCSS with Dart Sass,
+and generates `index.html` with hashed production assets in `dist/`. React and
+React DOM are constrained to the 19.1 patch series. Configure the build and
 dev server in `webpack.config.cjs`. Vitest uses `vitest.config.ts`; Vite and
 its React plugin are retained only as test tooling.
 
@@ -45,6 +58,9 @@ from the production bundle.
 
 Webpack configuration lives in `webpack.config.cjs`; `index.html` is the HTML
 template and Webpack injects the generated scripts and stylesheet links.
+Shared styles live in `src/styles/styles.scss`. Webpack processes SCSS through
+`sass-loader` and `css-loader`, injects styles during development, and extracts
+CSS for production. Plain CSS imports remain supported.
 Development uses hot module replacement and source maps. Production cleans
 `dist/`, extracts CSS, and splits React, icons, and dynamically imported code
 into hashed assets without source maps.
@@ -63,9 +79,79 @@ VITE_DEBUG_PANELS=1 BACKEND_URL=http://127.0.0.1:7861 yarn dev
 Webpack reads environment values in this order, with the first value taking
 priority: shell variables, `.env.<mode>.local`, `.env.local`, `.env.<mode>`,
 then `.env`. The mode is `development` for `yarn dev` and `production` for
-`yarn build`. The debug flag is embedded during compilation, so restart the
-dev server or rebuild after changing it. Only the explicitly configured debug
+`yarn build`. A named environment replaces `<mode>` in those file names
+without changing the Webpack build mode. The debug flag is embedded during
+compilation, so restart the dev server or rebuild after changing it. Only the explicitly configured debug
 flag is exposed to browser code.
+
+## Mock API
+
+Start the Webpack dev server at `http://127.0.0.1:5173` with sample API
+responses. Open `/assist`, `/search`, `/chat`, or `/tools` to try the fixtures:
+
+```bash
+yarn start:mock
+# or combine mocks with a named backend environment:
+yarn start:app --env keepghost --env mock
+```
+
+The sample [mocks/config.js](mocks/config.js) contains the response fixtures;
+[mocks/middleware.js](mocks/middleware.js) handles matching and delivery.
+Edit the config to add fixtures, then restart the dev server. Each entry
+matches an exact HTTP method and pathname; query parameters do not affect
+matching. For example:
+
+```js
+export default [
+  {
+    method: 'GET',
+    path: '/api/example',
+    status: 200,
+    delayMs: 150,
+    response: { message: 'Hello from the mock API' },
+  },
+  {
+    method: 'POST',
+    path: '/chat/send-chat-message',
+    events: [
+      { type: 'answer', text: 'Mock streaming answer' },
+      { type: 'done', session_id: 'mock-session' },
+    ],
+  },
+];
+```
+
+Each fixture supports these fields:
+
+| Field | Behavior |
+| --- | --- |
+| `method`, `path` | Required exact HTTP method and pathname, such as `POST` and `/api/agent/stream`. |
+| `status` | HTTP status; defaults to `200`. Use `503` to simulate a service failure. |
+| `response` | JSON value, or a function receiving the Node request and returning a JSON value. |
+| `events` | Array of SSE event objects, sent in order as `data: <JSON>` frames. Use this instead of `response`. |
+| `delayMs` | Delay before a JSON reply or before each SSE event. |
+| `headers` | Additional response headers. |
+
+The sample file includes health, search, chat, assistant, tool-agent,
+analytics, and error responses. Use `response` for JSON or `events` for SSE;
+`delayMs` delays a JSON reply or each SSE event. Optional `headers` add response
+headers, and a `response(req)` function can inspect the request. Responses carry
+`X-Mock-API: true` and are stateless fixtures.
+
+With the mock server running, check the sample endpoints:
+
+```bash
+curl -i http://127.0.0.1:5173/health
+curl -X POST http://127.0.0.1:5173/search/send-search-message \
+  -H 'Content-Type: application/json' -d '{"search_query":"sample"}'
+curl -N -X POST http://127.0.0.1:5173/chat/send-chat-message
+curl -i http://127.0.0.1:5173/api/mock-error  # sample 503 response
+```
+
+Mock middleware runs before the backend proxy. Unlisted routes still reach
+`BACKEND_URL`; page navigations continue to render the app. Mocking is off by
+default and is available only through the development server, so it is not
+included in production builds or `yarn preview`.
 
 ## Source layout
 
@@ -83,11 +169,11 @@ src/
 ├── static/           # Reserved for static assets
 ├── store/            # Reserved for shared application state
 ├── storybook/        # Reserved for component stories
-├── styles/           # Shared styles (styles.css)
+├── styles/           # Shared styles (styles.scss)
 └── utils/            # Domain selection, tool grouping, and schema helpers
 ```
 
-`main.tsx` loads `styles/styles.css` and mounts `apps/App.tsx`. The app shell
+`main.tsx` loads `styles/styles.scss` and mounts `apps/App.tsx`. The app shell
 selects a screen from `pages/` using the current route. `config/routes.ts`
 defines the allowed paths, `routes/navigation.ts` handles browser history,
 `hooks/useRoute.ts` subscribes to route changes, and `components/NavLink.tsx`

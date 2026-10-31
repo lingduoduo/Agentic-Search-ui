@@ -5,13 +5,20 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const dotenv = require('dotenv');
 
-module.exports = (_env, argv = {}) => {
+module.exports = (env = {}, argv = {}) => {
   const production = argv.mode === 'production';
   const mode = production ? 'production' : 'development';
+  const profiles = Object.keys(env).filter((key) => !key.startsWith('WEBPACK_') && key !== 'name' && key !== 'mock');
+  if (profiles.length > 1) throw new Error('Select one environment with --env <name>.');
+  const profile = env.name ?? profiles[0] ?? mode;
+  if (typeof profile !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(profile)) {
+    throw new Error('Environment names must contain only letters, numbers, underscores, or hyphens.');
+  }
   dotenv.config({
-    path: [`.env.${mode}.local`, '.env.local', `.env.${mode}`, '.env'],
+    path: [`.env.${profile}.local`, '.env.local', `.env.${profile}`, '.env'],
     quiet: true,
   });
+  const mockEnabled = env.mock === true || env.mock === 'true';
   const backend = process.env.BACKEND_URL || 'http://127.0.0.1:7860';
   const prefixes = ['/api', '/health', '/ready', '/auth', '/me', '/admin', '/analytics', '/chat', '/search', '/tools', '/tool'];
   const sharedPages = ['/chat', '/search', '/tools'];
@@ -47,6 +54,7 @@ module.exports = (_env, argv = {}) => {
           },
         },
         { test: /\.css$/, use: [production ? MiniCssExtractPlugin.loader : 'style-loader', 'css-loader'] },
+        { test: /\.scss$/, use: [production ? MiniCssExtractPlugin.loader : 'style-loader', 'css-loader', 'sass-loader'] },
         { test: /\.(png|jpe?g|gif|svg|webp|woff2?)$/i, type: 'asset/resource' },
       ],
     },
@@ -92,6 +100,16 @@ module.exports = (_env, argv = {}) => {
               res.end(fs.readFileSync(path.resolve(__dirname, 'dev-login.html')));
             },
           });
+          if (mockEnabled) {
+            const mock = Promise.all([import('./mocks/config.js'), import('./mocks/middleware.js')])
+              .then(([config, { createMockMiddleware }]) => createMockMiddleware(config.default));
+            middlewares.unshift({
+              name: 'mock-api',
+              middleware(req, res, next) {
+                mock.then((handler) => handler(req, res, next)).catch(next);
+              },
+            });
+          }
           return middlewares;
         },
       },

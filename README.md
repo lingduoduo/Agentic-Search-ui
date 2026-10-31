@@ -12,14 +12,15 @@ Start the backend first (see the backend README): retrieval server plus web
 backend on port 7860. Then:
 
 ```bash
-npm install
-npm run dev          # http://127.0.0.1:5173, proxies backend routes to :7860
+corepack enable      # once per Node install: provides the pinned Yarn
+yarn install
+yarn dev             # http://127.0.0.1:5173, proxies backend routes to :7860
 ```
 
 If the backend runs somewhere else, point the dev proxy at it:
 
 ```bash
-BACKEND_URL=http://127.0.0.1:7861 npm run dev
+BACKEND_URL=http://127.0.0.1:7861 yarn dev
 ```
 
 For a dev login, open `http://127.0.0.1:5173/dev-login.html` (dev server only).
@@ -27,10 +28,10 @@ For a dev login, open `http://127.0.0.1:5173/dev-login.html` (dev server only).
 ## Check
 
 ```bash
-npm run typecheck    # TypeScript
-npm run test:unit    # Vitest
-npm run build        # production bundle → dist/
-npm run test:ci      # all three, as CI runs them
+yarn typecheck       # TypeScript
+yarn test:unit       # Vitest
+yarn build           # production bundle → dist/
+yarn test:ci         # all three, as CI runs them
 ```
 
 ## Deploy

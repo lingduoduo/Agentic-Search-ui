@@ -77,12 +77,13 @@ owns the FastAPI backend. No component library — custom components only.
 ### Commands
 
 ```bash
-npm install
-npm run dev          # http://127.0.0.1:5173; proxies backend routes to BACKEND_URL (default :7860)
-npm run typecheck    # TypeScript check
-npm run test:unit    # Vitest
-npm run build        # production bundle → dist/
-npm run test:ci      # typecheck + build + unit tests, as CI runs them
+corepack enable      # once per Node install: provides the pinned Yarn
+yarn install
+yarn dev             # http://127.0.0.1:5173; proxies backend routes to BACKEND_URL (default :7860)
+yarn typecheck       # TypeScript check
+yarn test:unit       # Vitest
+yarn build           # production bundle → dist/
+yarn test:ci         # typecheck + build + unit tests, as CI runs them
 ```
 
 Node 24 (CI's version). jsdom's dependencies reject Node 23, so the tests fail there.
@@ -90,7 +91,7 @@ Node 24 (CI's version). jsdom's dependencies reject Node 23, so the tests fail t
 ### Running against the backend
 
 Start the backend from the Agentic-Search-GRPO checkout (retrieval server plus
-`uvicorn src.internal.servers.web.app:app --port 7860`), then `npm run dev`. The
+`uvicorn src.internal.servers.web.app:app --port 7860`), then `yarn dev`. The
 backend repo's `bin/run_web_stack.sh` starts all of it, using this checkout from
 `../Agentic-Search-UI` (override with `FRONTEND_DIR`).
 

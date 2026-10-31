@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 // The backend lives in its own repository (Agentic-Search-GRPO). Override when it
-// is not on the default port, e.g. BACKEND_URL=http://127.0.0.1:7861 npm run dev.
+// is not on the default port, e.g. BACKEND_URL=http://127.0.0.1:7861 yarn dev.
 const backend = process.env.BACKEND_URL ?? "http://127.0.0.1:7860";
 
 export default defineConfig({

@@ -170,7 +170,7 @@ src/
 ├── hooks/            # Route subscriptions and canonical URL hooks
 ├── interfaces/       # Shared API and UI types (index.ts)
 ├── pages/            # Assistant, Search, Chat, and Tools route screens
-├── routes/           # Browser history navigation and routing exports
+├── routes/           # React Router navigation and routing exports
 ├── services/         # Backend HTTP and SSE client (api.ts)
 ├── static/           # Reserved for static assets
 ├── store/            # Reserved for shared application state
@@ -180,10 +180,11 @@ src/
 
 `main.tsx` loads `assets/styles/tailwind.css` and `assets/styles/styles.scss`,
 then mounts `apps/App.tsx`. The app shell
-selects a screen from `pages/` using the current route. `config/routes.ts`
-defines the allowed paths, `routes/navigation.ts` handles browser history,
-`hooks/useRoute.ts` subscribes to route changes, and `components/NavLink.tsx`
-renders navigation links. `routes/index.ts` exports the routing API.
+uses React Router’s `BrowserRouter`, `Routes`, and `Route` to select a screen
+from `pages/`. `config/routes.ts` defines the allowed paths,
+`routes/navigation.ts` normalizes paths, `hooks/useRoute.ts` reads the router
+location and redirects root, unknown, and trailing-slash URLs to canonical paths,
+and `components/NavLink.tsx` wraps React Router’s active navigation links. `routes/index.ts` exports the routing API.
 
 The interface uses a compact full-width header, centered page content, white
 surfaces, and blue primary actions. Admin and analytics panels are available

@@ -1,7 +1,13 @@
 import { render, renderHook, screen, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach } from "vitest";
-import { NavLink, navigate, normalizeRoute, useCanonicalRoute, useRoute } from "..";
+import { BrowserRouter, MemoryRouter, useNavigate } from "react-router";
+import { NavLink, normalizeRoute, useCanonicalRoute, useRoute } from "..";
+import type { ReactNode } from "react";
+
+function wrapper({ children }: { children: ReactNode }) {
+  return <BrowserRouter>{children}</BrowserRouter>;
+}
 
 beforeEach(() => {
   window.history.replaceState({}, "", "/");
@@ -28,20 +34,22 @@ describe("normalizeRoute", () => {
 describe("useRoute", () => {
   it("reports the route for the current path", () => {
     window.history.replaceState({}, "", "/tools");
-    const { result } = renderHook(() => useRoute());
+    const { result } = renderHook(() => useRoute(), { wrapper });
     expect(result.current).toBe("/tools");
   });
 
   it("updates when navigate() is called", () => {
-    const { result } = renderHook(() => useRoute());
-    act(() => navigate("/search"));
-    expect(result.current).toBe("/search");
+    const { result } = renderHook(() => ({ route: useRoute(), navigate: useNavigate() }), {
+      wrapper,
+    });
+    act(() => result.current.navigate("/search"));
+    expect(result.current.route).toBe("/search");
     expect(window.location.pathname).toBe("/search");
   });
 
   // Back/forward reach the app as a popstate event; this is what the browser does.
   it("updates when the browser fires popstate", () => {
-    const { result } = renderHook(() => useRoute());
+    const { result } = renderHook(() => useRoute(), { wrapper });
     act(() => {
       window.history.replaceState({}, "", "/chat");
       window.dispatchEvent(new PopStateEvent("popstate"));
@@ -53,7 +61,7 @@ describe("useRoute", () => {
 describe("useCanonicalRoute", () => {
   it("rewrites / to the default route without adding a history entry", () => {
     const before = window.history.length;
-    const { result } = renderHook(() => useCanonicalRoute());
+    const { result } = renderHook(() => useCanonicalRoute(), { wrapper });
     expect(result.current).toBe("/assist");
     expect(window.location.pathname).toBe("/assist");
     expect(window.history.length).toBe(before);
@@ -61,7 +69,7 @@ describe("useCanonicalRoute", () => {
 
   it("leaves a known route alone", () => {
     window.history.replaceState({}, "", "/tools");
-    const { result } = renderHook(() => useCanonicalRoute());
+    const { result } = renderHook(() => useCanonicalRoute(), { wrapper });
     expect(result.current).toBe("/tools");
     expect(window.location.pathname).toBe("/tools");
   });
@@ -69,7 +77,7 @@ describe("useCanonicalRoute", () => {
 
 describe("NavLink", () => {
   it("renders a real href so copy-link and new-tab work", () => {
-    render(<NavLink to="/chat">Chat</NavLink>);
+    render(<NavLink to="/chat">Chat</NavLink>, { wrapper });
     expect(screen.getByRole("link", { name: "Chat" })).toHaveAttribute("href", "/chat");
   });
 
@@ -80,13 +88,14 @@ describe("NavLink", () => {
         <NavLink to="/chat">Chat</NavLink>
         <NavLink to="/tools">Tools</NavLink>
       </>,
+      { wrapper },
     );
     expect(screen.getByRole("link", { name: "Chat" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Tools" })).not.toHaveAttribute("aria-current");
   });
 
   it("navigates on a plain left click", async () => {
-    render(<NavLink to="/tools">Tools</NavLink>);
+    render(<NavLink to="/tools">Tools</NavLink>, { wrapper });
     await userEvent.click(screen.getByRole("link", { name: "Tools" }));
     expect(window.location.pathname).toBe("/tools");
   });
@@ -96,10 +105,17 @@ describe("NavLink", () => {
   // needs a session from userEvent.setup() to keep Meta down across the click.
   it("leaves a cmd-click to the browser", async () => {
     const user = userEvent.setup();
-    render(<NavLink to="/tools">Tools</NavLink>);
+    render(<NavLink to="/tools">Tools</NavLink>, { wrapper });
     await user.keyboard("{Meta>}");
     await user.click(screen.getByRole("link", { name: "Tools" }));
     await user.keyboard("{/Meta}");
     expect(window.location.pathname).toBe("/");
   });
+});
+
+it("reads the router location when embedded in a memory router", () => {
+  const { result } = renderHook(() => useRoute(), {
+    wrapper: ({ children }) => <MemoryRouter initialEntries={["/tools"]}>{children}</MemoryRouter>,
+  });
+  expect(result.current).toBe("/tools");
 });

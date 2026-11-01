@@ -174,3 +174,26 @@ test("sample history mocks serve audit, pagination and feedback filters without 
     await new Promise((resolve) => server.close(resolve));
   }
 });
+
+test("CSS passes through PostCSS in development and production", () => {
+  for (const mode of ["development", "production"]) {
+    const css = config({}, { mode }).module.rules.find((rule) => rule.test.test("tailwind.css"));
+    assert.ok(css, `${mode}: CSS loader rule`);
+    assert.deepEqual(css.use.slice(-2), ["css-loader", "postcss-loader"]);
+  }
+});
+
+test("Tailwind generates a utility used by the app without introducing Preflight", async () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const postcss = require("postcss");
+  const { default: settings } = await import("../postcss.config.mjs");
+  const plugins = Object.entries(settings.plugins).map(([name, options]) => require(name)(options));
+  const stylesheet = path.resolve(__dirname, "../src/assets/styles/tailwind.css");
+  const result = await postcss(plugins).process(fs.readFileSync(stylesheet, "utf8"), {
+    from: stylesheet,
+  });
+  assert.match(result.css, /\.min-w-0\s*\{\s*min-width:\s*0/);
+  assert.doesNotMatch(result.css, /box-sizing:\s*border-box/);
+  assert.doesNotMatch(result.css, /@import\s+["']tailwindcss/);
+});

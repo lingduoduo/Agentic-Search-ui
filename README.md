@@ -84,6 +84,28 @@ without changing the Webpack build mode. The debug flag is embedded during
 compilation, so restart the dev server or rebuild after changing it. Only the explicitly configured debug
 flag is exposed to browser code.
 
+## Tailwind CSS
+
+Tailwind CSS 4 runs through PostCSS in Webpack. `postcss.config.mjs` enables
+`@tailwindcss/postcss`, and `src/assets/styles/tailwind.css` loads the theme and
+utilities while scanning `src/` for complete class names. No JavaScript
+Tailwind config is needed for the default setup.
+
+Use utilities directly in JSX:
+
+```tsx
+<div className="grid gap-4 md:grid-cols-2">
+  <p className="text-sm text-slate-600">Your content</p>
+</div>
+```
+
+The Tailwind entry is plain CSS and is imported before `styles.scss` in
+`src/main.tsx`. Keep Sass features in SCSS files; put Tailwind directives and
+`@theme` customizations in `tailwind.css`. Existing unlayered SCSS rules take
+precedence over layered utilities when they set the same property. Preflight
+is omitted to preserve the current base styles, following the
+[Tailwind integration guide](https://tailwindcss.com/docs/preflight#disabling-preflight).
+
 ## Mock API
 
 Start the Webpack dev server at `http://127.0.0.1:5173` with sample API
@@ -164,7 +186,7 @@ src/
 │   ├── fonts/        # Local web fonts
 │   ├── icons/        # SVG and other icon assets
 │   ├── images/       # Photos, illustrations, and other images
-│   └── styles/       # Shared SCSS entry point (styles.scss)
+│   └── styles/       # Shared SCSS and Tailwind CSS entry points
 ├── components/       # Reusable UI, admin panels, and debug inspectors
 ├── config/           # Route definitions and search constants
 ├── hooks/            # Route subscriptions and canonical URL hooks
@@ -178,7 +200,8 @@ src/
 └── utils/            # Domain selection, tool grouping, and schema helpers
 ```
 
-`main.tsx` loads `assets/styles/styles.scss` and mounts `apps/App.tsx`. The app shell
+`main.tsx` loads `assets/styles/tailwind.css` and `assets/styles/styles.scss`,
+then mounts `apps/App.tsx`. The app shell
 selects a screen from `pages/` using the current route. `config/routes.ts`
 defines the allowed paths, `routes/navigation.ts` handles browser history,
 `hooks/useRoute.ts` subscribes to route changes, and `components/NavLink.tsx`

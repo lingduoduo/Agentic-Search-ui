@@ -1,7 +1,7 @@
 import {
   Bot,
   History,
-  House,
+  LayoutGrid,
   LogOut,
   MessagesSquare,
   Search,
@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Form } from "react-router";
 import { NavLink } from "./NavLink";
+import { routePath } from "../config/routes";
 
 type AppSidebarProps = {
   isAdmin: boolean;
@@ -35,23 +36,23 @@ export function AppSidebar({
         <h1>Agentic Search</h1>
       </div>
       <nav className="app-sidebar__surfaces" aria-label="Surfaces">
-        <NavLink to="/home" className="nav-link">
-          <House aria-hidden="true" size={18} />
-          Home
+        <NavLink to={routePath("space-apps-list")} className="nav-link">
+          <LayoutGrid aria-hidden="true" size={18} />
+          Apps
         </NavLink>
-        <NavLink to="/assist" className="nav-link">
+        <NavLink to={routePath("space-apps-detail", { app_id: "assist" })} className="nav-link">
           <Bot aria-hidden="true" size={18} />
           Assistant
         </NavLink>
-        <NavLink to="/search" className="nav-link">
+        <NavLink to={routePath("space-apps-detail", { app_id: "search" })} className="nav-link">
           <Search aria-hidden="true" size={18} />
           Search
         </NavLink>
-        <NavLink to="/chat" className="nav-link">
+        <NavLink to={routePath("space-apps-detail", { app_id: "chat" })} className="nav-link">
           <MessagesSquare aria-hidden="true" size={18} />
           Chat
         </NavLink>
-        <NavLink to="/tools" className="nav-link">
+        <NavLink to={routePath("space-apps-detail", { app_id: "tools" })} className="nav-link">
           <Wrench aria-hidden="true" size={18} />
           Tools
         </NavLink>
@@ -59,7 +60,7 @@ export function AppSidebar({
       <div className="app-sidebar__actions">
         {isAdmin && (
           <>
-            <NavLink to="/admin" className="nav-link">
+            <NavLink to={routePath("pages-admin")} className="nav-link">
               <ShieldCheck aria-hidden="true" size={18} />
               Admin
             </NavLink>
@@ -85,7 +86,7 @@ export function AppSidebar({
             </button>
           </>
         )}
-        <NavLink to="/account" className="nav-link">
+        <NavLink to={routePath("pages-account")} className="nav-link">
           <UserRound aria-hidden="true" size={18} />
           Account
         </NavLink>

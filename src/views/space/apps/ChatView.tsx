@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { sendChatMessage } from "../services/api";
-import type { ConversationTurn } from "../interfaces";
-import { Transcript } from "../components/Transcript";
+import { sendChatMessage } from "../../../services/api";
+import type { ConversationTurn } from "../../../interfaces";
+import { Transcript } from "../../../components/Transcript";
 
 export function ChatView() {
   const [message, setMessage] = useState("");

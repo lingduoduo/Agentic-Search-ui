@@ -7,7 +7,8 @@ export function createMockMiddleware(routes) {
       const pathname = new URL(req.url, "http://localhost").pathname;
       const route = routes.find((item) => item.method === req.method && item.path === pathname);
       if (!route) return next();
-      res.statusCode = route.status ?? 200;
+      res.statusCode =
+        (typeof route.status === "function" ? route.status(req) : route.status) ?? 200;
       res.setHeader("X-Mock-API", "true");
       res.setHeader("Cache-Control", "no-store");
       for (const [name, value] of Object.entries(route.headers ?? {})) res.setHeader(name, value);

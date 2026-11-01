@@ -217,3 +217,29 @@ test("Tailwind generates a utility used by the app without introducing Preflight
   assert.doesNotMatch(result.css, /box-sizing:\s*border-box/);
   assert.doesNotMatch(result.css, /@import\s+["']tailwindcss/);
 });
+
+test("mock session signs out until the next sign-in", async () => {
+  const { default: routes } = await import("../mocks/config.js");
+  const { createMockMiddleware } = await import("../mocks/middleware.js");
+  const http = require("node:http");
+  const mock = createMockMiddleware(routes);
+  const server = http.createServer((req, res) =>
+    mock(req, res, () => {
+      res.statusCode = 502;
+      res.end("unexpected backend request");
+    }),
+  );
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const status = async (method, path) => (await fetch(base + path, { method })).status;
+  try {
+    assert.equal(await status("GET", "/me"), 200);
+    assert.equal(await status("POST", "/auth/logout"), 204);
+    assert.equal(await status("GET", "/me"), 401);
+    assert.equal(await status("GET", "/me/permissions"), 401);
+    assert.equal(await status("POST", "/auth/login"), 200);
+    assert.equal(await status("GET", "/me"), 200);
+  } finally {
+    server.close();
+  }
+});

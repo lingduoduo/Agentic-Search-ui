@@ -10,19 +10,26 @@ This repository contains the React 19.1 + Webpack + TypeScript + SCSS single-pag
 
 ### Pages
 
-The four surfaces are child routes of the shared `App` layout. The root `/`
-route in `src/routes/router.tsx` renders `AppSidebar` on the left and an `Outlet`
-for the active workspace on the right. `/assist`, `/search`, `/chat`, and
-`/tools` each open their original workspace directly. Navigation and the global
-Manage tools and History controls persist across child-route navigation.
+`src/routes/router.tsx` has two pathless layout groups. Signed-in pages sit
+under `DefaultLayout` from `src/views/layouts/`, which renders
+`AppSidebar` on the left and the page heading above an `Outlet`; navigation and
+the global Manage tools and History controls persist across pages. The signed-in
+pages are the apps list, `/space/apps` (`ListView`), one app at
+`/space/apps/:app_id` (`DetailView`: `assist`, `search`, `chat` or `tools`; an
+unknown id shows the not-found page), `/account` and `/admin`. Signing in lands
+on `/space/apps`, and `/` redirects there. Public pages, marked
+`handle: { public: true }`, sit under `BlankLayout`, with no sidebar: the sign-in
+page and `NotFoundView` for unknown URLs. Route ids double as route names, and
+`routePath(name, params)` in `src/config/routes.ts` builds URLs from them. Each
+page's code is loaded lazily, the first time it opens.
 The sidebar becomes compact top navigation on small screens.
 
-`src/main.tsx` creates one router with `createAppRouter()` and mounts
-`RouterProvider`. `src/config/routes.ts` holds allowed paths, while the canonical
-route hook redirects root, unknown, and trailing-slash URLs to canonical paths.
+`src/main.tsx` mounts `src/App.tsx`, which creates one router with
+`createAppRouter()` and renders `RouterProvider`. `src/config/routes.ts` holds
+allowed paths.
 Each page owns its state, so navigating away discards unsaved work.
 
-`ROUTES` in `src/config/routes.ts` is mirrored in three other places, and all four
+`ROUTE_PATHS` in `src/config/routes.ts` is mirrored in three other places, and all four
 must be changed together to add a page: the proxy context filter in
 `webpack.config.cjs` and the SPA-navigation location in `nginx/default.conf.template`
 (both only for prefixes the backend also serves), and the `spa_page` handler in
@@ -42,13 +49,15 @@ yarn test:unit               # Vitest unit tests
 
 ## Signing in
 
-Every page except the sign-in page, `/auth/login`, checks the session before it
-mounts. The root route's loader (`requireLogin` in `src/auth/session.ts`) is the
-guard: it returns at once when the account is already cached
+Every page except the public ones (the sign-in page, `/auth/login`, and the
+not-found page) checks the session before it mounts. The root route's loader
+(`guard` in `src/views/auth/session.ts`) is the one guard and runs before every
+navigation, like Vue Router's `beforeEach`. For a route marked public it only
+sends a signed-in visitor past the sign-in page; otherwise it returns at once when the account is already cached
 (`src/store/account.ts`), and otherwise loads `GET /me` and `GET /me/permissions`
 once per page load. A `401` (or a `404` for a cookie whose user no longer exists)
-redirects to `/auth/login?redirect=<original path>`; `/` and unknown paths become
-`?redirect=/home`. Any other failure, such as the backend being down, still opens
+redirects to `/auth/login?redirect=<original path>`; `/` first redirects to
+`/space/apps`, so it becomes `?redirect=/space/apps`. Any other failure, such as the backend being down, still opens
 the page and the layout shows the error.
 
 The sign-in page posts its form to `POST /auth/login`, the same path: the dev proxy
@@ -56,14 +65,13 @@ and nginx serve the page only for an HTML navigation of exactly `/auth/login`. T
 backend sets the HttpOnly `fastapiusersauth` cookie; the app never stores a token,
 so the cached account, not a token, is what says "signed in". After sign-in,
 `safeRedirectPath` returns the user to `redirect` only when it is one of the app's
-own routes (`ROUTES` in `src/config/routes.ts`); anything else, including another
-origin or the sign-in page, goes to the **Home** page, `/home`, which links to every
-page the user can open. **Sign out** (sidebar and `/account`) calls
+own signed-in pages (`isRoute` in `src/config/routes.ts`); anything else, including
+another origin, the sign-in page or an unknown app id, goes to `/space/apps`. **Sign out** (sidebar and `/account`) calls
 `POST /auth/logout`, which clears the cookie even for an expired session.
 
 Every backend call goes through `apiFetch` in `src/services/api.ts`, which fires
 `SESSION_CLEARED_EVENT` on a `401`. That drops the cached account, and the
-signed-in layout (`App`) sends the user to `/auth/login?redirect=<current page>` —
+signed-in layout (`DefaultLayout`) sends the user to `/auth/login?redirect=<current page>` —
 except while the guard itself is confirming the session, since it redirects on
 its own then.
 
@@ -72,7 +80,7 @@ Permissions come from `/me/permissions`, not the role text: every user has
 users also have `full_admin_panel_access`, which shows the **Admin** link,
 **Manage tools** and **History**, and allows `/admin`. The `/admin` loader checks
 the permission before it fetches any admin data and sends other users to
-`/assist`. The backend's `make_require_admin` guards remain the real boundary.
+`/space/apps`. The backend's `make_require_admin` guards remain the real boundary.
 
 The app has no registration form. For local dev, create a user by opening (the
 sign-in page links to it in development builds only):
@@ -83,8 +91,9 @@ http://127.0.0.1:5173/dev-login.html
 
 and clicking **Log in**. It registers `dev@localhost` / `devpass` (idempotent), logs
 in, and confirms via `/me`, so the cookie is set on the dev server's origin. The
-first registered user is an admin. `yarn dev --env mock` is always signed in as
-an admin.
+first registered user is an admin. `yarn dev --env mock` starts signed in as an
+admin; **Sign out** lasts until you sign in again on the login page, with any
+email and password. Restart the dev server to reset it.
 
 Two caveats:
 
@@ -106,7 +115,7 @@ the debug enablement flag alone does not grant access.
 Admins get the `/admin` page — **Admin overview** and **Analytics** — and two
 sidebar buttons, **Manage tools** and **History**, which toggle their panels above
 the current page. The tools
-button is labelled _Manage tools_, not _Tools_: the `/tools` nav link goes to the
+button is labelled _Manage tools_, not _Tools_: the **Tools** nav link goes to the
 tool-agent page instead, and the two used to share a label. They call the
 `/admin/*` and `/analytics/*` routers, which are **admin-authenticated**. The
 exact path `/admin` is the SPA page; `/admin/*` stays backend-only in the Webpack
@@ -151,7 +160,7 @@ Click **Console** in the top bar to open it. **Retrieval Lab** runs a query agai
 **Streaming answers** (`AnswerPanel.tsx` → `ProgressLog`) — every query streams over SSE; `streamAgent` (`src/services/api.ts`) drives the UI from the `progress` / `claim` / `trace` / `approval_required` / `escalation_required` / `answer` / `done` events (full schema in the [SSE event table](https://github.com/lingduoduo/Agentic-Search-GRPO/blob/main/docs/architecture.md#intent-routing)). While the agent runs, a live **Agent reasoning** log renders one row per turn (`⟳ Turn N · writing answer…` active, `✓ Turn N · <tool> · N docs` completed) and answer tokens stream in as markdown; on `done` the log collapses to a one-line summary (`✓ 3 turns`) with a **show reasoning ▸** toggle that re-expands the full trace. Backend side, each turn fires the `on_turn` callback (`OnTurnCallback`) → a `progress` event on the `AgentRunDriver` queue (`src/internal/servers/web/run_driver.py`), which also carries `claim` / `trace` events and closes the run with the `answer` / `done` pair. The **New** button (`handleNewSession`, on the Assistant page) aborts any in-flight request and clears answer / citations / documents / messages / intent and any pending approval or escalation cards; the backend cancels the run when the stream's client disconnects.
 
 **On the Assistant page the answer arrives claim by claim, not token by token**
-(`AssistPage.tsx`). The grounded path's answer _is_ the join of the claims it has
+(`AssistView.tsx`). The grounded path's answer _is_ the join of the claims it has
 verified, so `streamAgent` accumulates each `claim` event onto the running answer
 separated by a space and renders it immediately. The terminal `answer` event then
 **overwrites** that accumulation rather than appending to it — it is the
@@ -194,7 +203,7 @@ curl -s -X POST http://localhost:7860/api/agent \
 
 **Tool Call Trace Panel** — When the agent runs in `tool` mode, a panel below the answer shows every tool call: name, status (✓ / ✗), arguments as JSON, result summary (first 200 chars or "N items" for lists), and latency in ms. Failed calls render with a red border and the error message.
 
-**Intent-adaptive layout** — `AssistPage.tsx` reads `response.intent` (set from the `done` SSE event via `setIntent`) and applies `intent-${intent}` to the `.results-layout` container; when `intent` is undefined no class is added and the layout falls back to the default single-column stack. The behaviour is **CSS-only** — `styles.scss` rules consume the class to reflow the existing panels (no extra components), keyed off stable hooks `.answer-column`, `.sources-panel`, `.session-panel`, and `.tool-trace-panel`:
+**Intent-adaptive layout** — `AssistView.tsx` reads `response.intent` (set from the `done` SSE event via `setIntent`) and applies `intent-${intent}` to the `.results-layout` container; when `intent` is undefined no class is added and the layout falls back to the default single-column stack. The behaviour is **CSS-only** — `styles.scss` rules consume the class to reflow the existing panels (no extra components), keyed off stable hooks `.answer-column`, `.sources-panel`, `.session-panel`, and `.tool-trace-panel`:
 
 | Intent           | `.results-layout` class | Layout                                                                                        |
 | ---------------- | ----------------------- | --------------------------------------------------------------------------------------------- |
@@ -238,8 +247,8 @@ yarn test:unit               # Vitest unit tests (vitest run)
 yarn test                    # typecheck, then the unit tests
 ```
 
-Frontend tests live under `src/apps/__tests__/`, `src/components/__tests__/`,
-`src/components/debug/__tests__/`, `src/pages/__tests__/`,
+Frontend tests live under `src/__tests__/`, `src/views/auth/__tests__/`, `src/views/space/apps/__tests__/`, `src/components/__tests__/`,
+`src/components/debug/__tests__/`,
 `src/services/__tests__/`, `src/routes/__tests__/`, and `src/utils/__tests__/`. A few of the
 component tests:
 

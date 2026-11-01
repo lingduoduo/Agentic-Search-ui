@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { SearchView } from "../SearchView";
-import * as api from "../../services/api";
+import * as api from "../../../../services/api";
 
 describe("SearchView", () => {
   it("renders returned docs", async () => {

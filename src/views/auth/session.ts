@@ -1,6 +1,6 @@
 import { redirect } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { DEFAULT_ROUTE, LOGIN_PATH, ROUTES } from "../config/routes";
+import { DEFAULT_ROUTE, LOGIN_PATH, isRoute } from "../../config/routes";
 import {
   errorStatus,
   getAdminSummary,
@@ -9,10 +9,10 @@ import {
   getAnalyticsByPersona,
   login,
   logout,
-} from "../services/api";
-import { clearAccount, getAccount, loadAccount } from "../store/account";
-import type { Account } from "../store/account";
-import type { AdminSurfaceSummary, BreakdownAnalytics, Permission } from "../interfaces";
+} from "../../services/api";
+import { clearAccount, getAccount, loadAccount } from "../../store/account";
+import type { Account } from "../../store/account";
+import type { AdminSurfaceSummary, BreakdownAnalytics, Permission } from "../../interfaces";
 
 export const ADMIN_PERMISSION: Permission = "full_admin_panel_access";
 
@@ -44,8 +44,6 @@ async function verifySession(): Promise<Account | "signed-out" | "error"> {
   }
 }
 
-const isAppRoute = (pathname: string) => (ROUTES as readonly string[]).includes(pathname);
-
 /**
  * Where to go after signing in. Only app pages on this origin qualify, so a
  * crafted `?redirect=` cannot send the user off-site or back to sign-in.
@@ -54,7 +52,7 @@ export function safeRedirectPath(target: string | null): string {
   if (!target?.startsWith("/")) return DEFAULT_ROUTE;
   const base = "http://app.invalid";
   const url = new URL(target, base);
-  if (url.origin !== base || !isAppRoute(url.pathname)) {
+  if (url.origin !== base || !isRoute(url.pathname)) {
     return DEFAULT_ROUTE;
   }
   return url.pathname + url.search + url.hash;
@@ -67,14 +65,27 @@ export function loginPath(fullPath: string) {
 
 function loginRedirect(request: Request) {
   const { pathname, search, hash } = new URL(request.url);
-  // "/" and unknown paths would land on the default page anyway; say so.
-  return redirect(loginPath(isAppRoute(pathname) ? pathname + search + hash : DEFAULT_ROUTE));
+  return redirect(loginPath(pathname + search + hash));
 }
 
 export type GuardData = { error: string | null };
 
-/** The signed-in layout's guard: confirm the session, then show the page. */
-export async function requireLogin({ request }: LoaderFunctionArgs): Promise<GuardData> {
+/**
+ * The one guard, run before every navigation (Vue Router's `beforeEach`).
+ * `publicRouteId` names the route when it is public: it needs no session, and
+ * the sign-in page sends a signed-in visitor on. Every other route needs a
+ * session; a signed-out visitor signs in and comes back.
+ */
+export async function guard(
+  { request }: LoaderFunctionArgs,
+  publicRouteId?: string,
+): Promise<GuardData> {
+  if (publicRouteId) {
+    if (publicRouteId === "auth-login" && typeof (await verifySession()) === "object") {
+      throw redirect(safeRedirectPath(new URL(request.url).searchParams.get("redirect")));
+    }
+    return { error: null };
+  }
   const session = await verifySession();
   if (session === "signed-out") throw loginRedirect(request);
   // The backend could not answer: keep going and let the layout show the error.
@@ -93,7 +104,7 @@ export type AdminData = {
 
 /** Checks the permission before any admin request is made. */
 export async function adminLoader({ request }: LoaderFunctionArgs): Promise<AdminData> {
-  // Runs alongside requireLogin; both share the one account request.
+  // Runs alongside the guard; both share the one account request.
   const session = await verifySession();
   if (session === "signed-out") throw loginRedirect(request);
   if (session === "error" || !isAdmin(session)) throw redirect(DEFAULT_ROUTE);
@@ -106,14 +117,6 @@ export async function adminLoader({ request }: LoaderFunctionArgs): Promise<Admi
     optional(getAnalyticsByFlow()),
   ]);
   return { summary, byLLM, byPersona, byFlow };
-}
-
-/** A signed-in user skips the form. */
-export async function loginLoader({ request }: LoaderFunctionArgs) {
-  if (typeof (await verifySession()) === "object") {
-    throw redirect(safeRedirectPath(new URL(request.url).searchParams.get("redirect")));
-  }
-  return null;
 }
 
 export async function loginAction({ request }: ActionFunctionArgs) {

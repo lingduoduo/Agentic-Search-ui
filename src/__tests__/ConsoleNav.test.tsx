@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderApp } from "./renderApp";
 
-vi.mock("../../services/api", () => ({
+vi.mock("../services/api", () => ({
   // The session loader reads both before the shell mounts; an admin sees every control.
   getCurrentUser: vi.fn().mockResolvedValue({
     id: "u1",
@@ -34,7 +34,7 @@ vi.mock("../../services/api", () => ({
 beforeEach(() => {
   vi.clearAllMocks();
   // The Console toggle belongs to the Assistant page.
-  window.history.replaceState({}, "", "/assist");
+  window.history.replaceState({}, "", "/space/apps/assist");
 });
 afterEach(() => vi.unstubAllEnvs());
 

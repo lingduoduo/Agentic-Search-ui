@@ -6,19 +6,19 @@ import {
   sendToolMessage,
   submitToolApproval,
   submitToolEscalation,
-} from "../services/api";
-import { groupToolsByServer } from "../utils/toolCatalog";
+} from "../../../services/api";
+import { groupToolsByServer } from "../../../utils/toolCatalog";
 import type {
   CatalogServer,
   ConversationTurn,
   ToolApprovalView,
   ToolDiscoverResult,
   ToolEscalationView,
-} from "../interfaces";
-import { ToolApprovalCard } from "../components/ToolApprovalCard";
-import { ToolCatalog } from "../components/ToolCatalog";
-import { ToolEscalationCard } from "../components/ToolEscalationCard";
-import { Transcript } from "../components/Transcript";
+} from "../../../interfaces";
+import { ToolApprovalCard } from "../../../components/ToolApprovalCard";
+import { ToolCatalog } from "../../../components/ToolCatalog";
+import { ToolEscalationCard } from "../../../components/ToolEscalationCard";
+import { Transcript } from "../../../components/Transcript";
 
 export function ToolAgentView() {
   const [message, setMessage] = useState("");

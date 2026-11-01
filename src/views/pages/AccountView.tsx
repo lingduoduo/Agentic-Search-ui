@@ -1,8 +1,8 @@
 import { Form } from "react-router";
 import { isAdmin } from "../auth/session";
-import { useAccount } from "../store/account";
+import { useAccount } from "../../store/account";
 
-export function AccountPage() {
+export function AccountView() {
   const account = useAccount();
   return (
     <section className="panel account-details" aria-label="Account details">

@@ -23,7 +23,10 @@ vi.mock("../../services/api", () => ({
   submitSessionFeedback: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  window.history.replaceState({}, "", "/assist/new");
+});
 afterEach(() => vi.unstubAllEnvs());
 
 describe("Console nav (DEBUG_PANELS gate)", () => {

@@ -13,6 +13,18 @@ export interface ChatSessionView {
   messages: ChatMessageView[];
 }
 
+export interface SessionSummary {
+  id: string;
+  title: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SessionListResponse {
+  sessions: SessionSummary[];
+  has_more: boolean;
+}
+
 export interface SourceDocumentView {
   id: string;
   citation: string;

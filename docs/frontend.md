@@ -10,10 +10,25 @@ This repository contains the React 19.1 + Webpack + TypeScript + SCSS single-pag
 
 ### Pages
 
-The four surfaces are routes, not tabs. `src/config/routes.ts` holds the route
-list and `src/routes/navigation.ts` implements the history router; `src/apps/App.tsx` is a shell that renders the
-topbar, the global panels, and whichever page the route selects. Each page owns
-its state, so navigating away discards it.
+The four surfaces are nested React Router routes. `src/routes/router.tsx`
+creates the route tree with `createBrowserRouter`; `src/main.tsx` mounts one
+`RouterProvider`. The shared `App` shell renders the topbar, global panels,
+and an `Outlet` for each surface's `SurfaceLayout`.
+
+Each surface (`/assist`, `/search`, `/chat`, `/tools`) has an index
+`SessionListView`, a `/new` child containing its existing workspace, and a
+`/:sessionId` child for the saved, read-only transcript. The list uses the
+user-scoped `/chat/get-user-chat-sessions?page_size=1000` API; history is
+shared across surfaces, as the backend has no surface filter. Search and
+pagination operate on those loaded recent sessions. Search and page state
+live in the URL, so browser Back restores them. Older sessions can be opened
+by ID through `/api/sessions/:sessionId`. List and detail requests are aborted
+on unmount, and late responses are ignored. Errors include a retry action.
+
+`src/config/routes.ts` holds the surface paths. Canonical pathname handling
+keeps nested new/detail URLs intact, normalizes trailing slashes, and replaces
+unknown URLs with `/assist` while preserving query strings and fragments.
+Each workspace owns its state, so navigating away discards unsaved work.
 
 `ROUTES` in `src/config/routes.ts` is mirrored in three other places, and all four
 must be changed together to add a page: the proxy context filter in

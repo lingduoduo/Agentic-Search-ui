@@ -21,6 +21,7 @@
     "format:check": "prettier . --check"
   },
   "dependencies": {
+    "@arco-design/web-react": "^2.66.18",
     "lucide-react": "^1.59.0",
     "react": "~19.1.0",
     "react-dom": "~19.1.0",

@@ -183,7 +183,8 @@ src/
 then creates a single browser router with `createAppRouter()` and mounts
 React Router’s `RouterProvider`. `routes/router.tsx` defines the route tree
 using `createBrowserRouter`: `apps/App.tsx` is the shared layout, and its
-`Outlet` renders each surface layout from `pages/`. Each surface has an index
+`AppSidebar` provides common left-hand navigation for every child route, while
+`Outlet` renders each surface layout from `pages/` in the workspace on the right. Each surface has an index
 `SessionListView`, a `new` child for its workspace, and a `:sessionId` child
 for the saved transcript. For example, `/chat` lists sessions, `/chat/new`
 starts a conversation, and `/chat/:sessionId` opens a saved conversation. `config/routes.ts` defines the allowed paths,
@@ -191,8 +192,9 @@ starts a conversation, and `/chat/:sessionId` opens a saved conversation. `confi
 location and redirects root, unknown, and trailing-slash URLs to canonical paths,
 and `components/NavLink.tsx` wraps React Router’s active navigation links. `routes/index.ts` exports the routing API.
 
-The interface uses a compact full-width header, centered page content, white
-surfaces, and blue primary actions. Admin and analytics panels are available
+The interface uses a shared left sidebar, a page workspace, white surfaces,
+and blue primary actions. On small screens the sidebar becomes compact top
+navigation. Admin and analytics panels are available
 under the expandable **Admin and analytics** section below the active page.
 
 Put imported images, icons, fonts, and SCSS in `src/assets/`. Webpack bundles

@@ -12,8 +12,11 @@ This repository contains the React 19.1 + Webpack + TypeScript + SCSS single-pag
 
 The four surfaces are nested React Router routes. `src/routes/router.tsx`
 creates the route tree with `createBrowserRouter`; `src/main.tsx` mounts one
-`RouterProvider`. The shared `App` shell renders the topbar, global panels,
-and an `Outlet` for each surface's `SurfaceLayout`.
+`RouterProvider`. The root `/` route uses the shared `App` layout: `AppSidebar` keeps surface
+navigation, Manage tools, and History on the left while an `Outlet` renders
+each child surface's `SurfaceLayout` in the workspace on the right. The sidebar
+and global panel state persist across child navigation. On small screens, the
+sidebar moves above the workspace.
 
 Each surface (`/assist`, `/search`, `/chat`, `/tools`) has an index
 `SessionListView`, a `/new` child containing its existing workspace, and a

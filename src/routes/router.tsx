@@ -11,6 +11,8 @@ import { ToolAgentView } from "../pages/ToolAgentView";
 
 export const appRoutes: RouteObject[] = [
   {
+    path: "/",
+    // Every child renders beside the persistent sidebar in the shared App layout.
     Component: App,
     children: [
       ...[

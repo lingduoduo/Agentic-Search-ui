@@ -1,5 +1,5 @@
 import type { ChatSessionView } from "../../interfaces";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { App } from "../App";
@@ -537,14 +537,23 @@ describe("page navigation", () => {
     expect(screen.getByRole("link", { current: "page" })).toHaveAttribute("href", pathname);
   });
 
-  it("preserves shared layout state when changing pages", async () => {
+  it("shares the same sidebar and panel state across child pages", async () => {
     renderApp();
-    const manageTools = screen.getByRole("button", { name: /manage tools/i });
+    const sidebar = screen.getByRole("complementary", { name: "Common navigation" });
+    const manageTools = within(sidebar).getByRole("button", { name: /manage tools/i });
     await userEvent.click(manageTools);
     expect(manageTools).toHaveClass("active");
-    await userEvent.click(screen.getByRole("link", { name: /^chat$/i }));
-    expect(screen.getByRole("button", { name: /manage tools/i })).toBe(manageTools);
+    await userEvent.click(within(sidebar).getByRole("link", { name: /^chat$/i }));
+    expect(screen.getByRole("complementary", { name: "Common navigation" })).toBe(sidebar);
+    await userEvent.click(screen.getByRole("link", { name: "Start new" }));
+    expect(screen.getByRole("textbox", { name: "Chat message" })).toBeInTheDocument();
+    expect(screen.getByRole("complementary", { name: "Common navigation" })).toBe(sidebar);
+    expect(within(sidebar).getByRole("button", { name: /manage tools/i })).toBe(manageTools);
     expect(manageTools).toHaveClass("active");
+    expect(within(sidebar).getByRole("link", { name: "Chat" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 
   it.each([

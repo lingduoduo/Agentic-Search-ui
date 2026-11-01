@@ -15,6 +15,23 @@ const chatEvents = [
   { type: 'done', session_id: session.id },
 ];
 
+const history = [
+  { id: 'mock-history-1', first_user_message: 'Find the deployment guide', feedback_type: 'like' },
+  { id: 'mock-history-2', first_user_message: 'Explain retrieval ranking', feedback_type: 'dislike' },
+  { id: 'mock-history-3', first_user_message: 'List available tools', feedback_type: null },
+].map((item) => ({
+  ...item,
+  user_id: 'mock-user',
+  name: 'Mock conversation',
+  first_ai_message: answer,
+  time_created: '2026-10-31T12:00:00Z',
+  flow_type: 'chat',
+  conversation_length: 2,
+  llm_name: 'mock-model',
+}));
+const feedbackCount = history.filter((item) => item.feedback_type !== null).length;
+const disliked = history.filter((item) => item.feedback_type === 'dislike');
+
 export default [
   { method: 'GET', path: '/health', response: { status: 'ok', mock: true } },
   { method: 'GET', path: '/ready', response: { status: 'ready', mock: true } },
@@ -30,6 +47,31 @@ export default [
     method: 'GET', path: `/analytics/by-${dimension}`,
     response: { dimension, items: [{ label: 'Mock', session_count: 3 }], total_sessions: 3 },
   })),
+  {
+    method: 'GET', path: '/admin/query-history/audit',
+    response: {
+      total_sessions: history.length,
+      total_messages: history.reduce((total, item) => total + item.conversation_length, 0),
+      sessions_with_feedback: feedbackCount,
+      sessions_with_dislike: disliked.length,
+      dislike_rate: feedbackCount ? disliked.length / feedbackCount : 0,
+      top_disliked_queries: disliked.map((item) => item.first_user_message),
+    },
+  },
+  {
+    method: 'GET', path: '/admin/chat-session-history',
+    response(req) {
+      const params = new URL(req.url, 'http://localhost').searchParams;
+      const feedback = params.get('feedback_type');
+      const filtered = feedback ? history.filter((item) => item.feedback_type === feedback) : history;
+      const page = Number(params.get('page_num') ?? 0);
+      const size = Number(params.get('page_size') ?? 20);
+      const pageNum = Number.isInteger(page) && page >= 0 ? page : 0;
+      const pageSize = Number.isInteger(size) && size > 0 ? size : 20;
+      const start = pageNum * pageSize;
+      return { items: filtered.slice(start, start + pageSize), total_items: filtered.length };
+    },
+  },
   { method: 'GET', path: '/admin/tools', response: [] },
   { method: 'POST', path: '/api/sessions', response: session },
   {

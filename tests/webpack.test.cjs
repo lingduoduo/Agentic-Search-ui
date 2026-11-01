@@ -86,3 +86,41 @@ test('mock middleware returns JSON, errors and SSE, and passes unmatched request
     await new Promise((resolve) => server.close(resolve));
   }
 });
+
+test('sample history mocks serve audit, pagination and feedback filters without a backend', async () => {
+  const { default: routes } = await import('../mocks/config.js');
+  const { createMockMiddleware } = await import('../mocks/middleware.js');
+  const http = require('node:http');
+  const mock = createMockMiddleware(routes);
+  const server = http.createServer((req, res) => mock(req, res, () => { res.statusCode = 502; res.end('unexpected backend request'); }));
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const get = async (path) => {
+    const response = await fetch(base + path);
+    assert.equal(response.status, 200, path);
+    assert.equal(response.headers.get('x-mock-api'), 'true');
+    return response.json();
+  };
+  try {
+    const page = await get('/admin/chat-session-history?page_num=0&page_size=20');
+    assert.ok(page.items.length > 1);
+    assert.equal(page.total_items, page.items.length);
+    const audit = await get('/admin/query-history/audit');
+    assert.equal(audit.total_sessions, page.total_items);
+    assert.equal(audit.total_messages, page.items.reduce((total, item) => total + item.conversation_length, 0));
+    assert.ok(Array.isArray(audit.top_disliked_queries));
+    const first = await get('/admin/chat-session-history?page_num=0&page_size=1');
+    const second = await get('/admin/chat-session-history?page_num=1&page_size=1');
+    assert.equal(first.items.length, 1);
+    assert.notEqual(first.items[0].id, second.items[0].id);
+    for (const feedback of ['like', 'dislike']) {
+      const filtered = await get(`/admin/chat-session-history?page_num=0&page_size=20&feedback_type=${feedback}`);
+      assert.ok(filtered.items.length > 0);
+      assert.ok(filtered.items.every((item) => item.feedback_type === feedback));
+    }
+    const empty = await get('/admin/chat-session-history?page_num=999&page_size=20');
+    assert.deepEqual(empty.items, []);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});

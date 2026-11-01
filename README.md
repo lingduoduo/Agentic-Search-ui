@@ -172,7 +172,7 @@ src/
 ├── routes/           # React Router navigation and routing exports
 ├── services/         # Backend HTTP and SSE client (api.ts)
 ├── static/           # Reserved for static assets
-├── store/            # Reserved for shared application state
+├── store/            # Redux Toolkit store: the signed-in account
 ├── storybook/        # Reserved for component stories
 ├── utils/            # Domain selection, tool grouping, and schema helpers
 └── views/
@@ -221,7 +221,8 @@ folders contain `.gitkeep` files so the structure is retained in Git.
 
 UI and service tests live in `__tests__/` directories alongside the code they
 cover. Webpack configuration checks live in `tests/webpack.test.cjs`.
-Component state stays with its owning page or component. `store/`, `static/`,
+Component state stays with its owning page or component; only the signed-in
+account is shared, in the Redux store under `store/`. `static/`
 and `storybook/` are empty placeholders in the local layout; Git will track
 them once files are added.
 

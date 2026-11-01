@@ -1,12 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { clearCredential, isLogin } from "../auth";
-import { clearAccount, loadAccount } from "../../store/account";
+import { accountCleared, loadAccount } from "../../store/account";
+import { store } from "../../store";
 
 const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  clearAccount();
+  store.dispatch(accountCleared());
 });
 
 describe("auth", () => {
@@ -20,7 +21,7 @@ describe("auth", () => {
       ),
     );
     expect(isLogin()).toBe(false);
-    await loadAccount();
+    await store.dispatch(loadAccount());
     expect(isLogin()).toBe(true);
 
     clearCredential();

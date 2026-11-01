@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createAppRouter } from "../routes/router";
 import { DefaultLayout } from "../views/layouts/DefaultLayout";
-import { renderApp } from "./renderApp";
+import { renderApp, renderWithStore } from "./renderApp";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 vi.mock("../services/api", () => ({
@@ -693,7 +693,7 @@ it("renders DefaultLayout and its child page from a data router", () => {
     ],
     { initialEntries: ["/space/apps/search"] },
   );
-  render(<RouterProvider router={router} />);
+  renderWithStore(<RouterProvider router={router} />);
   expect(screen.getByRole("heading", { name: "Routed child" })).toBeInTheDocument();
   expect(screen.getByRole("navigation", { name: "Surfaces" })).toBeInTheDocument();
   router.dispose();

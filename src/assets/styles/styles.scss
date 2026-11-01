@@ -34,6 +34,28 @@ textarea {
   font: inherit;
 }
 
+/* arco.css, loaded before this file, carries a global normalize. Put back the
+   browser defaults the app was designed on; class rules still override these. */
+body {
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+}
+
+input:where([type="checkbox"], [type="radio"]) {
+  margin: revert;
+}
+
+legend {
+  display: revert;
+  max-width: revert;
+  padding: revert;
+  white-space: revert;
+}
+
+small {
+  font-size: revert;
+}
+
 .app-shell {
   min-height: 100vh;
 }

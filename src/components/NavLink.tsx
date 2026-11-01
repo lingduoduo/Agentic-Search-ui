@@ -14,6 +14,7 @@ export function NavLink({
   return (
     <RouterNavLink
       to={to}
+      end
       className={({ isActive }) => `${className ?? ""}${isActive ? " active" : ""}`.trim()}
     >
       {children}

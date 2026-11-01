@@ -1,8 +1,5 @@
 import { createBrowserRouter } from "react-router";
 import type { RouteObject } from "react-router";
-import { SurfaceLayout } from "../pages/SurfaceLayout";
-import { SessionListView } from "../pages/SessionListView";
-import { SessionDetailView } from "../pages/SessionDetailView";
 import { App } from "../apps/App";
 import { AssistPage } from "../pages/AssistPage";
 import { SearchView } from "../pages/SearchView";
@@ -12,24 +9,15 @@ import { ToolAgentView } from "../pages/ToolAgentView";
 export const appRoutes: RouteObject[] = [
   {
     path: "/",
-    // Every child renders beside the persistent sidebar in the shared App layout.
+    // The shared layout owns the left sidebar; child pages render in its Outlet.
     Component: App,
     children: [
-      ...[
-        { path: "/assist", Workspace: AssistPage },
-        { path: "/search", Workspace: SearchView },
-        { path: "/chat", Workspace: ChatView },
-        { path: "/tools", Workspace: ToolAgentView },
-      ].map(({ path, Workspace }) => ({
-        path,
-        Component: SurfaceLayout,
-        children: [
-          { index: true, Component: SessionListView },
-          { path: "new", Component: Workspace },
-          { path: ":sessionId", Component: SessionDetailView },
-        ],
-      })),
-      { path: "*", Component: SessionListView },
+      { path: "assist", Component: AssistPage },
+      { path: "search", Component: SearchView },
+      { path: "chat", Component: ChatView },
+      { path: "tools", Component: ToolAgentView },
+      // The shared layout canonicalizes root and unknown URLs to /assist.
+      { path: "*", Component: AssistPage },
     ],
   },
 ];

@@ -10,28 +10,17 @@ This repository contains the React 19.1 + Webpack + TypeScript + SCSS single-pag
 
 ### Pages
 
-The four surfaces are nested React Router routes. `src/routes/router.tsx`
-creates the route tree with `createBrowserRouter`; `src/main.tsx` mounts one
-`RouterProvider`. The root `/` route uses the shared `App` layout: `AppSidebar` keeps surface
-navigation, Manage tools, and History on the left while an `Outlet` renders
-each child surface's `SurfaceLayout` in the workspace on the right. The sidebar
-and global panel state persist across child navigation. On small screens, the
-sidebar moves above the workspace.
+The four surfaces are child routes of the shared `App` layout. The root `/`
+route in `src/routes/router.tsx` renders `AppSidebar` on the left and an `Outlet`
+for the active workspace on the right. `/assist`, `/search`, `/chat`, and
+`/tools` each open their original workspace directly. Navigation and the global
+Manage tools and History controls persist across child-route navigation.
+The sidebar becomes compact top navigation on small screens.
 
-Each surface (`/assist`, `/search`, `/chat`, `/tools`) has an index
-`SessionListView`, a `/new` child containing its existing workspace, and a
-`/:sessionId` child for the saved, read-only transcript. The list uses the
-user-scoped `/chat/get-user-chat-sessions?page_size=1000` API; history is
-shared across surfaces, as the backend has no surface filter. Search and
-pagination operate on those loaded recent sessions. Search and page state
-live in the URL, so browser Back restores them. Older sessions can be opened
-by ID through `/api/sessions/:sessionId`. List and detail requests are aborted
-on unmount, and late responses are ignored. Errors include a retry action.
-
-`src/config/routes.ts` holds the surface paths. Canonical pathname handling
-keeps nested new/detail URLs intact, normalizes trailing slashes, and replaces
-unknown URLs with `/assist` while preserving query strings and fragments.
-Each workspace owns its state, so navigating away discards unsaved work.
+`src/main.tsx` creates one router with `createAppRouter()` and mounts
+`RouterProvider`. `src/config/routes.ts` holds allowed paths, while the canonical
+route hook redirects root, unknown, and trailing-slash URLs to canonical paths.
+Each page owns its state, so navigating away discards unsaved work.
 
 `ROUTES` in `src/config/routes.ts` is mirrored in three other places, and all four
 must be changed together to add a page: the proxy context filter in

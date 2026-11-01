@@ -38,6 +38,9 @@ module.exports = (env = {}, argv = {}) => {
     "/tool",
   ];
   const sharedPages = ["/chat", "/search", "/tools"];
+  // These pages own only the exact path; the rest of /admin and /auth stays
+  // backend-only, and POST /auth/login (not a page navigation) is the login call.
+  const sharedExactPages = ["/admin", "/auth/login"];
   const hasPrefix = (pathname, prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`);
 
   return {
@@ -92,6 +95,7 @@ module.exports = (env = {}, argv = {}) => {
       new HtmlWebpackPlugin({ template: "./index.html" }),
       new webpack.DefinePlugin({
         "import.meta.env.VITE_DEBUG_PANELS": JSON.stringify(process.env.VITE_DEBUG_PANELS || ""),
+        "import.meta.env.DEV": JSON.stringify(!production),
       }),
       ...(production
         ? [new MiniCssExtractPlugin({ filename: "assets/[name].[contenthash:8].css" })]
@@ -126,7 +130,8 @@ module.exports = (env = {}, argv = {}) => {
                 context: (pathname, req) => {
                   if (
                     req.headers.accept?.includes("text/html") &&
-                    sharedPages.some((prefix) => hasPrefix(pathname, prefix))
+                    (sharedPages.some((prefix) => hasPrefix(pathname, prefix)) ||
+                      sharedExactPages.includes(pathname))
                   )
                     return false;
                   return prefixes.some((prefix) => hasPrefix(pathname, prefix));

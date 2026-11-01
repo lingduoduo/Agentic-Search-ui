@@ -5,6 +5,7 @@ import type {
   AuditSummary,
   BreakdownAnalytics,
   ChatSessionView,
+  CurrentUser,
   DebugRetrievalOutcome,
   DebugRetrievalParams,
   DebugRetrievalResponse,
@@ -13,6 +14,7 @@ import type {
   RetrievalMode,
   FeedbackSignal,
   FeedbackTarget,
+  Permission,
   RouteLatencyResponse,
   ServerHealth,
   DebugToolsResult,
@@ -36,6 +38,14 @@ import type {
   SearchFullResponse,
   SearchDomainOption,
 } from "../interfaces";
+import { SESSION_CLEARED_EVENT } from "../config/session";
+
+/** Every backend call goes through here so any 401 signs the app out. */
+async function apiFetch(url: string, init?: RequestInit): Promise<Response> {
+  const response = await fetch(url, init);
+  if (response.status === 401) window.dispatchEvent(new Event(SESSION_CLEARED_EVENT));
+  return response;
+}
 
 /**
  * Run one per-mode retrieval against the dev-console proxy.
@@ -48,7 +58,7 @@ export async function runDebugRetrieval(
   mode: RetrievalMode,
   params: DebugRetrievalParams,
 ): Promise<DebugRetrievalOutcome> {
-  const response = await fetch(`/api/debug/retrieval/${mode}`, {
+  const response = await apiFetch(`/api/debug/retrieval/${mode}`, {
     method: "POST",
     credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
@@ -134,7 +144,7 @@ export async function getDebugRequest(id: string): Promise<RequestSnapshot> {
 }
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
@@ -160,6 +170,28 @@ export function errorStatus(err: unknown): number | undefined {
   return typeof err === "object" && err !== null && "status" in err
     ? (err as { status?: number }).status
     : undefined;
+}
+
+/** The backend's login form sets the HttpOnly session cookie on success. */
+export function login(email: string, password: string): Promise<CurrentUser> {
+  return requestJson<CurrentUser>("/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ username: email, password }),
+  });
+}
+
+/** Clears the session cookie; succeeds even when the session has expired. */
+export function logout(): Promise<void> {
+  return requestJson<void>("/auth/logout", { method: "POST" });
+}
+
+export function getCurrentUser(): Promise<CurrentUser> {
+  return requestJson<CurrentUser>("/me");
+}
+
+export function getPermissions(): Promise<Permission[]> {
+  return requestJson<Permission[]>("/me/permissions");
 }
 
 export function createSession(
@@ -276,7 +308,7 @@ export async function* streamAgent(
   request: AgentExperienceRequest,
   init?: Pick<RequestInit, "signal">,
 ): AsyncGenerator<SSEEvent> {
-  const response = await fetch("/api/agent/stream", {
+  const response = await apiFetch("/api/agent/stream", {
     method: "POST",
     credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
@@ -404,7 +436,7 @@ export async function* sendToolMessage(
   body: SendToolMessageBody,
   init?: Pick<RequestInit, "signal">,
 ): AsyncGenerator<ToolStreamEvent> {
-  const response = await fetch("/tool/send-tool-message", {
+  const response = await apiFetch("/tool/send-tool-message", {
     method: "POST",
     credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
@@ -428,7 +460,7 @@ export async function* sendChatMessage(
   body: SendChatMessageBody,
   init?: Pick<RequestInit, "signal">,
 ): AsyncGenerator<ChatStreamEvent> {
-  const response = await fetch("/chat/send-chat-message", {
+  const response = await apiFetch("/chat/send-chat-message", {
     method: "POST",
     credentials: "same-origin",
     headers: { "Content-Type": "application/json" },

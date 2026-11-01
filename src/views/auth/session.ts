@@ -11,6 +11,7 @@ import {
   logout,
 } from "../../services/api";
 import { clearAccount, getAccount, loadAccount } from "../../store/account";
+import { isLogin } from "../../utils/auth";
 import type { Account } from "../../store/account";
 import type { AdminSurfaceSummary, BreakdownAnalytics, Permission } from "../../interfaces";
 
@@ -31,8 +32,7 @@ export const isVerifyingSession = () => verifyingSession;
  * for anything else, such as the backend being down.
  */
 async function verifySession(): Promise<Account | "signed-out" | "error"> {
-  const cached = getAccount();
-  if (cached) return cached;
+  if (isLogin()) return getAccount()!;
   verifyingSession = true;
   try {
     return await loadAccount();

@@ -42,9 +42,7 @@ export function RequestInspector({ selectedRequestId }: Props) {
   }, [selected, selectedRequestId]);
 
   const orderedStages = snap
-    ? [...snap.stages].sort(
-        (a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage),
-      )
+    ? [...snap.stages].sort((a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage))
     : [];
 
   return (

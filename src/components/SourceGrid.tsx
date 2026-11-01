@@ -5,15 +5,15 @@ import type { SourceDocumentView } from "../interfaces";
 function scoreColor(score: number): string {
   if (score >= 0.7) return "rgb(34, 197, 94)";
   if (score >= 0.4) return "rgb(234, 179, 8)";
-  if (score > 0)   return "rgb(249, 115, 22)";
+  if (score > 0) return "rgb(249, 115, 22)";
   return "rgb(148, 163, 184)";
 }
 
 const SOURCE_COLORS: Record<string, string> = {
   "Browser Retrieval": "rgb(59, 130, 246)",
-  "SerpAPI":           "rgb(139, 92, 246)",
-  "Local Retrieval":   "rgb(107, 114, 128)",
-  "All Active Sources":"rgb(14, 165, 233)",
+  SerpAPI: "rgb(139, 92, 246)",
+  "Local Retrieval": "rgb(107, 114, 128)",
+  "All Active Sources": "rgb(14, 165, 233)",
 };
 
 interface SourceCardProps {
@@ -45,10 +45,7 @@ const SourceCard = memo(function SourceCard({ document, index }: SourceCardProps
   const sourceColor = SOURCE_COLORS[source] ?? "rgb(107, 114, 128)";
 
   return (
-    <article
-      className="source-card"
-      id={`source-${document.citation}`}
-    >
+    <article className="source-card" id={`source-${document.citation}`}>
       <div className="source-meta">
         <span>{document.citation}</span>
         <span
@@ -68,26 +65,18 @@ const SourceCard = memo(function SourceCard({ document, index }: SourceCardProps
         >
           #{mmrRank}
         </span>
-        {Array.isArray(document.metadata.categories) &&
-          document.metadata.categories.length > 0 && (
-            <span className="category-chips" title="Found by these search sources">
-              {(document.metadata.categories as string[]).join(" · ")}
-            </span>
-          )}
-        <button
-          className="source-copy-btn"
-          onClick={handleCopy}
-          title="Copy content"
-          type="button"
-        >
+        {Array.isArray(document.metadata.categories) && document.metadata.categories.length > 0 && (
+          <span className="category-chips" title="Found by these search sources">
+            {(document.metadata.categories as string[]).join(" · ")}
+          </span>
+        )}
+        <button className="source-copy-btn" onClick={handleCopy} title="Copy content" type="button">
           {copied ? "copied ✓" : "⎘ copy"}
         </button>
       </div>
 
       <div className="source-tags">
-        <span style={{ color: sourceColor, fontWeight: 600, fontSize: "0.7rem" }}>
-          {source}
-        </span>
+        <span style={{ color: sourceColor, fontWeight: 600, fontSize: "0.7rem" }}>{source}</span>
       </div>
 
       {document.url ? (
@@ -99,15 +88,9 @@ const SourceCard = memo(function SourceCard({ document, index }: SourceCardProps
         <h3>{document.title}</h3>
       )}
 
-      <p className={expanded ? undefined : "source-content--clamped"}>
-        {document.content}
-      </p>
+      <p className={expanded ? undefined : "source-content--clamped"}>{document.content}</p>
 
-      <button
-        className="source-expand-btn"
-        onClick={() => setExpanded((v) => !v)}
-        type="button"
-      >
+      <button className="source-expand-btn" onClick={() => setExpanded((v) => !v)} type="button">
         {expanded ? "show less ▴" : "show more ▾"}
       </button>
     </article>

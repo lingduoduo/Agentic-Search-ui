@@ -56,10 +56,7 @@ export function ToolEscalationCard({ escalation, onDecision }: ToolEscalationCar
   const locked = state === "submitting" || state === "decided";
 
   return (
-    <section
-      className="tool-approval-card"
-      aria-label={`Tool failure: ${escalation.tool_name}`}
-    >
+    <section className="tool-approval-card" aria-label={`Tool failure: ${escalation.tool_name}`}>
       <div className="tool-approval-header">
         <div>
           <p className="tool-approval-eyebrow">Tool failed</p>
@@ -87,7 +84,11 @@ export function ToolEscalationCard({ escalation, onDecision }: ToolEscalationCar
         This action may or may not have happened. Retry runs it again.
       </p>
 
-      {error && <p role="alert" className="tool-approval-error">{error}</p>}
+      {error && (
+        <p role="alert" className="tool-approval-error">
+          {error}
+        </p>
+      )}
       {state === "decided" && <p className="tool-approval-status">Decision submitted</p>}
 
       <div className="tool-approval-actions">

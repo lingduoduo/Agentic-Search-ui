@@ -6,9 +6,7 @@ import * as api from "../../../services/api";
 describe("EvalResultsPanel", () => {
   it("renders a card with metric rows per result file", async () => {
     vi.spyOn(api, "getEvalResults").mockResolvedValue({
-      results: [
-        { name: "beir.json", modified: 1_700_000_000, metrics: { "recall@10": 0.5 } },
-      ],
+      results: [{ name: "beir.json", modified: 1_700_000_000, metrics: { "recall@10": 0.5 } }],
     });
     render(<EvalResultsPanel />);
     await waitFor(() => expect(screen.getByText("beir.json")).toBeInTheDocument());
@@ -41,7 +39,9 @@ describe("EvalResultsPanel", () => {
     expect(within(generation).getByText("exact_match")).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Other" })).toBeInTheDocument();
     // Groups render in taxonomy order: retrieval before generation before other.
-    const captions = screen.getAllByRole("table").map((t) => t.querySelector("caption")?.textContent);
+    const captions = screen
+      .getAllByRole("table")
+      .map((t) => t.querySelector("caption")?.textContent);
     expect(captions).toEqual(["Retrieval", "Generation", "Other"]);
     expect(screen.queryByRole("table", { name: "Reward" })).not.toBeInTheDocument();
   });
@@ -49,8 +49,6 @@ describe("EvalResultsPanel", () => {
   it("shows an empty state when there are no results", async () => {
     vi.spyOn(api, "getEvalResults").mockResolvedValue({ results: [] });
     render(<EvalResultsPanel />);
-    await waitFor(() =>
-      expect(screen.getByText(/no eval results yet/i)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/no eval results yet/i)).toBeInTheDocument());
   });
 });

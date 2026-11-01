@@ -23,14 +23,9 @@ export interface SourceDocumentView {
   metadata: Record<string, unknown>;
 }
 
-export type AgentMode = "search_tool" | "hybrid_search" | "chat_once" | "chat_loop" | "search_agent" | "tool_agent";
-export type SearchSourceProvider =
-  | "auto"
-  | "retrieval"
-  | "google"
-  | "serpapi"
-  | "browser"
-  | "all";
+export type AgentMode =
+  "search_tool" | "hybrid_search" | "chat_once" | "chat_loop" | "search_agent" | "tool_agent";
+export type SearchSourceProvider = "auto" | "retrieval" | "google" | "serpapi" | "browser" | "all";
 
 export interface AgentExperienceRequest {
   query: string;
@@ -129,13 +124,7 @@ export interface AuditSummary {
   top_disliked_queries: string[];
 }
 
-export type AdminSurfaceKey =
-  | "access"
-  | "auth"
-  | "models"
-  | "tools"
-  | "analytics"
-  | "enterprise";
+export type AdminSurfaceKey = "access" | "auth" | "models" | "tools" | "analytics" | "enterprise";
 
 export interface AdminSurfaceMetric {
   label: string;
@@ -321,7 +310,7 @@ export type SSEEvent =
 
 export interface ProgressStep {
   turn: number;
-  text: string;  // e.g. "search_routing_tool · 5 docs" or "writing answer..."
+  text: string; // e.g. "search_routing_tool · 5 docs" or "writing answer..."
 }
 
 // --- Dev console: per-mode retrieval inspection ---

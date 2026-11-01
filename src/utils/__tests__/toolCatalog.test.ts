@@ -34,11 +34,7 @@ describe("groupToolsByServer", () => {
   });
 
   it("preserves input order within a server", () => {
-    const out = groupToolsByServer([
-      tool({ name: "z" }),
-      tool({ name: "a" }),
-      tool({ name: "m" }),
-    ]);
+    const out = groupToolsByServer([tool({ name: "z" }), tool({ name: "a" }), tool({ name: "m" })]);
     expect(out[0].tools.map((t) => t.name)).toEqual(["z", "a", "m"]);
   });
 

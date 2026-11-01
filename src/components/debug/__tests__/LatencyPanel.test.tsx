@@ -19,9 +19,7 @@ describe("LatencyPanel", () => {
 
     render(<LatencyPanel />);
 
-    await waitFor(() =>
-      expect(screen.getByText("POST /api/agent")).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText("POST /api/agent")).toBeInTheDocument());
     expect(screen.getByText("812.4")).toBeInTheDocument();
     expect(screen.getByText("2140.9")).toBeInTheDocument();
   });
@@ -30,7 +28,14 @@ describe("LatencyPanel", () => {
     vi.spyOn(api, "getRouteLatency").mockResolvedValue({
       routes: [row],
       stages: {
-        retrieval: { count: 12, p50_ms: 4.2, p95_ms: 9.9, max_ms: 12, avg_docs: 5, cache_hit_rate: 0.25 },
+        retrieval: {
+          count: 12,
+          p50_ms: 4.2,
+          p95_ms: 9.9,
+          max_ms: 12,
+          avg_docs: 5,
+          cache_hit_rate: 0.25,
+        },
         generation: {
           count: 12,
           p50_ms: 800.1,
@@ -96,9 +101,7 @@ describe("LatencyPanel", () => {
 
     render(<LatencyPanel />);
 
-    await waitFor(() =>
-      expect(screen.getByText(/no requests recorded yet/i)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/no requests recorded yet/i)).toBeInTheDocument());
   });
 
   it("renders a dash instead of crashing on a missing percentile", async () => {
@@ -108,9 +111,7 @@ describe("LatencyPanel", () => {
 
     render(<LatencyPanel />);
 
-    await waitFor(() =>
-      expect(screen.getByText("POST /api/agent")).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText("POST /api/agent")).toBeInTheDocument());
     expect(screen.getByText("—")).toBeInTheDocument();
   });
 
@@ -119,8 +120,6 @@ describe("LatencyPanel", () => {
 
     render(<LatencyPanel />);
 
-    await waitFor(() =>
-      expect(screen.getByText(/no requests recorded yet/i)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/no requests recorded yet/i)).toBeInTheDocument());
   });
 });

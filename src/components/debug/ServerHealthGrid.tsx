@@ -63,11 +63,7 @@ export function ServerHealthGrid({ answer, citations }: Props) {
       <h3>Grounding (last run)</h3>
       <p
         className={`server-health__grounding server-health__grounding--${
-          answered && grounded
-            ? "ok"
-            : answered || grounded
-              ? "warn"
-              : "idle"
+          answered && grounded ? "ok" : answered || grounded ? "warn" : "idle"
         }`}
       >
         {groundingLabel}

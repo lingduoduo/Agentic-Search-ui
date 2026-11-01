@@ -75,7 +75,9 @@ export function QueryHistoryPanel() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getAuditSummary().then(setAudit).catch(() => undefined);
+    getAuditSummary()
+      .then(setAudit)
+      .catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -164,18 +166,13 @@ export function QueryHistoryPanel() {
               </td>
             </tr>
           )}
-          {!loading &&
-            page?.items.map((item) => <SessionRow key={item.id} item={item} />)}
+          {!loading && page?.items.map((item) => <SessionRow key={item.id} item={item} />)}
         </tbody>
       </table>
 
       {totalPages > 1 && (
         <div className="qh-pagination">
-          <button
-            type="button"
-            disabled={pageNum === 0}
-            onClick={() => setPageNum((p) => p - 1)}
-          >
+          <button type="button" disabled={pageNum === 0} onClick={() => setPageNum((p) => p - 1)}>
             ‹ Prev
           </button>
           <span>

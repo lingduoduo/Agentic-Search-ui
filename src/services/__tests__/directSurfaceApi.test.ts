@@ -13,13 +13,17 @@ function sseStream(chunks: string[]): ReadableStream<Uint8Array> {
 
 describe("sendChatMessage", () => {
   it("parses answer then done", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-      ok: true, status: 200,
-      body: sseStream([
-        'data: {"type":"answer","text":"hi"}\n\n',
-        'data: {"type":"done","session_id":"s1"}\n\n',
-      ]),
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        body: sseStream([
+          'data: {"type":"answer","text":"hi"}\n\n',
+          'data: {"type":"done","session_id":"s1"}\n\n',
+        ]),
+      }),
+    );
     const types: string[] = [];
     for await (const e of sendChatMessage({ message: "q" })) types.push(e.type);
     expect(types).toEqual(["answer", "done"]);
@@ -35,10 +39,14 @@ describe("sendChatMessage", () => {
 
 describe("sendSearchMessage", () => {
   it("posts and returns docs", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-      ok: true, status: 200,
-      json: async () => ({ all_executed_queries: ["q"], search_docs: [] }),
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ all_executed_queries: ["q"], search_docs: [] }),
+      }),
+    );
     const r = await sendSearchMessage({ search_query: "q" });
     expect(r.all_executed_queries).toEqual(["q"]);
   });

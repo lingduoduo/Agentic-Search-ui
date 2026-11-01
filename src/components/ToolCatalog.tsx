@@ -22,13 +22,7 @@ interface Props {
  * pre-grouped, no flags). One renderer keeps them from drifting apart the way
  * ToolPanel and debug/ToolsPanel did.
  */
-export function ToolCatalog({
-  servers,
-  registeredCount,
-  discovery,
-  onDiscover,
-  note,
-}: Props) {
+export function ToolCatalog({ servers, registeredCount, discovery, onDiscover, note }: Props) {
   const [query, setQuery] = useState("");
 
   function submit() {
@@ -50,9 +44,7 @@ export function ToolCatalog({
             {registeredCount} registered across {servers.length}{" "}
             {servers.length === 1 ? "server" : "servers"}
           </p>
-          {servers.length === 0 && (
-            <p className="tools-panel__note">No tools are registered.</p>
-          )}
+          {servers.length === 0 && <p className="tools-panel__note">No tools are registered.</p>}
           {servers.map((server) => (
             <article key={server.name} className="tools-panel__server">
               <header>{server.name}</header>
@@ -101,9 +93,8 @@ export function ToolCatalog({
         </button>
       </div>
       <p className="tools-panel__hint">
-        Ranks tools by keyword similarity, with no model involved — which is not
-        how the agent chooses. The agent is offered every agent-callable tool and
-        picks one itself.
+        Ranks tools by keyword similarity, with no model involved — which is not how the agent
+        chooses. The agent is offered every agent-callable tool and picks one itself.
       </p>
 
       {discovery && (

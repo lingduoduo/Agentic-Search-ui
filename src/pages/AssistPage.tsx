@@ -40,16 +40,16 @@ function upsertTrace(
   events: ControlFlowEventView[],
   event: ControlFlowEventView,
 ): ControlFlowEventView[] {
-  return [...events.filter((item) => item.sequence !== event.sequence), event]
-    .sort((a, b) => a.sequence - b.sequence);
+  return [...events.filter((item) => item.sequence !== event.sequence), event].sort(
+    (a, b) => a.sequence - b.sequence,
+  );
 }
 
 // Dev escape hatch: `?dev=1` reveals the raw Retrieval URL override. In normal
 // use the backend resolves the retrieval URL from the selected Source, so the
 // client never dictates what the server fetches.
 const DEV_MODE =
-  typeof window !== "undefined" &&
-  new URLSearchParams(window.location.search).has("dev");
+  typeof window !== "undefined" && new URLSearchParams(window.location.search).has("dev");
 
 export function AssistPage() {
   const [query, setQuery] = useState("");
@@ -61,13 +61,13 @@ export function AssistPage() {
     { name: "web", description: "General information, websites, explanations, references" },
   ]);
   const [intent, setIntent] = useState<"search" | "chat" | "tool" | undefined>(undefined);
-  const [clarification, setClarification] = useState<
-    { view: ClarificationView; query: string } | null
-  >(null);
+  const [clarification, setClarification] = useState<{
+    view: ClarificationView;
+    query: string;
+  } | null>(null);
   const [route, setRoute] = useState<string | undefined>(undefined);
   const [routeDegraded, setRouteDegraded] = useState<string | undefined>(undefined);
-  const [sourceProvider, setSourceProvider] =
-    useState<SearchSourceProvider>("auto");
+  const [sourceProvider, setSourceProvider] = useState<SearchSourceProvider>("auto");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [answer, setAnswer] = useState("");
   const [citations, setCitations] = useState<string[]>([]);
@@ -123,160 +123,149 @@ export function AssistPage() {
     [sessionId],
   );
 
-  const handleSubmit = useCallback(async (
-    eventOrQuery?: FormEvent | string,
-    options?: { route?: "chat" | "search" | "tool" },
-  ) => {
-    if (eventOrQuery && typeof eventOrQuery !== "string") eventOrQuery.preventDefault();
-    const raw = typeof eventOrQuery === "string" ? eventOrQuery : query;
-    const normalizedQuery = raw.trim();
-    if (!normalizedQuery) return;
+  const handleSubmit = useCallback(
+    async (eventOrQuery?: FormEvent | string, options?: { route?: "chat" | "search" | "tool" }) => {
+      if (eventOrQuery && typeof eventOrQuery !== "string") eventOrQuery.preventDefault();
+      const raw = typeof eventOrQuery === "string" ? eventOrQuery : query;
+      const normalizedQuery = raw.trim();
+      if (!normalizedQuery) return;
 
-    requestRef.current?.abort();
-    const controller = new AbortController();
-    requestRef.current = controller;
+      requestRef.current?.abort();
+      const controller = new AbortController();
+      requestRef.current = controller;
 
-    setIsLoading(true);
-    setError(null);
-    setIntent(undefined);
-    setRoute(undefined);
-    setRouteDegraded(undefined);
-    setAutoDomains(null);
-    // Clear the previous turn's answer so a failed/next query never renders a
-    // stale answer or citation anchors pointing at now-removed source cards.
-    setAnswer("");
-    setClarification(null);
-    setStreamingAnswer("");
-    setCitations([]);
-    setDocuments([]);
-    setToolCalls([]);
-    setProgressSteps([]);
-    setCompletedSteps([]);
-    setControlFlowTrace([]);
-    setPendingApprovals([]);
-    setPendingEscalations([]);
-    try {
-      const activeSessionId = await ensureSession(controller.signal);
-      // Append the user turn to the local timeline. Done after ensureSession so
-      // the new-session reset inside it can't wipe the message we just added.
-      setMessages((current) => [
-        ...current,
-        { role: "user", content: normalizedQuery },
-      ]);
-      const agentRequest: AgentExperienceRequest = {
-        query: normalizedQuery,
-        session_id: activeSessionId,
-        // Only forwarded in dev mode; otherwise the backend resolves the URL.
-        search_url: DEV_MODE ? searchUrl : undefined,
-        top_k: topK,
-        ...(domains[0] !== AUTO && domains.length === 1
-          ? { domain: domains[0] }
-          : { domains }),
-        source_provider: DEV_MODE ? sourceProvider : undefined,
-        route: options?.route,
-      };
-
-      let accumulatedAnswer = "";
-      let liveSteps: ProgressStep[] = [];
-      for await (const event of streamAgent(agentRequest, { signal: controller.signal })) {
-        if (event.type === "progress") {
-          liveSteps = [...liveSteps, { turn: event.turn, text: event.text }];
-          setProgressSteps(liveSteps);
-        } else if (event.type === "trace") {
-          setControlFlowTrace((current) => upsertTrace(current, event.event));
-        } else if (event.type === "approval_required") {
-          setPendingApprovals((current) => [
-            ...current.filter((approval) => approval.id !== event.approval.id),
-            event.approval,
-          ]);
-        } else if (event.type === "escalation_required") {
-          setPendingEscalations((current) => [
-            ...current.filter((escalation) => escalation.id !== event.escalation.id),
-            event.escalation,
-          ]);
-        } else if (event.type === "claim") {
-          accumulatedAnswer = accumulatedAnswer
-            ? `${accumulatedAnswer} ${event.text}`
-            : event.text;
-          setStreamingAnswer(accumulatedAnswer);
-        } else if (event.type === "answer") {
-          accumulatedAnswer = event.text;
-          setStreamingAnswer(event.text);
-        } else if (event.type === "done") {
-          setSessionId(event.session_id);
-          setCitations(event.citations);
-          setDocuments(event.documents);
-          setToolCalls(event.tool_calls ?? []);
-          setControlFlowTrace(
-            [...(event.control_flow_trace ?? [])].sort(
-              (a, b) => a.sequence - b.sequence,
-            ),
-          );
-          if (event.intent && event.intent !== "clarify") setIntent(event.intent);
-          setClarification(
-            event.clarification
-              ? { view: event.clarification, query: normalizedQuery }
-              : null,
-          );
-          setAutoDomains(event.auto_domains ?? null);
-          setRoute(event.route ?? undefined);
-          setRouteDegraded(event.route_degraded ?? undefined);
-          // ClarificationPrompt already renders the question; don't duplicate
-          // it in the answer panel.
-          const displayedAnswer = event.clarification ? "" : accumulatedAnswer;
-          setStreamingAnswer(displayedAnswer);
-          setAnswer(displayedAnswer);
-          setMessages((current) => [
-            ...current,
-            { role: "assistant", content: accumulatedAnswer },
-          ]);
-          setCompletedSteps(liveSteps);
-          setProgressSteps([]);
-          setPendingApprovals([]);
-          setPendingEscalations([]);
-          setLastRequestId(event.request_id ?? null);
-        } else if (event.type === "error") {
-          throw new Error(event.detail);
-        }
-      }
-    } catch (caught) {
-      if (requestRef.current !== controller) return;
-      setPendingApprovals([]);
-      setPendingEscalations([]);
-      if (caught instanceof DOMException && caught.name === "AbortError") return;
-      setError(caught instanceof Error ? caught.message : "Search failed");
+      setIsLoading(true);
+      setError(null);
+      setIntent(undefined);
+      setRoute(undefined);
+      setRouteDegraded(undefined);
+      setAutoDomains(null);
+      // Clear the previous turn's answer so a failed/next query never renders a
+      // stale answer or citation anchors pointing at now-removed source cards.
       setAnswer("");
+      setClarification(null);
+      setStreamingAnswer("");
       setCitations([]);
       setDocuments([]);
-    } finally {
-      if (requestRef.current === controller) {
-        requestRef.current = null;
-        setIsLoading(false);
+      setToolCalls([]);
+      setProgressSteps([]);
+      setCompletedSteps([]);
+      setControlFlowTrace([]);
+      setPendingApprovals([]);
+      setPendingEscalations([]);
+      try {
+        const activeSessionId = await ensureSession(controller.signal);
+        // Append the user turn to the local timeline. Done after ensureSession so
+        // the new-session reset inside it can't wipe the message we just added.
+        setMessages((current) => [...current, { role: "user", content: normalizedQuery }]);
+        const agentRequest: AgentExperienceRequest = {
+          query: normalizedQuery,
+          session_id: activeSessionId,
+          // Only forwarded in dev mode; otherwise the backend resolves the URL.
+          search_url: DEV_MODE ? searchUrl : undefined,
+          top_k: topK,
+          ...(domains[0] !== AUTO && domains.length === 1 ? { domain: domains[0] } : { domains }),
+          source_provider: DEV_MODE ? sourceProvider : undefined,
+          route: options?.route,
+        };
+
+        let accumulatedAnswer = "";
+        let liveSteps: ProgressStep[] = [];
+        for await (const event of streamAgent(agentRequest, { signal: controller.signal })) {
+          if (event.type === "progress") {
+            liveSteps = [...liveSteps, { turn: event.turn, text: event.text }];
+            setProgressSteps(liveSteps);
+          } else if (event.type === "trace") {
+            setControlFlowTrace((current) => upsertTrace(current, event.event));
+          } else if (event.type === "approval_required") {
+            setPendingApprovals((current) => [
+              ...current.filter((approval) => approval.id !== event.approval.id),
+              event.approval,
+            ]);
+          } else if (event.type === "escalation_required") {
+            setPendingEscalations((current) => [
+              ...current.filter((escalation) => escalation.id !== event.escalation.id),
+              event.escalation,
+            ]);
+          } else if (event.type === "claim") {
+            accumulatedAnswer = accumulatedAnswer
+              ? `${accumulatedAnswer} ${event.text}`
+              : event.text;
+            setStreamingAnswer(accumulatedAnswer);
+          } else if (event.type === "answer") {
+            accumulatedAnswer = event.text;
+            setStreamingAnswer(event.text);
+          } else if (event.type === "done") {
+            setSessionId(event.session_id);
+            setCitations(event.citations);
+            setDocuments(event.documents);
+            setToolCalls(event.tool_calls ?? []);
+            setControlFlowTrace(
+              [...(event.control_flow_trace ?? [])].sort((a, b) => a.sequence - b.sequence),
+            );
+            if (event.intent && event.intent !== "clarify") setIntent(event.intent);
+            setClarification(
+              event.clarification ? { view: event.clarification, query: normalizedQuery } : null,
+            );
+            setAutoDomains(event.auto_domains ?? null);
+            setRoute(event.route ?? undefined);
+            setRouteDegraded(event.route_degraded ?? undefined);
+            // ClarificationPrompt already renders the question; don't duplicate
+            // it in the answer panel.
+            const displayedAnswer = event.clarification ? "" : accumulatedAnswer;
+            setStreamingAnswer(displayedAnswer);
+            setAnswer(displayedAnswer);
+            setMessages((current) => [
+              ...current,
+              { role: "assistant", content: accumulatedAnswer },
+            ]);
+            setCompletedSteps(liveSteps);
+            setProgressSteps([]);
+            setPendingApprovals([]);
+            setPendingEscalations([]);
+            setLastRequestId(event.request_id ?? null);
+          } else if (event.type === "error") {
+            throw new Error(event.detail);
+          }
+        }
+      } catch (caught) {
+        if (requestRef.current !== controller) return;
+        setPendingApprovals([]);
+        setPendingEscalations([]);
+        if (caught instanceof DOMException && caught.name === "AbortError") return;
+        setError(caught instanceof Error ? caught.message : "Search failed");
+        setAnswer("");
+        setCitations([]);
+        setDocuments([]);
+      } finally {
+        if (requestRef.current === controller) {
+          requestRef.current = null;
+          setIsLoading(false);
+        }
       }
-    }
-  }, [domains, ensureSession, query, searchUrl, sourceProvider, topK]);
+    },
+    [domains, ensureSession, query, searchUrl, sourceProvider, topK],
+  );
 
-  const handleApprovalDecision = useCallback(async (
-    approvalId: string,
-    decision: "approve" | "deny",
-  ) => {
-    const signal = requestRef.current?.signal;
-    await submitToolApproval(approvalId, decision, { signal });
-    setPendingApprovals((current) =>
-      current.filter((approval) => approval.id !== approvalId),
-    );
-  }, []);
+  const handleApprovalDecision = useCallback(
+    async (approvalId: string, decision: "approve" | "deny") => {
+      const signal = requestRef.current?.signal;
+      await submitToolApproval(approvalId, decision, { signal });
+      setPendingApprovals((current) => current.filter((approval) => approval.id !== approvalId));
+    },
+    [],
+  );
 
-  const handleEscalationDecision = useCallback(async (
-    escalationId: string,
-    decision: "retry" | "skip" | "cancel",
-  ) => {
-    const signal = requestRef.current?.signal;
-    await submitToolEscalation(escalationId, decision, { signal });
-    setPendingEscalations((current) =>
-      current.filter((escalation) => escalation.id !== escalationId),
-    );
-  }, []);
+  const handleEscalationDecision = useCallback(
+    async (escalationId: string, decision: "retry" | "skip" | "cancel") => {
+      const signal = requestRef.current?.signal;
+      await submitToolEscalation(escalationId, decision, { signal });
+      setPendingEscalations((current) =>
+        current.filter((escalation) => escalation.id !== escalationId),
+      );
+    },
+    [],
+  );
 
   const handleNewSession = useCallback(async () => {
     requestRef.current?.abort();
@@ -298,10 +287,13 @@ export function AssistPage() {
 
   // Stable while an answer streams in, so the memoized composer skips the
   // re-render each streamed claim would otherwise cause.
-  const handleExampleSelect = useCallback((q: string) => {
-    setQuery(q);
-    handleSubmit(q);
-  }, [handleSubmit]);
+  const handleExampleSelect = useCallback(
+    (q: string) => {
+      setQuery(q);
+      handleSubmit(q);
+    },
+    [handleSubmit],
+  );
 
   const handleTopKChange = useCallback((value: number) => {
     setTopK(Math.min(20, Math.max(1, value || 1)));
@@ -313,10 +305,7 @@ export function AssistPage() {
       if (value === "browser" && current === DEFAULT_SEARCH_URL) {
         return DEFAULT_BROWSER_SEARCH_URL;
       }
-      if (
-        (value === "retrieval" || value === "all") &&
-        current === DEFAULT_BROWSER_SEARCH_URL
-      ) {
+      if ((value === "retrieval" || value === "all") && current === DEFAULT_BROWSER_SEARCH_URL) {
         return DEFAULT_SEARCH_URL;
       }
       return current;

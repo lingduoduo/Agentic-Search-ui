@@ -23,7 +23,9 @@ function groupsOf(file: EvalResultFile): Array<[MetricGroup, Record<string, numb
   const groups = file.groups ?? { other: file.metrics };
   return METRIC_GROUPS.flatMap((group) => {
     const values = groups[group];
-    return values && Object.keys(values).length > 0 ? [[group, values] as [MetricGroup, Record<string, number>]] : [];
+    return values && Object.keys(values).length > 0
+      ? [[group, values] as [MetricGroup, Record<string, number>]]
+      : [];
   });
 }
 
@@ -51,8 +53,7 @@ export function EvalResultsPanel() {
       <h2>Evaluation Results</h2>
       {results !== null && results.length === 0 && (
         <p className="eval-results__empty">
-          No eval results yet — run an eval with <code>--output</code> into{" "}
-          <code>data/eval/</code>.
+          No eval results yet — run an eval with <code>--output</code> into <code>data/eval/</code>.
         </p>
       )}
       {results?.map((file) => {

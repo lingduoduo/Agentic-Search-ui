@@ -8,18 +8,35 @@ describe("ToolCatalogPanel", () => {
   it("renders the registered count and catalog grouped by server", async () => {
     vi.spyOn(api, "getDebugTools").mockResolvedValue({
       registered: [
-        { name: "search", description: "d", parameters: {}, source: "function", provider_id: null, agent_callable: true, user_scoped: false },
+        {
+          name: "search",
+          description: "d",
+          parameters: {},
+          source: "function",
+          provider_id: null,
+          agent_callable: true,
+          user_scoped: false,
+        },
       ],
       catalog: [
         {
           name: "local",
           description: "local",
-          tools: [{ name: "search", description: "Search the corpus", source: "function", server: "local" }],
+          tools: [
+            {
+              name: "search",
+              description: "Search the corpus",
+              source: "function",
+              server: "local",
+            },
+          ],
         },
       ],
     });
     render(<ToolCatalogPanel />);
-    await waitFor(() => expect(screen.getByText(/1 registered across 1 server/)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/1 registered across 1 server/)).toBeInTheDocument(),
+    );
     expect(screen.getByText("local")).toBeInTheDocument();
     expect(screen.getByText("Search the corpus")).toBeInTheDocument();
   });

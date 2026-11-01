@@ -31,9 +31,7 @@ describe("ToolAgentView", () => {
 
     const approveBtn = await screen.findByRole("button", { name: /approve/i });
     fireEvent.click(approveBtn);
-    await waitFor(() =>
-      expect(submitSpy).toHaveBeenCalledWith("ap1", "approve"),
-    );
+    await waitFor(() => expect(submitSpy).toHaveBeenCalledWith("ap1", "approve"));
   });
 
   it("shows an escalation card, posts the decision, and clears it on done", async () => {
@@ -73,9 +71,7 @@ describe("ToolAgentView", () => {
 
     const skipBtn = await screen.findByRole("button", { name: /skip/i });
     fireEvent.click(skipBtn);
-    await waitFor(() =>
-      expect(submitSpy).toHaveBeenCalledWith("esc1", "skip"),
-    );
+    await waitFor(() => expect(submitSpy).toHaveBeenCalledWith("esc1", "skip"));
     await waitFor(() =>
       expect(screen.queryByRole("button", { name: /skip/i })).not.toBeInTheDocument(),
     );
@@ -138,7 +134,6 @@ describe("ToolAgentView", () => {
     vi.spyOn(api, "sendToolMessage").mockImplementation((() => {
       async function* g() {
         throw new Error("NO_LOCAL_MODEL");
-        // eslint-disable-next-line no-unreachable
         yield undefined as never;
       }
       return g();
@@ -150,9 +145,7 @@ describe("ToolAgentView", () => {
     });
     fireEvent.click(screen.getByText("Send"));
 
-    await waitFor(() =>
-      expect(screen.getByText(/needs a local model/)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/needs a local model/)).toBeInTheDocument());
   });
 });
 
@@ -245,9 +238,7 @@ describe("ToolAgentView tool catalog", () => {
 
     render(<ToolAgentView />);
 
-    expect(
-      await screen.findByText("Tool inventory needs an admin session."),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Tool inventory needs an admin session.")).toBeInTheDocument();
     // Not an error banner: using the agent without admin is a normal state.
     expect(document.querySelector(".error-banner")).toBeNull();
     // And the agent itself still works.
@@ -255,15 +246,11 @@ describe("ToolAgentView tool catalog", () => {
   });
 
   it("reports an unavailable inventory distinctly from a permission problem", async () => {
-    vi.spyOn(api, "listTools").mockRejectedValue(
-      Object.assign(new Error("boom"), { status: 500 }),
-    );
+    vi.spyOn(api, "listTools").mockRejectedValue(Object.assign(new Error("boom"), { status: 500 }));
 
     render(<ToolAgentView />);
 
-    expect(
-      await screen.findByText("Tool inventory is unavailable right now."),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Tool inventory is unavailable right now.")).toBeInTheDocument();
   });
 
   it("ranks tools for a query without involving the model", async () => {
@@ -316,9 +303,8 @@ describe("ToolAgentView degraded notice", () => {
   }
 
   it("marks a degraded answer with a notice carrying the reason", async () => {
-    vi.spyOn(api, "sendToolMessage").mockImplementation(
-      (() => streamOnce({ degraded: "model_unavailable" })) as never,
-    );
+    vi.spyOn(api, "sendToolMessage").mockImplementation((() =>
+      streamOnce({ degraded: "model_unavailable" })) as never);
     render(<ToolAgentView />);
     await send();
     const notice = await screen.findByRole("status");
@@ -335,9 +321,8 @@ describe("ToolAgentView degraded notice", () => {
   });
 
   it("shows no notice when done carries degraded: null", async () => {
-    vi.spyOn(api, "sendToolMessage").mockImplementation(
-      (() => streamOnce({ degraded: null })) as never,
-    );
+    vi.spyOn(api, "sendToolMessage").mockImplementation((() =>
+      streamOnce({ degraded: null })) as never);
     render(<ToolAgentView />);
     await send();
     await screen.findByText("search-only list");

@@ -24,9 +24,7 @@ describe("ToolApprovalCard", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-06-27T12:00:00.000Z"));
 
-    const { container } = render(
-      <ToolApprovalCard approval={approval} onDecision={vi.fn()} />,
-    );
+    const { container } = render(<ToolApprovalCard approval={approval} onDecision={vi.fn()} />);
 
     expect(
       screen.getByRole("region", { name: "Approval required for send_email" }),
@@ -56,7 +54,10 @@ describe("ToolApprovalCard", () => {
   it("locks both actions while submitting and after success", async () => {
     let resolveDecision!: () => void;
     const onDecision = vi.fn(
-      () => new Promise<void>((resolve) => { resolveDecision = resolve; }),
+      () =>
+        new Promise<void>((resolve) => {
+          resolveDecision = resolve;
+        }),
     );
     const user = userEvent.setup();
     render(<ToolApprovalCard approval={approval} onDecision={onDecision} />);

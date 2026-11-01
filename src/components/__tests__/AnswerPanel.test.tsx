@@ -147,7 +147,7 @@ it("renders live progress log when progressSteps is non-empty", () => {
       citations={[]}
       progressSteps={[{ turn: 1, text: "search_routing_tool · 5 docs" }]}
       completedSteps={[]}
-    />
+    />,
   );
   expect(screen.getByText(/agent reasoning/i)).toBeInTheDocument();
   expect(screen.getByText(/search_routing_tool · 5 docs/i)).toBeInTheDocument();
@@ -163,7 +163,7 @@ it("renders collapsed summary when progressSteps is empty and completedSteps is 
         { turn: 1, text: "search_routing_tool · 5 docs" },
         { turn: 2, text: "writing answer..." },
       ]}
-    />
+    />,
   );
   expect(screen.getByText(/2 turns/i)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /show reasoning/i })).toBeInTheDocument();
@@ -176,7 +176,7 @@ it("expands the log when 'show reasoning' is clicked", async () => {
       citations={[]}
       progressSteps={[]}
       completedSteps={[{ turn: 1, text: "search_routing_tool · 5 docs" }]}
-    />
+    />,
   );
   const button = screen.getByRole("button", { name: /show reasoning/i });
   await userEvent.click(button);
@@ -185,14 +185,7 @@ it("expands the log when 'show reasoning' is clicked", async () => {
 });
 
 it("renders nothing for progress when both arrays are empty", () => {
-  render(
-    <AnswerPanel
-      answer="answer"
-      citations={[]}
-      progressSteps={[]}
-      completedSteps={[]}
-    />
-  );
+  render(<AnswerPanel answer="answer" citations={[]} progressSteps={[]} completedSteps={[]} />);
   expect(document.querySelector(".progress-log")).not.toBeInTheDocument();
   expect(document.querySelector(".progress-summary")).not.toBeInTheDocument();
 });
@@ -202,12 +195,7 @@ it("renders nothing for progress when both arrays are empty", () => {
 // ---------------------------------------------------------------------------
 
 it("renders bold text from markdown", async () => {
-  render(
-    <AnswerPanel
-      answer="See **bold** text here."
-      citations={[]}
-    />
-  );
+  render(<AnswerPanel answer="See **bold** text here." citations={[]} />);
   expect(await screen.findByText("bold")).toBeInTheDocument();
   const strong = document.querySelector("strong");
   expect(strong).not.toBeNull();
@@ -215,45 +203,25 @@ it("renders bold text from markdown", async () => {
 });
 
 it("renders citation [D1] as an anchor link", async () => {
-  render(
-    <AnswerPanel
-      answer="See [D1] for details."
-      citations={[]}
-    />
-  );
+  render(<AnswerPanel answer="See [D1] for details." citations={[]} />);
   const link = await screen.findByRole("link", { name: "[D1]" });
   expect(link).toHaveAttribute("href", "#source-[D1]");
   expect(link).toHaveClass("citation-link");
 });
 
 it("renders citation [R1Q1D1] as an anchor link", async () => {
-  render(
-    <AnswerPanel
-      answer="See [R1Q1D1] for details."
-      citations={[]}
-    />
-  );
+  render(<AnswerPanel answer="See [R1Q1D1] for details." citations={[]} />);
   const link = await screen.findByRole("link", { name: "[R1Q1D1]" });
   expect(link).toHaveAttribute("href", "#source-[R1Q1D1]");
   expect(link).toHaveClass("citation-link");
 });
 
 it("renders no anchor when answer has no citation pattern", () => {
-  render(
-    <AnswerPanel
-      answer="No citations here."
-      citations={[]}
-    />
-  );
+  render(<AnswerPanel answer="No citations here." citations={[]} />);
   expect(screen.queryByRole("link")).not.toBeInTheDocument();
 });
 
 it("does not render .citation-row div", () => {
-  render(
-    <AnswerPanel
-      answer="answer"
-      citations={["[D1]", "[D2]"]}
-    />
-  );
+  render(<AnswerPanel answer="answer" citations={["[D1]", "[D2]"]} />);
   expect(document.querySelector(".citation-row")).not.toBeInTheDocument();
 });

@@ -5,12 +5,8 @@ interface SessionTimelineProps {
   messages: ChatMessageView[];
 }
 
-export const SessionTimeline = memo(function SessionTimeline({
-  messages,
-}: SessionTimelineProps) {
-  const visible = messages
-    .map((m, i) => ({ m, i }))
-    .filter(({ m }) => m.role !== "system");
+export const SessionTimeline = memo(function SessionTimeline({ messages }: SessionTimelineProps) {
+  const visible = messages.map((m, i) => ({ m, i })).filter(({ m }) => m.role !== "system");
 
   if (visible.length === 0) {
     return <div className="empty-state compact">Start a query to create history.</div>;
@@ -31,7 +27,9 @@ export const SessionTimeline = memo(function SessionTimeline({
             {isUser && <div className="chat-avatar chat-avatar--user">U</div>}
 
             <div className="chat-bubble-wrapper">
-              <div className={`chat-bubble ${isUser ? "chat-bubble--user" : "chat-bubble--assistant"}`}>
+              <div
+                className={`chat-bubble ${isUser ? "chat-bubble--user" : "chat-bubble--assistant"}`}
+              >
                 {message.content}
               </div>
               {!isUser && (roundsUsed != null || numTurns != null) && (

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { ClipboardList, FileSearch, Wrench } from "lucide-react";
 import {
   getAdminSummary,
   getAnalyticsByFlow,
@@ -33,48 +32,49 @@ export function App() {
     getAnalyticsByFlow().then(setAnalyticsByFlow).catch(() => undefined);
   }, []);
 
+  const page = {
+    "/assist": { title: "Assistant", description: "Ask a question, search your sources, and follow the answer trail." },
+    "/search": { title: "Search", description: "Find relevant documents and explore the sources behind each result." },
+    "/chat": { title: "Chat", description: "Start a conversation with your model." },
+    "/tools": { title: "Tools", description: "Ask the tool agent to complete a task and inspect its results." },
+  }[route];
+
   return (
-    <main className="app-shell">
-      <section className="workspace" aria-label="Agentic Search workspace">
-        <header className="topbar">
-          <div className="brand">
-            <div className="brand-mark" aria-hidden="true">
-              <FileSearch size={26} />
-            </div>
-            <div>
-              <h1>Agentic Search</h1>
-              <p>Ask a question, retrieve context, and inspect the answer trail.</p>
-            </div>
-          </div>
-          <div className="topbar-actions">
-            <nav className="surface-nav" aria-label="Surfaces">
-              <NavLink to="/assist" className="icon-button">Assistant</NavLink>
-              <NavLink to="/search" className="icon-button">Search</NavLink>
-              <NavLink to="/chat" className="icon-button">Chat</NavLink>
-              <NavLink to="/tools" className="icon-button">Tools</NavLink>
-            </nav>
-            <button
-              className={`icon-button${showTools ? " active" : ""}`}
-              type="button"
-              onClick={() => setShowTools((v) => !v)}
-              title="Manage tools"
-            >
-              <Wrench size={18} />
-              {/* Not "Tools": the nav link above already owns that label and
-                  goes somewhere else entirely (the agent surface). */}
-              <span>Manage tools</span>
-            </button>
-            <button
-              className={`icon-button${showQueryHistory ? " active" : ""}`}
-              type="button"
-              onClick={() => setShowQueryHistory((v) => !v)}
-              title="Query history audit"
-            >
-              <ClipboardList size={18} />
-              <span>History</span>
-            </button>
-          </div>
-        </header>
+    <div className="app-shell">
+      <header className="topbar">
+        <div className="header-navigation">
+          <div className="brand"><h1>Agentic Search</h1></div>
+          <nav className="surface-nav" aria-label="Surfaces">
+            <NavLink to="/assist" className="nav-link">Assistant</NavLink>
+            <NavLink to="/search" className="nav-link">Search</NavLink>
+            <NavLink to="/chat" className="nav-link">Chat</NavLink>
+            <NavLink to="/tools" className="nav-link">Tools</NavLink>
+          </nav>
+        </div>
+        <div className="topbar-actions">
+          <button
+            className={`icon-button${showTools ? " active" : ""}`}
+            type="button"
+            onClick={() => setShowTools((v) => !v)}
+            title="Manage tools"
+          >
+            <span>Manage tools</span>
+          </button>
+          <button
+            className={`icon-button${showQueryHistory ? " active" : ""}`}
+            type="button"
+            onClick={() => setShowQueryHistory((v) => !v)}
+            title="Query history audit"
+          >
+            <span>History</span>
+          </button>
+        </div>
+      </header>
+      <main className="workspace" aria-label="Agentic Search workspace">
+        <div className="page-intro">
+          <h2>{page.title}</h2>
+          <p>{page.description}</p>
+        </div>
 
         {showTools && <ToolAdminPanel />}
 
@@ -90,15 +90,16 @@ export function App() {
           <ToolAgentView />
         )}
 
-        {adminSummary && <AdminOverview summary={adminSummary} />}
-        {(analyticsByLLM || analyticsByPersona || analyticsByFlow) && (
-          <AnalyticsDashboard
-            byLLM={analyticsByLLM}
-            byPersona={analyticsByPersona}
-            byFlow={analyticsByFlow}
-          />
+        {(adminSummary || analyticsByLLM || analyticsByPersona || analyticsByFlow) && (
+          <details className="workspace-insights">
+            <summary>Admin and analytics</summary>
+            {adminSummary && <AdminOverview summary={adminSummary} />}
+            {(analyticsByLLM || analyticsByPersona || analyticsByFlow) && (
+              <AnalyticsDashboard byLLM={analyticsByLLM} byPersona={analyticsByPersona} byFlow={analyticsByFlow} />
+            )}
+          </details>
         )}
-      </section>
-    </main>
+      </main>
+    </div>
   );
 }

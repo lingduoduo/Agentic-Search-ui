@@ -58,7 +58,7 @@ from the production bundle.
 
 Webpack configuration lives in `webpack.config.cjs`; `index.html` is the HTML
 template and Webpack injects the generated scripts and stylesheet links.
-Shared styles live in `src/styles/styles.scss`. Webpack processes SCSS through
+Shared styles live in `src/assets/styles/styles.scss`. Webpack processes SCSS through
 `sass-loader` and `css-loader`, injects styles during development, and extracts
 CSS for production. Plain CSS imports remain supported.
 Development uses hot module replacement and source maps. Production cleans
@@ -133,7 +133,8 @@ Each fixture supports these fields:
 | `headers` | Additional response headers. |
 
 The sample file includes health, search, chat, assistant, tool-agent,
-analytics, and error responses. Use `response` for JSON or `events` for SSE;
+analytics, query history, audit summaries, and error responses. History fixtures
+support `page_num`, `page_size`, and `feedback_type=like|dislike` query parameters. Use `response` for JSON or `events` for SSE;
 `delayMs` delays a JSON reply or each SSE event. Optional `headers` add response
 headers, and a `response(req)` function can inspect the request. Responses carry
 `X-Mock-API: true` and are stateless fixtures.
@@ -159,6 +160,11 @@ included in production builds or `yarn preview`.
 src/
 ├── main.tsx          # React entry point and shared stylesheet import
 ├── apps/             # App.tsx shell, navigation, global panels, and tests
+├── assets/
+│   ├── fonts/        # Local web fonts
+│   ├── icons/        # SVG and other icon assets
+│   ├── images/       # Photos, illustrations, and other images
+│   └── styles/       # Shared SCSS entry point (styles.scss)
 ├── components/       # Reusable UI, admin panels, and debug inspectors
 ├── config/           # Route definitions and search constants
 ├── hooks/            # Route subscriptions and canonical URL hooks
@@ -169,15 +175,24 @@ src/
 ├── static/           # Reserved for static assets
 ├── store/            # Reserved for shared application state
 ├── storybook/        # Reserved for component stories
-├── styles/           # Shared styles (styles.scss)
 └── utils/            # Domain selection, tool grouping, and schema helpers
 ```
 
-`main.tsx` loads `styles/styles.scss` and mounts `apps/App.tsx`. The app shell
+`main.tsx` loads `assets/styles/styles.scss` and mounts `apps/App.tsx`. The app shell
 selects a screen from `pages/` using the current route. `config/routes.ts`
 defines the allowed paths, `routes/navigation.ts` handles browser history,
 `hooks/useRoute.ts` subscribes to route changes, and `components/NavLink.tsx`
 renders navigation links. `routes/index.ts` exports the routing API.
+
+The interface uses a compact full-width header, centered page content, white
+surfaces, and blue primary actions. Admin and analytics panels are available
+under the expandable **Admin and analytics** section below the active page.
+
+Put imported images, icons, fonts, and SCSS in `src/assets/`. Webpack bundles
+referenced assets with hashed filenames in `dist/assets/`; merely adding a
+file does not include it in the build. Reference images from components and
+fonts or background images with relative `url(...)` paths in SCSS. Empty asset
+folders contain `.gitkeep` files so the structure is retained in Git.
 
 UI and service tests live in `__tests__/` directories alongside the code they
 cover. Webpack configuration checks live in `tests/webpack.test.cjs`.

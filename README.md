@@ -84,28 +84,6 @@ without changing the Webpack build mode. The debug flag is embedded during
 compilation, so restart the dev server or rebuild after changing it. Only the explicitly configured debug
 flag is exposed to browser code.
 
-## Tailwind CSS
-
-Tailwind CSS 4 runs through PostCSS in Webpack. `postcss.config.mjs` enables
-`@tailwindcss/postcss`, and `src/assets/styles/tailwind.css` loads the theme and
-utilities while scanning `src/` for complete class names. No JavaScript
-Tailwind config is needed for the default setup.
-
-Use utilities directly in JSX:
-
-```tsx
-<div className="grid gap-4 md:grid-cols-2">
-  <p className="text-sm text-slate-600">Your content</p>
-</div>
-```
-
-The Tailwind entry is plain CSS and is imported before `styles.scss` in
-`src/main.tsx`. Keep Sass features in SCSS files; put Tailwind directives and
-`@theme` customizations in `tailwind.css`. Existing unlayered SCSS rules take
-precedence over layered utilities when they set the same property. Preflight
-is omitted to preserve the current base styles, following the
-[Tailwind integration guide](https://tailwindcss.com/docs/preflight#disabling-preflight).
-
 ## Mock API
 
 Start the Webpack dev server at `http://127.0.0.1:5173` with sample API

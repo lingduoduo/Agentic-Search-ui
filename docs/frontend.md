@@ -69,7 +69,8 @@ own signed-in pages (`isRoute` in `src/config/routes.ts`); anything else, includ
 another origin, the sign-in page or an unknown app id, goes to `/space/apps`. **Sign out** (sidebar and `/account`) calls
 `POST /auth/logout`, which clears the cookie even for an expired session.
 
-Every backend call goes through `apiFetch` in `src/services/api.ts`, which fires
+Every backend call in `src/services/api.ts` goes through `src/utils/request.ts`
+(`get` / `post` / `del`, and `stream` for SSE), which fires
 `SESSION_CLEARED_EVENT` on a `401`. That drops the cached account, and the
 signed-in layout (`DefaultLayout`) sends the user to `/auth/login?redirect=<current page>` —
 except while the guard itself is confirming the session, since it redirects on

@@ -1,44 +1,63 @@
-import { useSyncExternalStore } from "react";
-import { SESSION_CLEARED_EVENT } from "../config/session";
+import { createSlice } from "@reduxjs/toolkit";
+import type { Dispatch, PayloadAction } from "@reduxjs/toolkit";
 import { getCurrentUser, getPermissions } from "../services/api";
 import type { CurrentUser, Permission } from "../interfaces";
 
 export type Account = { user: CurrentUser; permissions: Permission[] };
 
-let account: Account | null = null;
+/** Shown for the signed-in user; kept in the frontend only, not saved to the backend. */
+export type Profile = { name: string; email: string; avatar: string };
+
+// Signed out until /me loads.
+const initialState: { account: Account | null; profile: Profile } = {
+  account: null,
+  profile: { name: "", email: "", avatar: "" },
+};
+
+// /me has no name or avatar: the name starts as the email's local part.
+const profileOf = (account: Account | null): Profile =>
+  account
+    ? { name: account.user.email.split("@")[0], email: account.user.email, avatar: "" }
+    : initialState.profile;
+
+const accountSlice = createSlice({
+  name: "account",
+  initialState,
+  reducers: {
+    accountLoaded(state, action: PayloadAction<Account>) {
+      state.account = action.payload;
+      state.profile = profileOf(action.payload);
+    },
+    profileUpdated(state, action: PayloadAction<Partial<Profile>>) {
+      Object.assign(state.profile, action.payload);
+    },
+    /** Undoes profile edits, back to what /me gave. */
+    profileReset(state) {
+      state.profile = profileOf(state.account);
+    },
+    accountCleared: () => initialState,
+  },
+  selectors: {
+    selectAccount: (state) => state.account,
+    selectProfile: (state) => state.profile,
+  },
+});
+
+export const { accountLoaded, profileUpdated, profileReset, accountCleared } = accountSlice.actions;
+export const { selectAccount, selectProfile } = accountSlice.selectors;
+export default accountSlice.reducer;
+
 let pending: Promise<Account> | null = null;
-const listeners = new Set<() => void>();
-
-function setAccount(next: Account | null) {
-  account = next;
-  listeners.forEach((listener) => listener());
-}
-
-// The cookie no longer works, so neither does the account loaded with it.
-window.addEventListener(SESSION_CLEARED_EVENT, () => setAccount(null));
-
-export const getAccount = () => account;
-
-export const clearAccount = () => setAccount(null);
 
 /** Loads /me and /me/permissions; concurrent callers share one request. */
-export function loadAccount(): Promise<Account> {
+export const loadAccount = () => (dispatch: Dispatch) => {
   pending ??= Promise.all([getCurrentUser(), getPermissions()])
     .then(([user, permissions]) => {
-      setAccount({ user, permissions });
+      dispatch(accountLoaded({ user, permissions }));
       return { user, permissions };
     })
     .finally(() => {
       pending = null;
     });
   return pending;
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
-export function useAccount() {
-  return useSyncExternalStore(subscribe, getAccount);
-}
+};

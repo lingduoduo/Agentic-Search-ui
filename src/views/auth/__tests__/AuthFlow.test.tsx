@@ -1,16 +1,18 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { appRoutes } from "../../../routes/router";
-import { clearAccount } from "../../../store/account";
+import { accountCleared } from "../../../store/account";
+import { store } from "../../../store";
+import { renderWithStore } from "../../../__tests__/renderApp";
 import { safeRedirectPath } from "../session";
 
 const routers: ReturnType<typeof createMemoryRouter>[] = [];
 afterEach(() => {
   routers.splice(0).forEach((router) => router.dispose());
   vi.unstubAllGlobals();
-  clearAccount();
+  store.dispatch(accountCleared());
 });
 
 const alice = { id: "u1", email: "alice@example.test", role: "basic", is_active: true };
@@ -37,7 +39,7 @@ function signedIn(permissions: string[]) {
 function renderAt(url: string) {
   const router = createMemoryRouter(appRoutes, { initialEntries: [url] });
   routers.push(router);
-  render(<RouterProvider router={router} />);
+  renderWithStore(<RouterProvider router={router} />);
   return router;
 }
 
@@ -304,6 +306,20 @@ describe("account", () => {
     expect(account).toHaveTextContent("basic");
     expect(account).toHaveTextContent("Workspaces");
     expect(account).not.toHaveTextContent("Admin panel");
+  });
+
+  it("shows the name, updates it in the store, and resets it", async () => {
+    stubBackend(signedIn(["basic_access"]));
+    renderAt("/account");
+    const account = await screen.findByLabelText("Account details");
+    expect(account).toHaveTextContent("Namealice");
+
+    await userEvent.type(within(account).getByRole("textbox", { name: "New name" }), "Alice");
+    await userEvent.click(within(account).getByRole("button", { name: "Update name" }));
+    expect(account).toHaveTextContent("NameAlice");
+
+    await userEvent.click(within(account).getByRole("button", { name: "Reset" }));
+    expect(account).toHaveTextContent("Namealice");
   });
 
   it("signs out through the backend and returns to login", async () => {

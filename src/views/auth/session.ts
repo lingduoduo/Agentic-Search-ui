@@ -10,7 +10,9 @@ import {
   login,
   logout,
 } from "../../services/api";
-import { clearAccount, getAccount, loadAccount } from "../../store/account";
+import { accountCleared, loadAccount, selectAccount } from "../../store/account";
+import { store } from "../../store";
+import { isLogin } from "../../utils/auth";
 import type { Account } from "../../store/account";
 import type { AdminSurfaceSummary, BreakdownAnalytics, Permission } from "../../interfaces";
 
@@ -31,11 +33,10 @@ export const isVerifyingSession = () => verifyingSession;
  * for anything else, such as the backend being down.
  */
 async function verifySession(): Promise<Account | "signed-out" | "error"> {
-  const cached = getAccount();
-  if (cached) return cached;
+  if (isLogin()) return selectAccount(store.getState())!;
   verifyingSession = true;
   try {
-    return await loadAccount();
+    return await store.dispatch(loadAccount());
   } catch (err) {
     const status = errorStatus(err);
     return status === 401 || status === 404 ? "signed-out" : "error";
@@ -124,9 +125,9 @@ export async function loginAction({ request }: ActionFunctionArgs) {
   try {
     await login(String(form.get("email") ?? "").trim(), String(form.get("password") ?? ""));
     // Cache the account now so the guard lets the next page straight in.
-    await loadAccount();
+    await store.dispatch(loadAccount());
   } catch (err) {
-    clearAccount();
+    store.dispatch(accountCleared());
     return { error: err instanceof Error ? err.message : "Unable to sign in. Please try again." };
   }
   return redirect(safeRedirectPath(new URL(request.url).searchParams.get("redirect")));
@@ -134,6 +135,6 @@ export async function loginAction({ request }: ActionFunctionArgs) {
 
 export async function logoutAction() {
   await logout();
-  clearAccount();
+  store.dispatch(accountCleared());
   return redirect(LOGIN_PATH);
 }

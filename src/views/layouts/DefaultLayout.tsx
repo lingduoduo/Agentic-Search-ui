@@ -7,7 +7,8 @@ import { AppSidebar } from "../../components/AppSidebar";
 import { isAdmin, isVerifyingSession, loginPath } from "../auth/session";
 import type { GuardData } from "../auth/session";
 import { SESSION_CLEARED_EVENT } from "../../config/session";
-import { useAccount } from "../../store/account";
+import { selectAccount } from "../../store/account";
+import { useAppSelector } from "../../store";
 
 /** Left sidebar plus the page heading; the page renders in the Outlet. */
 export function DefaultLayout() {
@@ -16,7 +17,7 @@ export function DefaultLayout() {
   const match = useMatches().at(-1);
   const heading = (match?.handle as RouteHandle | undefined)?.heading;
   const page = typeof heading === "function" ? heading(match!.params) : heading;
-  const admin = isAdmin(useAccount());
+  const admin = isAdmin(useAppSelector(selectAccount));
   const guard = useRouteLoaderData("root") as GuardData | undefined;
   const location = useLocation();
   const navigate = useNavigate();

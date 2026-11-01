@@ -38,12 +38,12 @@ import type {
   SearchFullResponse,
   SearchDomainOption,
 } from "../interfaces";
-import { SESSION_CLEARED_EVENT } from "../config/session";
+import { clearCredential } from "../utils/auth";
 
 /** Every backend call goes through here so any 401 signs the app out. */
 async function apiFetch(url: string, init?: RequestInit): Promise<Response> {
   const response = await fetch(url, init);
-  if (response.status === 401) window.dispatchEvent(new Event(SESSION_CLEARED_EVENT));
+  if (response.status === 401) clearCredential();
   return response;
 }
 

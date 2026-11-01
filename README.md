@@ -226,7 +226,8 @@ account is shared, in the Redux store under `store/`. `static/`
 and `storybook/` are empty placeholders in the local layout; Git will track
 them once files are added.
 
-When extending the app, put backend requests in `services/api.ts`, shared
+When extending the app, put backend requests in `services/api.ts` (using the
+`get` / `post` / `stream` helpers from `utils/request.ts`), shared
 constants in `config/`, shared data contracts in `interfaces/`, pure helpers in `utils/`, and reusable UI in `components/`.
 Route screens in `views/pages/` and `views/space/apps/` compose these pieces inside a layout from `views/layouts/`.
 

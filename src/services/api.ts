@@ -38,19 +38,12 @@ import type {
   SearchFullResponse,
   SearchDomainOption,
 } from "../interfaces";
-import { clearCredential } from "../utils/auth";
-
-/** Every backend call goes through here so any 401 signs the app out. */
-async function apiFetch(url: string, init?: RequestInit): Promise<Response> {
-  const response = await fetch(url, init);
-  if (response.status === 401) clearCredential();
-  return response;
-}
+import { RequestError, del, get, post, stream } from "../utils/request";
 
 /**
  * Run one per-mode retrieval against the dev-console proxy.
  *
- * Unlike {@link requestJson}, this never throws on a non-2xx response: the
+ * Unlike the other calls, this never throws on a non-2xx response: the
  * Retrieval Lab needs to render mode-specific states (503 = dense unavailable,
  * 404 = endpoint not mounted) rather than a generic error.
  */
@@ -58,41 +51,30 @@ export async function runDebugRetrieval(
   mode: RetrievalMode,
   params: DebugRetrievalParams,
 ): Promise<DebugRetrievalOutcome> {
-  const response = await apiFetch(`/api/debug/retrieval/${mode}`, {
-    method: "POST",
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
-  });
-  const data = await response.json().catch(() => null);
-  if (!response.ok) {
-    const detail =
-      data && typeof data === "object" && "detail" in data
-        ? String((data as { detail: unknown }).detail)
-        : `Request failed with ${response.status}`;
-    return { status: response.status, ok: false, data: null, detail };
+  try {
+    const data = await post<DebugRetrievalResponse>(`/api/debug/retrieval/${mode}`, {
+      body: params,
+    });
+    return { status: 200, ok: true, data, detail: null };
+  } catch (err) {
+    if (!(err instanceof RequestError) || err.status === undefined) throw err;
+    return { status: err.status, ok: false, data: null, detail: err.message };
   }
-  return {
-    status: response.status,
-    ok: true,
-    data: data as DebugRetrievalResponse,
-    detail: null,
-  };
 }
 
 /** Fetch reachability of the configured backend servers (dev console). */
 export function getServerHealth(): Promise<{ servers: ServerHealth[] }> {
-  return requestJson<{ servers: ServerHealth[] }>("/api/debug/health");
+  return get<{ servers: ServerHealth[] }>("/api/debug/health");
 }
 
 /** List evaluation result files from the configured results dir (dev console). */
 export function getEvalResults(): Promise<{ results: EvalResultFile[] }> {
-  return requestJson<{ results: EvalResultFile[] }>("/api/debug/eval-results");
+  return get<{ results: EvalResultFile[] }>("/api/debug/eval-results");
 }
 
 /** Per-route request latency from the dev-console middleware. */
 export function getRouteLatency(): Promise<RouteLatencyResponse> {
-  return requestJson<RouteLatencyResponse>("/api/debug/latency");
+  return get<RouteLatencyResponse>("/api/debug/latency");
 }
 
 /**
@@ -105,67 +87,42 @@ export function submitSessionFeedback(
   target: FeedbackTarget = "overall",
   init?: Pick<RequestInit, "signal">,
 ): Promise<{ ok: boolean }> {
-  return requestJson<{ ok: boolean }>("/api/feedback", {
-    method: "POST",
-    body: JSON.stringify({ session_id: sessionId, signal, target, source: "answer_panel" }),
+  return post<{ ok: boolean }>("/api/feedback", {
+    body: { session_id: sessionId, signal, target, source: "answer_panel" },
     signal: init?.signal,
   });
 }
 
 /** Registered tools + the discovery catalog grouped by server (dev console). */
 export function getDebugTools(): Promise<DebugToolsResult> {
-  return requestJson<DebugToolsResult>("/api/debug/tools");
+  return get<DebugToolsResult>("/api/debug/tools");
 }
 
 /** Rank tools for a query via the semantic router (dev console). */
 export function discoverTools(query: string): Promise<ToolDiscoverResult> {
-  return requestJson<ToolDiscoverResult>("/api/debug/tools/discover", {
-    method: "POST",
-    body: JSON.stringify({ query }),
+  return post<ToolDiscoverResult>("/api/debug/tools/discover", {
+    body: { query },
   });
 }
 
 /** Run only the query-transform pipeline for a query (dev console). */
 export function runQueryTransform(query: string): Promise<QueryTransformResult> {
-  return requestJson<QueryTransformResult>("/api/debug/query-transform", {
-    method: "POST",
-    body: JSON.stringify({ query }),
+  return post<QueryTransformResult>("/api/debug/query-transform", {
+    body: { query },
   });
 }
 
 /** List recent captured request runs (dev console — Request Inspector). */
 export async function listDebugRequests(): Promise<{ requests: RequestSummary[] }> {
-  return requestJson<{ requests: RequestSummary[] }>("/api/debug/requests");
+  return get<{ requests: RequestSummary[] }>("/api/debug/requests");
 }
 
 /** Fetch one request's full stage-by-stage snapshot (dev console — Request Inspector). */
 export async function getDebugRequest(id: string): Promise<RequestSnapshot> {
-  return requestJson<RequestSnapshot>(`/api/debug/request/${encodeURIComponent(id)}`);
+  return get<RequestSnapshot>(`/api/debug/request/${encodeURIComponent(id)}`);
 }
 
-async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(url, {
-    credentials: "same-origin",
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-    ...init,
-  });
-  const data = await response.json().catch(() => null);
-  if (!response.ok) {
-    const detail =
-      data && typeof data === "object" && "detail" in data
-        ? String(data.detail)
-        : `Request failed with ${response.status}`;
-    // Carry the status so callers can tell "you lack the role" from "it broke".
-    // Additive: the message is unchanged, so existing handlers are unaffected.
-    throw Object.assign(new Error(detail), { status: response.status });
-  }
-  return data as T;
-}
-
-/** HTTP status attached to a `requestJson` rejection, when there was one. */
+/** HTTP status attached to a request rejection, when there was one. */
 export function errorStatus(err: unknown): number | undefined {
   return typeof err === "object" && err !== null && "status" in err
     ? (err as { status?: number }).status
@@ -174,8 +131,7 @@ export function errorStatus(err: unknown): number | undefined {
 
 /** The backend's login form sets the HttpOnly session cookie on success. */
 export function login(email: string, password: string): Promise<CurrentUser> {
-  return requestJson<CurrentUser>("/auth/login", {
-    method: "POST",
+  return post<CurrentUser>("/auth/login", {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ username: email, password }),
   });
@@ -183,24 +139,23 @@ export function login(email: string, password: string): Promise<CurrentUser> {
 
 /** Clears the session cookie; succeeds even when the session has expired. */
 export function logout(): Promise<void> {
-  return requestJson<void>("/auth/logout", { method: "POST" });
+  return post<void>("/auth/logout");
 }
 
 export function getCurrentUser(): Promise<CurrentUser> {
-  return requestJson<CurrentUser>("/me");
+  return get<CurrentUser>("/me");
 }
 
 export function getPermissions(): Promise<Permission[]> {
-  return requestJson<Permission[]>("/me/permissions");
+  return get<Permission[]>("/me/permissions");
 }
 
 export function createSession(
   request: SessionCreateRequest = {},
   init?: Pick<RequestInit, "signal">,
 ): Promise<ChatSessionView> {
-  return requestJson<ChatSessionView>("/api/sessions", {
-    method: "POST",
-    body: JSON.stringify(request),
+  return post<ChatSessionView>("/api/sessions", {
+    body: request,
     signal: init?.signal,
   });
 }
@@ -209,46 +164,35 @@ export function getSession(
   sessionId: string,
   init?: Pick<RequestInit, "signal">,
 ): Promise<ChatSessionView> {
-  return requestJson<ChatSessionView>(`/api/sessions/${sessionId}`, {
-    signal: init?.signal,
-  });
+  return get<ChatSessionView>(`/api/sessions/${sessionId}`, { signal: init?.signal });
 }
 
 export function getAdminSummary(init?: Pick<RequestInit, "signal">): Promise<AdminSurfaceSummary> {
-  return requestJson<AdminSurfaceSummary>("/admin/observability/summary", {
-    signal: init?.signal,
-  });
+  return get<AdminSurfaceSummary>("/admin/observability/summary", { signal: init?.signal });
 }
 
 export function getAnalyticsByLLM(init?: Pick<RequestInit, "signal">): Promise<BreakdownAnalytics> {
-  return requestJson<BreakdownAnalytics>("/analytics/by-llm", {
-    signal: init?.signal,
-  });
+  return get<BreakdownAnalytics>("/analytics/by-llm", { signal: init?.signal });
 }
 
 export function getAnalyticsByPersona(
   init?: Pick<RequestInit, "signal">,
 ): Promise<BreakdownAnalytics> {
-  return requestJson<BreakdownAnalytics>("/analytics/by-persona", {
-    signal: init?.signal,
-  });
+  return get<BreakdownAnalytics>("/analytics/by-persona", { signal: init?.signal });
 }
 
 export function getAnalyticsByFlow(
   init?: Pick<RequestInit, "signal">,
 ): Promise<BreakdownAnalytics> {
-  return requestJson<BreakdownAnalytics>("/analytics/by-flow", {
-    signal: init?.signal,
-  });
+  return get<BreakdownAnalytics>("/analytics/by-flow", { signal: init?.signal });
 }
 
 export function runAgent(
   request: AgentExperienceRequest,
   init?: Pick<RequestInit, "signal">,
 ): Promise<AgentExperienceResponse> {
-  return requestJson<AgentExperienceResponse>("/api/agent", {
-    method: "POST",
-    body: JSON.stringify(request),
+  return post<AgentExperienceResponse>("/api/agent", {
+    body: request,
     signal: init?.signal,
   });
 }
@@ -258,9 +202,8 @@ export function submitToolApproval(
   decision: "approve" | "deny",
   init?: Pick<RequestInit, "signal">,
 ): Promise<unknown> {
-  return requestJson<unknown>(`/api/agent/approvals/${approvalId}`, {
-    method: "POST",
-    body: JSON.stringify({ decision }),
+  return post<unknown>(`/api/agent/approvals/${approvalId}`, {
+    body: { decision },
     signal: init?.signal,
   });
 }
@@ -270,57 +213,17 @@ export function submitToolEscalation(
   decision: "retry" | "skip" | "cancel",
   init?: Pick<RequestInit, "signal">,
 ): Promise<unknown> {
-  return requestJson<unknown>(`/api/agent/escalations/${escalationId}`, {
-    method: "POST",
-    body: JSON.stringify({ decision }),
+  return post<unknown>(`/api/agent/escalations/${escalationId}`, {
+    body: { decision },
     signal: init?.signal,
   });
-}
-
-/**
- * Decode an SSE byte stream into typed events.
- *
- * The server frames each event as a single `data: <json>` line closed by a
- * blank line (see src/internal/servers/sse.py), so a frame never spans lines
- * and this does not reassemble multi-line `data:` runs. It also ignores
- * `event:`, `id:` and `retry:`, none of which the server emits.
- */
-async function* readSSE<T>(body: ReadableStream<Uint8Array>): AsyncGenerator<T> {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed.startsWith("data:")) continue;
-      const payload = trimmed.slice("data:".length).trim();
-      if (payload) yield JSON.parse(payload) as T;
-    }
-  }
 }
 
 export async function* streamAgent(
   request: AgentExperienceRequest,
   init?: Pick<RequestInit, "signal">,
 ): AsyncGenerator<SSEEvent> {
-  const response = await apiFetch("/api/agent/stream", {
-    method: "POST",
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
-    signal: init?.signal,
-  });
-
-  if (!response.ok || !response.body) {
-    throw new Error(`Stream request failed: ${response.status}`);
-  }
-
-  yield* readSSE<SSEEvent>(response.body);
+  yield* stream<SSEEvent>("/api/agent/stream", { body: request, signal: init?.signal });
 }
 
 export function getQueryHistory(
@@ -334,34 +237,18 @@ export function getQueryHistory(
   } = {},
   init?: Pick<RequestInit, "signal">,
 ): Promise<QueryHistoryPage> {
-  const qs = new URLSearchParams();
-  if (params.page_num !== undefined) qs.set("page_num", String(params.page_num));
-  if (params.page_size !== undefined) qs.set("page_size", String(params.page_size));
-  if (params.start_time) qs.set("start_time", params.start_time);
-  if (params.end_time) qs.set("end_time", params.end_time);
-  if (params.user_id) qs.set("user_id", params.user_id);
-  if (params.feedback_type) qs.set("feedback_type", params.feedback_type);
-  const query = qs.toString();
-  return requestJson<QueryHistoryPage>(`/admin/chat-session-history${query ? `?${query}` : ""}`, {
-    signal: init?.signal,
-  });
+  return get<QueryHistoryPage>("/admin/chat-session-history", { params, signal: init?.signal });
 }
 
 export function getAuditSummary(
   params: { start_time?: string; end_time?: string } = {},
   init?: Pick<RequestInit, "signal">,
 ): Promise<AuditSummary> {
-  const qs = new URLSearchParams();
-  if (params.start_time) qs.set("start_time", params.start_time);
-  if (params.end_time) qs.set("end_time", params.end_time);
-  const query = qs.toString();
-  return requestJson<AuditSummary>(`/admin/query-history/audit${query ? `?${query}` : ""}`, {
-    signal: init?.signal,
-  });
+  return get<AuditSummary>("/admin/query-history/audit", { params, signal: init?.signal });
 }
 
 export function listTools(init?: Pick<RequestInit, "signal">): Promise<ToolView[]> {
-  return requestJson<ToolView[]>("/admin/tools", { signal: init?.signal });
+  return get<ToolView[]>("/admin/tools", { signal: init?.signal });
 }
 
 /**
@@ -375,9 +262,8 @@ export function discoverAdminTools(
   query: string,
   init?: Pick<RequestInit, "signal">,
 ): Promise<ToolDiscoverResult> {
-  return requestJson<ToolDiscoverResult>("/admin/tools/discover", {
-    method: "POST",
-    body: JSON.stringify({ query }),
+  return post<ToolDiscoverResult>("/admin/tools/discover", {
+    body: { query },
     signal: init?.signal,
   });
 }
@@ -386,9 +272,8 @@ export function registerOpenAPITools(
   req: OpenAPIRegisterRequest,
   init?: Pick<RequestInit, "signal">,
 ): Promise<OpenAPIRegisterResponse> {
-  return requestJson<OpenAPIRegisterResponse>("/admin/tools/openapi", {
-    method: "POST",
-    body: JSON.stringify(req),
+  return post<OpenAPIRegisterResponse>("/admin/tools/openapi", {
+    body: req,
     signal: init?.signal,
   });
 }
@@ -397,10 +282,7 @@ export function deleteOpenAPIProvider(
   providerId: string,
   init?: Pick<RequestInit, "signal">,
 ): Promise<void> {
-  return requestJson<void>(`/admin/tools/openapi/${providerId}`, {
-    method: "DELETE",
-    signal: init?.signal,
-  });
+  return del<void>(`/admin/tools/openapi/${providerId}`, { signal: init?.signal });
 }
 
 export function invokeTool(
@@ -408,9 +290,8 @@ export function invokeTool(
   req: ToolInvokeRequest,
   init?: Pick<RequestInit, "signal">,
 ): Promise<ToolInvokeResponse> {
-  return requestJson<ToolInvokeResponse>(`/admin/tools/${name}/invoke`, {
-    method: "POST",
-    body: JSON.stringify(req),
+  return post<ToolInvokeResponse>(`/admin/tools/${name}/invoke`, {
+    body: req,
     signal: init?.signal,
   });
 }
@@ -421,73 +302,61 @@ export function submitFeedback(
   feedbackText?: string,
   init?: Pick<RequestInit, "signal">,
 ): Promise<void> {
-  return requestJson<void>("/chat/create-chat-message-feedback", {
-    method: "POST",
-    body: JSON.stringify({
+  return post<void>("/chat/create-chat-message-feedback", {
+    body: {
       chat_message_id: messageId,
       is_positive: isPositive,
       feedback_text: feedbackText ?? null,
-    }),
+    },
     signal: init?.signal,
   });
+}
+
+/** Streams a local-model surface; a 400 means no local model is configured. */
+async function* streamWithModel<T>(
+  url: string,
+  body: object,
+  init?: Pick<RequestInit, "signal">,
+): AsyncGenerator<T> {
+  try {
+    yield* stream<T>(url, { body: { stream: true, ...body }, signal: init?.signal });
+  } catch (err) {
+    if (errorStatus(err) === 400) throw new Error("NO_LOCAL_MODEL", { cause: err });
+    throw err;
+  }
 }
 
 export async function* sendToolMessage(
   body: SendToolMessageBody,
   init?: Pick<RequestInit, "signal">,
 ): AsyncGenerator<ToolStreamEvent> {
-  const response = await apiFetch("/tool/send-tool-message", {
-    method: "POST",
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ stream: true, ...body }),
-    signal: init?.signal,
-  });
-  if (response.status === 400) {
-    throw new Error("NO_LOCAL_MODEL");
-  }
-  if (!response.ok || !response.body) {
-    throw new Error(`Tool stream failed: ${response.status}`);
-  }
-  yield* readSSE<ToolStreamEvent>(response.body);
+  yield* streamWithModel<ToolStreamEvent>("/tool/send-tool-message", body, init);
 }
 
 export function getToolHistory(): Promise<{ sessions: ToolSessionSummary[] }> {
-  return requestJson<{ sessions: ToolSessionSummary[] }>("/tool/tool-history");
+  return get<{ sessions: ToolSessionSummary[] }>("/tool/tool-history");
 }
 
 export async function* sendChatMessage(
   body: SendChatMessageBody,
   init?: Pick<RequestInit, "signal">,
 ): AsyncGenerator<ChatStreamEvent> {
-  const response = await apiFetch("/chat/send-chat-message", {
-    method: "POST",
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ stream: true, ...body }),
-    signal: init?.signal,
-  });
-  if (response.status === 400) throw new Error("NO_LOCAL_MODEL");
-  if (!response.ok || !response.body) {
-    throw new Error(`Chat stream failed: ${response.status}`);
-  }
-  yield* readSSE<ChatStreamEvent>(response.body);
+  yield* streamWithModel<ChatStreamEvent>("/chat/send-chat-message", body, init);
 }
 
 export function fetchSearchDomains(): Promise<{
   domains: SearchDomainOption[];
 }> {
-  return requestJson<{ domains: SearchDomainOption[] }>("/api/search-domains");
+  return get<{ domains: SearchDomainOption[] }>("/api/search-domains");
 }
 
 export function sendSearchMessage(body: SendSearchMessageBody): Promise<SearchFullResponse> {
-  return requestJson<SearchFullResponse>("/search/send-search-message", {
-    method: "POST",
-    body: JSON.stringify({
+  return post<SearchFullResponse>("/search/send-search-message", {
+    body: {
       search_query: body.search_query,
       num_hits: body.num_hits ?? 8,
       run_query_expansion: false,
       stream: false,
-    }),
+    },
   });
 }

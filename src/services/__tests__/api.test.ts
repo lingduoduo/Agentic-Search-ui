@@ -35,13 +35,14 @@ describe("submitToolApproval", () => {
 
     await submitToolApproval("a1", "approve");
 
-    expect(mockFetch).toHaveBeenCalledWith("/api/agent/approvals/a1", {
+    const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/agent/approvals/a1");
+    expect(init).toMatchObject({
       credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
       method: "POST",
       body: JSON.stringify({ decision: "approve" }),
-      signal: undefined,
     });
+    expect(new Headers(init.headers).get("Content-Type")).toBe("application/json");
   });
 });
 

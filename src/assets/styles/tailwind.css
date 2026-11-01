@@ -1,0 +1,4 @@
+/* Keep the existing SCSS base styles; load Tailwind without its Preflight reset. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source("../..");

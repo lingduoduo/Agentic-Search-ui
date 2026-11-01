@@ -98,7 +98,7 @@ export function App() {
         </div>
       </header>
       <main className="workspace" aria-label="Agentic Search workspace">
-        <div className="page-intro">
+        <div className="page-intro min-w-0">
           <h2>{page.title}</h2>
           <p>{page.description}</p>
         </div>

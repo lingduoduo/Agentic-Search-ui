@@ -40,29 +40,57 @@ yarn test:unit               # Vitest unit tests
 > it at with `AGENTIC_SEARCH_FRONTEND_DIST` (stale until you rebuild). `:5173` is
 > the live source with hot-reload.
 
-## Logging in (Search / Chat / Tools pages)
+## Signing in
 
-The **Search** page calls `POST /search/send-search-message`, which resolves the
-caller with `resolve_active_user` and returns `401 Authentication required` for
-anonymous requests — unlike `/api/agent`, this surface requires a real user
-rather than falling back to the anonymous `["public"]` identity. `AGENTIC_SEARCH_DEV_ADMIN`
-does **not** cover this; that bypass applies only to the admin routers.
+Every page except the sign-in page, `/auth/login`, checks the session before it
+mounts. The root route's loader (`requireLogin` in `src/auth/session.ts`) is the
+guard: it returns at once when the account is already cached
+(`src/store/account.ts`), and otherwise loads `GET /me` and `GET /me/permissions`
+once per page load. A `401` (or a `404` for a cookie whose user no longer exists)
+redirects to `/auth/login?redirect=<original path>`; `/` and unknown paths become
+`?redirect=/home`. Any other failure, such as the backend being down, still opens
+the page and the layout shows the error.
 
-There is no login UI in the app. For local dev, open:
+The sign-in page posts its form to `POST /auth/login`, the same path: the dev proxy
+and nginx serve the page only for an HTML navigation of exactly `/auth/login`. The
+backend sets the HttpOnly `fastapiusersauth` cookie; the app never stores a token,
+so the cached account, not a token, is what says "signed in". After sign-in,
+`safeRedirectPath` returns the user to `redirect` only when it is one of the app's
+own routes (`ROUTES` in `src/config/routes.ts`); anything else, including another
+origin or the sign-in page, goes to the **Home** page, `/home`, which links to every
+page the user can open. **Sign out** (sidebar and `/account`) calls
+`POST /auth/logout`, which clears the cookie even for an expired session.
+
+Every backend call goes through `apiFetch` in `src/services/api.ts`, which fires
+`SESSION_CLEARED_EVENT` on a `401`. That drops the cached account, and the
+signed-in layout (`App`) sends the user to `/auth/login?redirect=<current page>` —
+except while the guard itself is confirming the session, since it redirects on
+its own then.
+
+Permissions come from `/me/permissions`, not the role text: every user has
+`basic_access` (the four workspaces and `/account`); admins and configured super
+users also have `full_admin_panel_access`, which shows the **Admin** link,
+**Manage tools** and **History**, and allows `/admin`. The `/admin` loader checks
+the permission before it fetches any admin data and sends other users to
+`/assist`. The backend's `make_require_admin` guards remain the real boundary.
+
+The app has no registration form. For local dev, create a user by opening (the
+sign-in page links to it in development builds only):
 
 ```
 http://127.0.0.1:5173/dev-login.html
 ```
 
-and click **Log in**. It registers `dev@localhost` / `devpass` (idempotent), logs
-in, and confirms via `/me`. That sets the `fastapiusersauth` cookie on the dev
-server's origin, which is where the pages need it. Return to the dashboard and
-Search works.
+and clicking **Log in**. It registers `dev@localhost` / `devpass` (idempotent), logs
+in, and confirms via `/me`, so the cookie is set on the dev server's origin. The
+first registered user is an admin. `yarn dev --env mock` is always signed in as
+an admin.
 
 Two caveats:
 
 - `AGENTIC_SEARCH_WEB_DB_PATH` defaults to `:memory:`, so the user disappears when
-  the backend restarts — click **Log in** again, or start the backend with a file
+  the backend restarts — the app returns to `/auth/login`; click **Log in** on
+  `dev-login.html` again, or start the backend with a file
   DB (`AGENTIC_SEARCH_WEB_DB_PATH=data/web.db`) to make it stick.
 - `dev-login.html` is served by the Webpack dev server only. It is not a build input,
   so `yarn build` does not emit it into `dist/`, and the nginx image never serves it. Keep it that way: the first
@@ -75,13 +103,14 @@ Debug panels also require an authenticated admin when enabled. Their request
 traces and retrieval diagnostics use the same admin guard as the dashboard;
 the debug enablement flag alone does not grant access.
 
-The web UI includes admin panels. **Manage tools** and **History** are top-bar
-buttons; **Admin overview** and **Analytics** render below the results once their
-data loads. The tools
+Admins get the `/admin` page — **Admin overview** and **Analytics** — and two
+sidebar buttons, **Manage tools** and **History**, which toggle their panels above
+the current page. The tools
 button is labelled _Manage tools_, not _Tools_: the `/tools` nav link goes to the
 tool-agent page instead, and the two used to share a label. They call the
-`/admin/*` and `/analytics/*` routers, which are **admin-authenticated**. Two
-things make them work locally:
+`/admin/*` and `/analytics/*` routers, which are **admin-authenticated**. The
+exact path `/admin` is the SPA page; `/admin/*` stays backend-only in the Webpack
+proxy and nginx. Two things make them work locally:
 
 1. **Proxy** — the Webpack dev server already forwards `/admin` and `/analytics` to
    the backend (above), so requests reach FastAPI on `:7860`.
@@ -96,10 +125,11 @@ AGENTIC_SEARCH_DEV_ADMIN=1 PYTHONPATH=src:. \
 
 The startup log prints `ADMIN AUTH BYPASSED …` when it's active. **Dev only —
 never set this in production.** Without the flag the endpoints return `401` and
-you'd need an admin JWT in the `fastapiusersauth` cookie instead.
+you'd need an admin JWT in the `fastapiusersauth` cookie instead. The bypass does
+not change `/me/permissions`, so the app still needs a signed-in admin account to
+show the admin controls.
 
-Clicking a top-bar button toggles its panel below the observability panels
-(scroll down to see it). Empty panels — e.g. **Manage tools** with no registered
+Empty panels — e.g. **Manage tools** with no registered
 tools — are expected when nothing is configured locally, not an error.
 
 ## Dev console

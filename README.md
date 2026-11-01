@@ -191,8 +191,9 @@ and `components/NavLink.tsx` wraps React Router’s active navigation links. `ro
 
 The interface uses a shared left sidebar, a page workspace, white surfaces,
 and blue primary actions. On small screens the sidebar becomes compact top
-navigation. Admin and analytics panels are available
-under the expandable **Admin and analytics** section below the active page.
+navigation. Every page requires signing in at `/auth/login`, after which `/home`
+links to the workspaces; admins also get the
+`/admin` page with the admin overview and analytics.
 
 Put imported images, icons, fonts, and SCSS in `src/assets/`. Webpack bundles
 referenced assets with hashed filenames in `dist/assets/`; merely adding a

@@ -9,6 +9,7 @@ const document = {
   score: 0.95,
   metadata: { source: "mock" },
 };
+const mockUser = { id: "mock-user", email: "admin@example.test", role: "admin", is_active: true };
 const session = { id: "mock-session", messages: [], title: "Mock session", user_id: null };
 const chatEvents = [
   { type: "answer", text: answer },
@@ -37,6 +38,11 @@ const feedbackCount = history.filter((item) => item.feedback_type !== null).leng
 const disliked = history.filter((item) => item.feedback_type === "dislike");
 
 export default [
+  // Mock mode is always signed in as an admin so every page is reachable.
+  { method: "GET", path: "/me", response: mockUser },
+  { method: "GET", path: "/me/permissions", response: ["basic_access", "full_admin_panel_access"] },
+  { method: "POST", path: "/auth/login", response: mockUser },
+  { method: "POST", path: "/auth/logout", status: 204 },
   { method: "GET", path: "/health", response: { status: "ok", mock: true } },
   { method: "GET", path: "/ready", response: { status: "ready", mock: true } },
   {

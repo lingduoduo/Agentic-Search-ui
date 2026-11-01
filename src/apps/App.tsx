@@ -1,44 +1,38 @@
 import { useEffect, useState } from "react";
-import { Outlet } from "react-router";
-import {
-  getAdminSummary,
-  getAnalyticsByFlow,
-  getAnalyticsByLLM,
-  getAnalyticsByPersona,
-} from "../services/api";
-import { AdminOverview } from "../components/AdminOverview";
-import { AnalyticsDashboard } from "../components/AnalyticsDashboard";
+import { Outlet, useLocation, useNavigate, useRouteLoaderData } from "react-router";
 import { QueryHistoryPanel } from "../components/QueryHistoryPanel";
 import { ToolAdminPanel } from "../components/ToolAdminPanel";
 import { useCanonicalRoute } from "../routes";
 import { AppSidebar } from "../components/AppSidebar";
-import type { AdminSurfaceSummary, BreakdownAnalytics } from "../interfaces";
+import { isAdmin, isVerifyingSession, loginPath } from "../auth/session";
+import type { GuardData } from "../auth/session";
+import { SESSION_CLEARED_EVENT } from "../config/session";
+import { useAccount } from "../store/account";
 
 export function App() {
-  const [adminSummary, setAdminSummary] = useState<AdminSurfaceSummary | null>(null);
-  const [analyticsByLLM, setAnalyticsByLLM] = useState<BreakdownAnalytics | null>(null);
-  const [analyticsByPersona, setAnalyticsByPersona] = useState<BreakdownAnalytics | null>(null);
-  const [analyticsByFlow, setAnalyticsByFlow] = useState<BreakdownAnalytics | null>(null);
   const [showQueryHistory, setShowQueryHistory] = useState(false);
   const [showTools, setShowTools] = useState(false);
   const route = useCanonicalRoute();
+  const admin = isAdmin(useAccount());
+  const guard = useRouteLoaderData("root") as GuardData | undefined;
+  const location = useLocation();
+  const navigate = useNavigate();
 
+  // Any 401 after the guard let us in: the session ended, so sign in again
+  // and come back here. This layout only mounts on signed-in pages.
   useEffect(() => {
-    getAdminSummary()
-      .then(setAdminSummary)
-      .catch(() => undefined);
-    getAnalyticsByLLM()
-      .then(setAnalyticsByLLM)
-      .catch(() => undefined);
-    getAnalyticsByPersona()
-      .then(setAnalyticsByPersona)
-      .catch(() => undefined);
-    getAnalyticsByFlow()
-      .then(setAnalyticsByFlow)
-      .catch(() => undefined);
-  }, []);
+    const onSessionCleared = () => {
+      if (isVerifyingSession()) return;
+      void navigate(loginPath(location.pathname + location.search + location.hash), {
+        replace: true,
+      });
+    };
+    window.addEventListener(SESSION_CLEARED_EVENT, onSessionCleared);
+    return () => window.removeEventListener(SESSION_CLEARED_EVENT, onSessionCleared);
+  }, [location, navigate]);
 
   const page = {
+    "/home": { title: "Home", description: "Pick a workspace to get started." },
     "/assist": {
       title: "Assistant",
       description: "Ask a question, search your sources, and follow the answer trail.",
@@ -52,11 +46,17 @@ export function App() {
       title: "Tools",
       description: "Ask the tool agent to complete a task and inspect its results.",
     },
+    "/account": { title: "Account", description: "Your sign-in identity and access." },
+    "/admin": {
+      title: "Admin",
+      description: "Operational health and usage analytics across the deployment.",
+    },
   }[route];
 
   return (
     <div className="app-shell">
       <AppSidebar
+        isAdmin={admin}
         showTools={showTools}
         showQueryHistory={showQueryHistory}
         onToggleTools={() => setShowTools((value) => !value)}
@@ -68,25 +68,18 @@ export function App() {
           <p>{page.description}</p>
         </div>
 
-        {showTools && <ToolAdminPanel />}
+        {guard?.error && (
+          <div className="error-banner" role="alert">
+            {guard.error}
+          </div>
+        )}
 
-        {showQueryHistory && <QueryHistoryPanel />}
+        {/* Both panels call admin-only endpoints. */}
+        {admin && showTools && <ToolAdminPanel />}
+
+        {admin && showQueryHistory && <QueryHistoryPanel />}
 
         <Outlet />
-
-        {(adminSummary || analyticsByLLM || analyticsByPersona || analyticsByFlow) && (
-          <details className="workspace-insights">
-            <summary>Admin and analytics</summary>
-            {adminSummary && <AdminOverview summary={adminSummary} />}
-            {(analyticsByLLM || analyticsByPersona || analyticsByFlow) && (
-              <AnalyticsDashboard
-                byLLM={analyticsByLLM}
-                byPersona={analyticsByPersona}
-                byFlow={analyticsByFlow}
-              />
-            )}
-          </details>
-        )}
       </main>
     </div>
   );

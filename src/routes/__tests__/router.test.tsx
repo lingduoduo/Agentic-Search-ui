@@ -15,7 +15,7 @@ beforeEach(() => {
 
 describe("normalizeRoute", () => {
   it("maps / to the default route", () => {
-    expect(normalizeRoute("/")).toBe("/assist");
+    expect(normalizeRoute("/")).toBe("/home");
   });
 
   it("keeps a known route", () => {
@@ -27,7 +27,7 @@ describe("normalizeRoute", () => {
   });
 
   it("falls back to the default for an unknown path", () => {
-    expect(normalizeRoute("/nope")).toBe("/assist");
+    expect(normalizeRoute("/nope")).toBe("/home");
   });
 });
 
@@ -62,8 +62,8 @@ describe("useCanonicalRoute", () => {
   it("rewrites / to the default route without adding a history entry", () => {
     const before = window.history.length;
     const { result } = renderHook(() => useCanonicalRoute(), { wrapper });
-    expect(result.current).toBe("/assist");
-    expect(window.location.pathname).toBe("/assist");
+    expect(result.current).toBe("/home");
+    expect(window.location.pathname).toBe("/home");
     expect(window.history.length).toBe(before);
   });
 

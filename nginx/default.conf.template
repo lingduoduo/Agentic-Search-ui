@@ -23,6 +23,15 @@ server {
         add_header Cache-Control "public, immutable";
     }
 
+    # These pages are the exact path only; /admin/* and /auth/* below stay
+    # backend-only. POST /auth/login is the login call, not a page navigation.
+    location ~ ^/(admin|auth/login)$ {
+        if ($spa_navigation) {
+            rewrite ^ /index.html last;
+        }
+        include /etc/nginx/conf.d/snippets/backend-proxy.conf;
+    }
+
     # Backend-only prefixes. /tool(/|$) does not match /tools.
     location ~ ^/(api|health|ready|auth|me|admin|analytics|tool)(/|$) {
         include /etc/nginx/conf.d/snippets/backend-proxy.conf;
@@ -38,7 +47,7 @@ server {
         include /etc/nginx/conf.d/snippets/backend-proxy.conf;
     }
 
-    # Everything else is the SPA; router.tsx maps unknown paths to /assist.
+    # Everything else is the SPA; router.tsx maps unknown paths to /home.
     location / {
         try_files $uri /index.html;
     }

@@ -17,14 +17,34 @@ test("development proxies API calls while keeping page navigations local", () =>
     "/chat/send",
     "/search/send",
     "/tools/discover",
+    "/admin",
   ]) {
     assert.equal(matches(path, { headers: { accept: "application/json" } }), true, path);
   }
-  for (const path of ["/assist", "/chat", "/search", "/tools", "/chat/session"]) {
+  for (const path of [
+    "/home",
+    "/assist",
+    "/chat",
+    "/search",
+    "/tools",
+    "/chat/session",
+    "/admin",
+    "/auth/login",
+  ]) {
     assert.equal(matches(path, { headers: { accept: "text/html" } }), false, path);
   }
+  assert.equal(matches("/admin/tools", { headers: { accept: "text/html" } }), true);
+  assert.equal(matches("/auth/register", { headers: { accept: "text/html" } }), true);
   assert.equal(matches("/src/main.tsx", { headers: {} }), false);
   assert.equal(dev.devServer.static, false);
+});
+
+test("only development builds set import.meta.env.DEV", () => {
+  const define = (mode) =>
+    config({}, { mode }).plugins.find((plugin) => plugin.constructor.name === "DefinePlugin")
+      .definitions["import.meta.env.DEV"];
+  assert.equal(define("development"), "true");
+  assert.equal(define("production"), "false");
 });
 
 test("production emits assets into dist and has no development login middleware", () => {

@@ -5,7 +5,6 @@ import type {
   AuditSummary,
   BreakdownAnalytics,
   ChatSessionView,
-  SessionListResponse,
   DebugRetrievalOutcome,
   DebugRetrievalParams,
   DebugRetrievalResponse,
@@ -178,14 +177,7 @@ export function getSession(
   sessionId: string,
   init?: Pick<RequestInit, "signal">,
 ): Promise<ChatSessionView> {
-  return requestJson<ChatSessionView>(`/api/sessions/${encodeURIComponent(sessionId)}`, {
-    signal: init?.signal,
-  });
-}
-
-/** The backend lists a recent window shared by all four surfaces. */
-export function listSessions(init?: Pick<RequestInit, "signal">): Promise<SessionListResponse> {
-  return requestJson<SessionListResponse>("/chat/get-user-chat-sessions?page_size=1000", {
+  return requestJson<ChatSessionView>(`/api/sessions/${sessionId}`, {
     signal: init?.signal,
   });
 }

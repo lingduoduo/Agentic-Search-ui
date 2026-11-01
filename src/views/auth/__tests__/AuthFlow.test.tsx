@@ -308,6 +308,20 @@ describe("account", () => {
     expect(account).not.toHaveTextContent("Admin panel");
   });
 
+  it("shows the name, updates it in the store, and resets it", async () => {
+    stubBackend(signedIn(["basic_access"]));
+    renderAt("/account");
+    const account = await screen.findByLabelText("Account details");
+    expect(account).toHaveTextContent("Namealice");
+
+    await userEvent.type(within(account).getByRole("textbox", { name: "New name" }), "Alice");
+    await userEvent.click(within(account).getByRole("button", { name: "Update name" }));
+    expect(account).toHaveTextContent("NameAlice");
+
+    await userEvent.click(within(account).getByRole("button", { name: "Reset" }));
+    expect(account).toHaveTextContent("Namealice");
+  });
+
   it("signs out through the backend and returns to login", async () => {
     let session = true;
     const fetchMock = stubBackend({

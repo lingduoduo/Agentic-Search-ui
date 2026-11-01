@@ -1,16 +1,18 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { appRoutes } from "../../../routes/router";
-import { clearAccount } from "../../../store/account";
+import { accountCleared } from "../../../store/account";
+import { store } from "../../../store";
+import { renderWithStore } from "../../../__tests__/renderApp";
 import { safeRedirectPath } from "../session";
 
 const routers: ReturnType<typeof createMemoryRouter>[] = [];
 afterEach(() => {
   routers.splice(0).forEach((router) => router.dispose());
   vi.unstubAllGlobals();
-  clearAccount();
+  store.dispatch(accountCleared());
 });
 
 const alice = { id: "u1", email: "alice@example.test", role: "basic", is_active: true };
@@ -37,7 +39,7 @@ function signedIn(permissions: string[]) {
 function renderAt(url: string) {
   const router = createMemoryRouter(appRoutes, { initialEntries: [url] });
   routers.push(router);
-  render(<RouterProvider router={router} />);
+  renderWithStore(<RouterProvider router={router} />);
   return router;
 }
 

@@ -1,11 +1,12 @@
 import { SESSION_CLEARED_EVENT } from "../config/session";
-import { getAccount } from "../store/account";
+import { selectAccount } from "../store/account";
+import { store } from "../store";
 
 // The credential is the backend's HttpOnly session cookie: the browser sends it
 // and JavaScript never sees it. The account loaded with it stands in for it.
 
 /** True once this page load has confirmed the session cookie with /me. */
-export const isLogin = () => getAccount() !== null;
+export const isLogin = () => selectAccount(store.getState()) !== null;
 
 /**
  * The cookie no longer works: the account store forgets the user and a

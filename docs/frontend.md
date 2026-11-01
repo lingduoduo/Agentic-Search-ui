@@ -54,7 +54,7 @@ not-found page) checks the session before it mounts. The root route's loader
 (`guard` in `src/views/auth/session.ts`) is the one guard and runs before every
 navigation, like Vue Router's `beforeEach`. For a route marked public it only
 sends a signed-in visitor past the sign-in page; otherwise it returns at once when the account is already cached
-(`src/store/account.ts`), and otherwise loads `GET /me` and `GET /me/permissions`
+(Redux Toolkit: the `account` slice in `src/store/account.ts`), and otherwise loads `GET /me` and `GET /me/permissions`
 once per page load. A `401` (or a `404` for a cookie whose user no longer exists)
 redirects to `/auth/login?redirect=<original path>`; `/` first redirects to
 `/space/apps`, so it becomes `?redirect=/space/apps`. Any other failure, such as the backend being down, still opens

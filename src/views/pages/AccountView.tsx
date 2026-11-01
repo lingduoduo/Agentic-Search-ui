@@ -1,9 +1,10 @@
 import { Form } from "react-router";
 import { isAdmin } from "../auth/session";
-import { useAccount } from "../../store/account";
+import { selectAccount } from "../../store/account";
+import { useAppSelector } from "../../store";
 
 export function AccountView() {
-  const account = useAccount();
+  const account = useAppSelector(selectAccount);
   return (
     <section className="panel account-details" aria-label="Account details">
       {account && (

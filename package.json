@@ -22,10 +22,12 @@
   },
   "dependencies": {
     "@arco-design/web-react": "^2.66.18",
+    "@reduxjs/toolkit": "^2.13.0",
     "lucide-react": "^1.59.0",
     "react": "~19.1.0",
     "react-dom": "~19.1.0",
     "react-markdown": "^10.1.0",
+    "react-redux": "^9.3.1",
     "react-router": "^7"
   },
   "devDependencies": {

@@ -1,44 +1,41 @@
-import { useSyncExternalStore } from "react";
-import { SESSION_CLEARED_EVENT } from "../config/session";
+import { createSlice } from "@reduxjs/toolkit";
+import type { Dispatch, PayloadAction } from "@reduxjs/toolkit";
 import { getCurrentUser, getPermissions } from "../services/api";
 import type { CurrentUser, Permission } from "../interfaces";
 
 export type Account = { user: CurrentUser; permissions: Permission[] };
 
-let account: Account | null = null;
+const accountSlice = createSlice({
+  name: "account",
+  initialState: { account: null as Account | null },
+  reducers: {
+    accountLoaded(state, action: PayloadAction<Account>) {
+      state.account = action.payload;
+    },
+    accountCleared(state) {
+      state.account = null;
+    },
+  },
+  selectors: {
+    selectAccount: (state) => state.account,
+  },
+});
+
+export const { accountLoaded, accountCleared } = accountSlice.actions;
+export const { selectAccount } = accountSlice.selectors;
+export default accountSlice.reducer;
+
 let pending: Promise<Account> | null = null;
-const listeners = new Set<() => void>();
-
-function setAccount(next: Account | null) {
-  account = next;
-  listeners.forEach((listener) => listener());
-}
-
-// The cookie no longer works, so neither does the account loaded with it.
-window.addEventListener(SESSION_CLEARED_EVENT, () => setAccount(null));
-
-export const getAccount = () => account;
-
-export const clearAccount = () => setAccount(null);
 
 /** Loads /me and /me/permissions; concurrent callers share one request. */
-export function loadAccount(): Promise<Account> {
+export const loadAccount = () => (dispatch: Dispatch) => {
   pending ??= Promise.all([getCurrentUser(), getPermissions()])
     .then(([user, permissions]) => {
-      setAccount({ user, permissions });
+      dispatch(accountLoaded({ user, permissions }));
       return { user, permissions };
     })
     .finally(() => {
       pending = null;
     });
   return pending;
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
-export function useAccount() {
-  return useSyncExternalStore(subscribe, getAccount);
-}
+};

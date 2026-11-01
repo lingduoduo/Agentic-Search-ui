@@ -1,33 +1,25 @@
-import { useEffect, useSyncExternalStore } from "react";
-import { DEFAULT_ROUTE } from "../config/routes";
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router";
 import type { Route } from "../config/routes";
 import { normalizeRoute } from "../routes/navigation";
 
-function subscribe(onStoreChange: () => void): () => void {
-  window.addEventListener("popstate", onStoreChange);
-  return () => window.removeEventListener("popstate", onStoreChange);
-}
-
-function getSnapshot(): Route {
-  return normalizeRoute(window.location.pathname);
-}
-
-/** The route for the current URL, re-read whenever the history entry changes. */
+/** Resolve the current React Router location to a supported surface. */
 export function useRoute(): Route {
-  return useSyncExternalStore(subscribe, getSnapshot, () => DEFAULT_ROUTE);
+  return normalizeRoute(useLocation().pathname);
 }
 
-/**
- * `useRoute`, plus an address-bar rewrite when the URL is not already the
- * resolved route (`/` and unknown paths). `replaceState` keeps Back pointing at
- * whatever preceded the app instead of looping on the redirect.
- */
+/** Canonicalize root, unknown and trailing-slash URLs without adding history. */
 export function useCanonicalRoute(): Route {
-  const route = useRoute();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const route = normalizeRoute(location.pathname);
   useEffect(() => {
-    if (window.location.pathname !== route) {
-      window.history.replaceState({}, "", route);
+    if (location.pathname !== route) {
+      void navigate(
+        { pathname: route, search: location.search, hash: location.hash },
+        { replace: true },
+      );
     }
-  }, [route]);
+  }, [location, navigate, route]);
   return route;
 }

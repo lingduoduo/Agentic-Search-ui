@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BrowserRouter, Route, Routes } from "react-router";
 import {
   getAdminSummary,
   getAnalyticsByFlow,
@@ -17,6 +18,14 @@ import { NavLink, useCanonicalRoute } from "../routes";
 import type { AdminSurfaceSummary, BreakdownAnalytics } from "../interfaces";
 
 export function App() {
+  return (
+    <BrowserRouter>
+      <AppLayout />
+    </BrowserRouter>
+  );
+}
+
+function AppLayout() {
   const [adminSummary, setAdminSummary] = useState<AdminSurfaceSummary | null>(null);
   const [analyticsByLLM, setAnalyticsByLLM] = useState<BreakdownAnalytics | null>(null);
   const [analyticsByPersona, setAnalyticsByPersona] = useState<BreakdownAnalytics | null>(null);
@@ -107,15 +116,13 @@ export function App() {
 
         {showQueryHistory && <QueryHistoryPanel />}
 
-        {route === "/assist" ? (
-          <AssistPage />
-        ) : route === "/search" ? (
-          <SearchView />
-        ) : route === "/chat" ? (
-          <ChatView />
-        ) : (
-          <ToolAgentView />
-        )}
+        <Routes>
+          <Route path="/assist" element={<AssistPage />} />
+          <Route path="/search" element={<SearchView />} />
+          <Route path="/chat" element={<ChatView />} />
+          <Route path="/tools" element={<ToolAgentView />} />
+          <Route path="*" element={<AssistPage />} />
+        </Routes>
 
         {(adminSummary || analyticsByLLM || analyticsByPersona || analyticsByFlow) && (
           <details className="workspace-insights">

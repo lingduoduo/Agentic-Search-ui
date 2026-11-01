@@ -3,6 +3,8 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { App } from "../App";
+import { renderApp } from "./renderApp";
+import { createMemoryRouter, RouterProvider } from "react-router";
 
 vi.mock("../../services/api", () => ({
   createSession: vi.fn().mockResolvedValue({ id: "s1", messages: [], title: null, user_id: null }),
@@ -80,7 +82,7 @@ function errorStream(message: string) {
 
 describe("App adaptive layout", () => {
   it("has no intent class on initial render", () => {
-    render(<App />);
+    renderApp();
     const layout = document.querySelector(".results-layout");
     expect(layout?.classList).not.toContain("intent-search");
     expect(layout?.classList).not.toContain("intent-chat");
@@ -89,7 +91,7 @@ describe("App adaptive layout", () => {
 
   it("adds intent-search class to results layout on search response", async () => {
     mockStreamAgent.mockReturnValue(fakeStream("search"));
-    render(<App />);
+    renderApp();
     await submitQuery("find docs on cross-encoder reranking");
     await waitFor(() => {
       const layout = document.querySelector(".results-layout");
@@ -99,7 +101,7 @@ describe("App adaptive layout", () => {
 
   it("adds intent-chat class to results layout on chat response", async () => {
     mockStreamAgent.mockReturnValue(fakeStream("chat"));
-    render(<App />);
+    renderApp();
     await submitQuery("explain FAISS");
     await waitFor(() => {
       const layout = document.querySelector(".results-layout");
@@ -109,7 +111,7 @@ describe("App adaptive layout", () => {
 
   it("adds intent-tool class to results layout on tool response", async () => {
     mockStreamAgent.mockReturnValue(fakeStream("tool", []));
-    render(<App />);
+    renderApp();
     await submitQuery("run API tool");
     await waitFor(() => {
       const layout = document.querySelector(".results-layout");
@@ -119,7 +121,7 @@ describe("App adaptive layout", () => {
 
   it("shows error banner on API failure", async () => {
     mockStreamAgent.mockReturnValue(errorStream("No LLM configured"));
-    render(<App />);
+    renderApp();
     await submitQuery("explain FAISS");
     await waitFor(() => {
       expect(screen.getByText(/no llm configured/i)).toBeInTheDocument();
@@ -128,7 +130,7 @@ describe("App adaptive layout", () => {
 
   it("clears error when new session is created", async () => {
     mockStreamAgent.mockReturnValue(errorStream("failed"));
-    render(<App />);
+    renderApp();
     await submitQuery("q");
     await waitFor(() => expect(screen.getByText(/failed/i)).toBeInTheDocument());
     await userEvent.click(screen.getByRole("button", { name: /new/i }));
@@ -147,7 +149,7 @@ describe("App adaptive layout", () => {
       };
     }
     mockStreamAgent.mockReturnValue(noIntentStream());
-    render(<App />);
+    renderApp();
     await submitQuery("explain FAISS");
     await waitFor(() => expect(answerPanelText()).toContain(baseResponse.answer));
     const layout = document.querySelector(".results-layout");
@@ -172,7 +174,7 @@ describe("App answer-state reset", () => {
       .mockReturnValueOnce(groundedStream())
       .mockReturnValueOnce(errorStream("second failed"));
 
-    render(<App />);
+    renderApp();
     await submitQuery("first query");
     await waitFor(() =>
       expect(document.querySelector(".answer-column .citation-link")).not.toBeNull(),
@@ -190,7 +192,7 @@ describe("App answer-state reset", () => {
 describe("App session timeline", () => {
   it("appends the user query then the assistant answer after a streamed turn", async () => {
     mockStreamAgent.mockReturnValue(fakeStream("chat"));
-    render(<App />);
+    renderApp();
     await submitQuery("what is FAISS");
     await waitFor(() => expect(answerPanelText()).toContain(baseResponse.answer));
 
@@ -206,7 +208,7 @@ describe("App session timeline", () => {
 describe("App grounding status", () => {
   it("shows 'Grounded' when the answer has citations", async () => {
     mockStreamAgent.mockReturnValue(fakeStream("chat"));
-    render(<App />);
+    renderApp();
     await submitQuery("explain FAISS");
     await waitFor(() => expect(answerPanelText()).toContain(baseResponse.answer));
     expect(document.querySelector(".status-pill")?.textContent).toBe("Grounded");
@@ -224,7 +226,7 @@ describe("App grounding status", () => {
       };
     }
     mockStreamAgent.mockReturnValue(noCitationsStream());
-    render(<App />);
+    renderApp();
     await submitQuery("FAISS");
     await waitFor(() => expect(answerPanelText()).toContain(baseResponse.answer));
     expect(document.querySelector(".status-pill")?.textContent).toBe("Answered");
@@ -244,7 +246,7 @@ describe("App grounding status", () => {
       };
     }
     mockStreamAgent.mockReturnValue(routedStream());
-    render(<App />);
+    renderApp();
     await submitQuery("FAISS");
     await waitFor(() => expect(answerPanelText()).toContain(baseResponse.answer));
     const pill = document.querySelector(".route-pill");
@@ -255,7 +257,7 @@ describe("App grounding status", () => {
 
   it("renders no route chip when the response omits route", async () => {
     mockStreamAgent.mockReturnValue(fakeStream("chat"));
-    render(<App />);
+    renderApp();
     await submitQuery("explain FAISS");
     await waitFor(() => expect(answerPanelText()).toContain(baseResponse.answer));
     expect(document.querySelector(".route-pill")).toBeNull();
@@ -265,7 +267,7 @@ describe("App grounding status", () => {
 describe("App example chips", () => {
   it("runs the agent with the chip's query in one click and applies the intent layout", async () => {
     mockStreamAgent.mockReturnValue(fakeStream("search"));
-    render(<App />);
+    renderApp();
     await userEvent.click(
       screen.getByRole("button", { name: /find docs on cross-encoder reranking/i }),
     );
@@ -282,7 +284,7 @@ describe("App example chips", () => {
 describe("App retrieval URL handling", () => {
   it("does not send a client search_url in normal (non-dev) mode", async () => {
     mockStreamAgent.mockReturnValue(fakeStream("search"));
-    render(<App />);
+    renderApp();
     await submitQuery("find docs");
     await waitFor(() => expect(mockStreamAgent).toHaveBeenCalledTimes(1));
     const sentRequest = mockStreamAgent.mock.calls[0][0] as {
@@ -326,7 +328,7 @@ describe("App tool approvals", () => {
         resumeStream();
       });
 
-      render(<App />);
+      renderApp();
       await submitQuery("send an email");
       await userEvent.click(
         await screen.findByRole("button", {
@@ -354,7 +356,7 @@ describe("App tool approvals", () => {
     mockStreamAgent.mockReturnValue(approvalStream());
     mockSubmitToolApproval.mockRejectedValue(new Error("Approval service unavailable"));
 
-    render(<App />);
+    renderApp();
     await submitQuery("send an email");
     await userEvent.click(await screen.findByRole("button", { name: /approve/i }));
 
@@ -383,7 +385,7 @@ describe("App tool approvals", () => {
     }
     mockStreamAgent.mockReturnValueOnce(olderStream()).mockReturnValueOnce(newerStream());
 
-    render(<App />);
+    renderApp();
     await submitQuery("first search");
     const textarea = screen.getByRole("textbox", { name: /question/i });
     await userEvent.clear(textarea);
@@ -408,7 +410,7 @@ describe("App tool approvals", () => {
     }
     mockStreamAgent.mockReturnValue(approvalStream());
 
-    render(<App />);
+    renderApp();
     await submitQuery("send an email");
     expect(await screen.findByLabelText(/approval required for send_email/i)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /new/i }));
@@ -427,7 +429,7 @@ describe("App tool approvals", () => {
     }
     mockStreamAgent.mockReturnValue(approvalsStream());
 
-    render(<App />);
+    renderApp();
     await submitQuery("send an email");
 
     expect(
@@ -447,7 +449,7 @@ describe("App tool approvals", () => {
     }
     mockStreamAgent.mockReturnValue(approvalsStream());
 
-    render(<App />);
+    renderApp();
     await submitQuery("run tools");
 
     expect(await screen.findByLabelText(/approval required for send_email/i)).toBeInTheDocument();
@@ -475,7 +477,7 @@ describe("App tool approvals", () => {
     }
     mockStreamAgent.mockReturnValue(approvalStream());
 
-    render(<App />);
+    renderApp();
     await submitQuery("run a tool");
     expect(await screen.findByLabelText(/approval required for send_email/i)).toBeInTheDocument();
     finish();
@@ -494,7 +496,7 @@ describe("App dashboard layout order", () => {
       metrics: [],
       sections: [],
     });
-    render(<App />);
+    renderApp();
     const admin = await screen.findByLabelText(/admin and observability/i);
     const layout = document.querySelector(".results-layout");
     expect(layout).toBeInTheDocument();
@@ -508,13 +510,37 @@ describe("page navigation", () => {
   });
 
   it("renders the assistant page at /", () => {
-    render(<App />);
+    renderApp();
     expect(screen.getByRole("textbox", { name: /question/i })).toBeInTheDocument();
     expect(window.location.pathname).toBe("/assist");
   });
 
+  it.each([
+    ["/unknown?source=link#answer", "/assist"],
+    ["/chat/?source=link#answer", "/chat"],
+  ])("canonicalizes %s while preserving query and fragment", async (url, pathname) => {
+    window.history.replaceState({}, "", url);
+    const historyLength = window.history.length;
+    renderApp();
+    await waitFor(() => expect(window.location.pathname).toBe(pathname));
+    expect(window.location.search).toBe("?source=link");
+    expect(window.location.hash).toBe("#answer");
+    expect(window.history.length).toBe(historyLength);
+    expect(screen.getByRole("link", { current: "page" })).toHaveAttribute("href", pathname);
+  });
+
+  it("preserves shared layout state when changing pages", async () => {
+    renderApp();
+    const manageTools = screen.getByRole("button", { name: /manage tools/i });
+    await userEvent.click(manageTools);
+    expect(manageTools).toHaveClass("active");
+    await userEvent.click(screen.getByRole("link", { name: /^chat$/i }));
+    expect(screen.getByRole("button", { name: /manage tools/i })).toBe(manageTools);
+    expect(manageTools).toHaveClass("active");
+  });
+
   it("exposes the four surfaces as links, not tabs", () => {
-    render(<App />);
+    renderApp();
     const nav = screen.getByRole("navigation", { name: /surfaces/i });
     expect(nav).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /assistant/i })).toHaveAttribute("href", "/assist");
@@ -526,7 +552,7 @@ describe("page navigation", () => {
   it("names the registry button 'Manage tools' so only the nav link is 'Tools'", async () => {
     // The header used to carry two controls both labelled "Tools": this nav link
     // (the agent surface) and the wrench button (the admin registry panel).
-    render(<App />);
+    renderApp();
     expect(screen.getByRole("button", { name: /manage tools/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^tools$/i })).not.toBeInTheDocument();
     // Exactly one control is named exactly "Tools", and it is the link.
@@ -534,7 +560,7 @@ describe("page navigation", () => {
   });
 
   it("swaps the page and the URL when a link is clicked", async () => {
-    render(<App />);
+    renderApp();
     await userEvent.click(screen.getByRole("link", { name: /^chat$/i }));
     expect(window.location.pathname).toBe("/chat");
     expect(screen.queryByRole("textbox", { name: /question/i })).not.toBeInTheDocument();
@@ -542,13 +568,13 @@ describe("page navigation", () => {
 
   it("mounts the requested page on a deep link without passing through assist", () => {
     window.history.replaceState({}, "", "/search");
-    render(<App />);
+    renderApp();
     expect(screen.getByRole("textbox", { name: /search query/i })).toBeInTheDocument();
     expect(screen.queryByRole("textbox", { name: /question/i })).not.toBeInTheDocument();
   });
 
   it("goes back to the previous page on popstate", async () => {
-    render(<App />);
+    renderApp();
     await userEvent.click(screen.getByRole("link", { name: /^tools$/i }));
     expect(window.location.pathname).toBe("/tools");
     act(() => {
@@ -568,7 +594,7 @@ describe("App search domain", () => {
       ],
     });
     mockStreamAgent.mockReturnValue(fakeStream("search"));
-    render(<App />);
+    renderApp();
     await userEvent.click(await screen.findByRole("checkbox", { name: "financial" }));
     await submitQuery("etf fees");
     await waitFor(() => expect(mockStreamAgent).toHaveBeenCalled());
@@ -580,9 +606,20 @@ describe("App search domain", () => {
 
   it("defaults to web when the user picks nothing", async () => {
     mockStreamAgent.mockReturnValue(fakeStream("search"));
-    render(<App />);
+    renderApp();
     await submitQuery("etf fees");
     await waitFor(() => expect(mockStreamAgent).toHaveBeenCalled());
     expect(mockStreamAgent.mock.calls[0][0]).toMatchObject({ domain: "web" });
   });
+});
+
+it("renders the shared layout and child page from a data router", () => {
+  const router = createMemoryRouter(
+    [{ element: <App />, children: [{ path: "/search", element: <h3>Routed child</h3> }] }],
+    { initialEntries: ["/search"] },
+  );
+  render(<RouterProvider router={router} />);
+  expect(screen.getByRole("heading", { name: "Routed child" })).toBeInTheDocument();
+  expect(screen.getByRole("navigation", { name: "Surfaces" })).toBeInTheDocument();
+  router.dispose();
 });

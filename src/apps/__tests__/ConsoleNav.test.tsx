@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { App } from "../App";
+import { renderApp } from "./renderApp";
 
 vi.mock("../../services/api", () => ({
   createSession: vi.fn().mockResolvedValue({ id: "s1", messages: [], title: null, user_id: null }),
@@ -29,13 +29,13 @@ afterEach(() => vi.unstubAllEnvs());
 describe("Console nav (DEBUG_PANELS gate)", () => {
   it("hides the Console toggle when the flag is off", () => {
     vi.stubEnv("VITE_DEBUG_PANELS", "");
-    render(<App />);
+    renderApp();
     expect(screen.queryByRole("button", { name: /console/i })).not.toBeInTheDocument();
   });
 
   it("shows the Console toggle and opens the Retrieval Lab when enabled", async () => {
     vi.stubEnv("VITE_DEBUG_PANELS", "1");
-    render(<App />);
+    renderApp();
     const toggle = screen.getByRole("button", { name: /console/i });
     expect(toggle).toBeInTheDocument();
     await userEvent.click(toggle);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter, Route, Routes } from "react-router";
+import { Outlet } from "react-router";
 import {
   getAdminSummary,
   getAnalyticsByFlow,
@@ -8,24 +8,12 @@ import {
 } from "../services/api";
 import { AdminOverview } from "../components/AdminOverview";
 import { AnalyticsDashboard } from "../components/AnalyticsDashboard";
-import { ChatView } from "../pages/ChatView";
 import { QueryHistoryPanel } from "../components/QueryHistoryPanel";
-import { SearchView } from "../pages/SearchView";
-import { ToolAgentView } from "../pages/ToolAgentView";
 import { ToolAdminPanel } from "../components/ToolAdminPanel";
-import { AssistPage } from "../pages/AssistPage";
 import { NavLink, useCanonicalRoute } from "../routes";
 import type { AdminSurfaceSummary, BreakdownAnalytics } from "../interfaces";
 
 export function App() {
-  return (
-    <BrowserRouter>
-      <AppLayout />
-    </BrowserRouter>
-  );
-}
-
-function AppLayout() {
   const [adminSummary, setAdminSummary] = useState<AdminSurfaceSummary | null>(null);
   const [analyticsByLLM, setAnalyticsByLLM] = useState<BreakdownAnalytics | null>(null);
   const [analyticsByPersona, setAnalyticsByPersona] = useState<BreakdownAnalytics | null>(null);
@@ -116,13 +104,7 @@ function AppLayout() {
 
         {showQueryHistory && <QueryHistoryPanel />}
 
-        <Routes>
-          <Route path="/assist" element={<AssistPage />} />
-          <Route path="/search" element={<SearchView />} />
-          <Route path="/chat" element={<ChatView />} />
-          <Route path="/tools" element={<ToolAgentView />} />
-          <Route path="*" element={<AssistPage />} />
-        </Routes>
+        <Outlet />
 
         {(adminSummary || analyticsByLLM || analyticsByPersona || analyticsByFlow) && (
           <details className="workspace-insights">

@@ -179,9 +179,10 @@ src/
 ```
 
 `main.tsx` loads `assets/styles/tailwind.css` and `assets/styles/styles.scss`,
-then mounts `apps/App.tsx`. The app shell
-uses React Router’s `BrowserRouter`, `Routes`, and `Route` to select a screen
-from `pages/`. `config/routes.ts` defines the allowed paths,
+then creates a single browser router with `createAppRouter()` and mounts
+React Router’s `RouterProvider`. `routes/router.tsx` defines the route tree
+using `createBrowserRouter`: `apps/App.tsx` is the shared layout, and its
+`Outlet` renders the selected screen from `pages/`. `config/routes.ts` defines the allowed paths,
 `routes/navigation.ts` normalizes paths, `hooks/useRoute.ts` reads the router
 location and redirects root, unknown, and trailing-slash URLs to canonical paths,
 and `components/NavLink.tsx` wraps React Router’s active navigation links. `routes/index.ts` exports the routing API.
@@ -273,8 +274,9 @@ panels, the dev console, and the UI features.
 To add a route screen:
 
 1. Create the screen in `src/pages/` and its tests in `src/pages/__tests__/`.
-2. Add the pathname to `ROUTES` in `src/config/routes.ts` and render the screen
-   from `src/apps/App.tsx`. Navigation helpers live in `src/routes/index.ts`.
+2. Add the pathname to `ROUTES` in `src/config/routes.ts` and register the screen
+   as a child route in `src/routes/router.tsx`. Add its navigation link and page
+   heading in `src/apps/App.tsx`. Navigation helpers live in `src/routes/index.ts`.
 3. Keep page serving aligned with the backend: update the proxy context filter in
    `webpack.config.cjs` and the shared-prefix location in
    `nginx/default.conf.template` when the route shares a backend API prefix,

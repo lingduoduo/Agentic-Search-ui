@@ -2,7 +2,7 @@
 
 The React 19.1 + Webpack + TypeScript + SCSS frontend for
 [Agentic Search](https://github.com/lingduoduo/Agentic-Search-GRPO). It's a
-single-page app with four routes: **Assistant** (`/assist`), **Search**
+single-page app with four surfaces: **Assistant** (`/assist`), **Search**
 (`/search`), **Chat** (`/chat`), and **Tools** (`/tools`). It talks to the
 FastAPI backend over same-origin HTTP and SSE.
 
@@ -87,7 +87,8 @@ flag is exposed to browser code.
 ## Mock API
 
 Start the Webpack dev server at `http://127.0.0.1:5173` with sample API
-responses. Open `/assist`, `/search`, `/chat`, or `/tools` to try the fixtures:
+responses. Open `/assist`, `/search`, `/chat`, or `/tools` to browse session fixtures.
+Use **Start new** (for example, `/chat/new`) to try workspace fixtures:
 
 ```bash
 yarn start:mock
@@ -182,13 +183,18 @@ src/
 then creates a single browser router with `createAppRouter()` and mounts
 React Router’s `RouterProvider`. `routes/router.tsx` defines the route tree
 using `createBrowserRouter`: `apps/App.tsx` is the shared layout, and its
-`Outlet` renders the selected screen from `pages/`. `config/routes.ts` defines the allowed paths,
+`AppSidebar` provides common left-hand navigation for every child route, while
+`Outlet` renders each surface layout from `pages/` in the workspace on the right. Each surface has an index
+`SessionListView`, a `new` child for its workspace, and a `:sessionId` child
+for the saved transcript. For example, `/chat` lists sessions, `/chat/new`
+starts a conversation, and `/chat/:sessionId` opens a saved conversation. `config/routes.ts` defines the allowed paths,
 `routes/navigation.ts` normalizes paths, `hooks/useRoute.ts` reads the router
 location and redirects root, unknown, and trailing-slash URLs to canonical paths,
 and `components/NavLink.tsx` wraps React Router’s active navigation links. `routes/index.ts` exports the routing API.
 
-The interface uses a compact full-width header, centered page content, white
-surfaces, and blue primary actions. Admin and analytics panels are available
+The interface uses a shared left sidebar, a page workspace, white surfaces,
+and blue primary actions. On small screens the sidebar becomes compact top
+navigation. Admin and analytics panels are available
 under the expandable **Admin and analytics** section below the active page.
 
 Put imported images, icons, fonts, and SCSS in `src/assets/`. Webpack bundles

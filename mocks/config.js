@@ -37,6 +37,32 @@ const feedbackCount = history.filter((item) => item.feedback_type !== null).leng
 const disliked = history.filter((item) => item.feedback_type === "dislike");
 
 export default [
+  {
+    method: "GET",
+    path: "/chat/get-user-chat-sessions",
+    response: {
+      sessions: history.map((item) => ({
+        id: item.id,
+        title: item.first_user_message,
+        created_at: item.time_created,
+        updated_at: item.time_created,
+      })),
+      has_more: false,
+    },
+  },
+  ...history.map((item) => ({
+    method: "GET",
+    path: `/api/sessions/${item.id}`,
+    response: {
+      id: item.id,
+      title: item.first_user_message,
+      user_id: item.user_id,
+      messages: [
+        { role: "user", content: item.first_user_message },
+        { role: "assistant", content: item.first_ai_message },
+      ],
+    },
+  })),
   { method: "GET", path: "/health", response: { status: "ok", mock: true } },
   { method: "GET", path: "/ready", response: { status: "ready", mock: true } },
   {

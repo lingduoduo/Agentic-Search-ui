@@ -26,6 +26,10 @@ describe("normalizeRoute", () => {
     expect(normalizeRoute("/chat/")).toBe("/chat");
   });
 
+  it("recognizes a nested session as part of its surface", () => {
+    expect(normalizeRoute("/chat/session-123")).toBe("/chat");
+  });
+
   it("falls back to the default for an unknown path", () => {
     expect(normalizeRoute("/nope")).toBe("/assist");
   });
@@ -65,6 +69,15 @@ describe("useCanonicalRoute", () => {
     expect(result.current).toBe("/assist");
     expect(window.location.pathname).toBe("/assist");
     expect(window.history.length).toBe(before);
+  });
+
+  it("preserves a nested detail URL, query, and fragment", () => {
+    window.history.replaceState({}, "", "/tools/session-123/?q=test#messages");
+    const { result } = renderHook(() => useCanonicalRoute(), { wrapper });
+    expect(result.current).toBe("/tools");
+    expect(window.location.pathname).toBe("/tools/session-123");
+    expect(window.location.search).toBe("?q=test");
+    expect(window.location.hash).toBe("#messages");
   });
 
   it("leaves a known route alone", () => {

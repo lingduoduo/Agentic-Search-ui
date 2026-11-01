@@ -1,5 +1,5 @@
 import type { ChatSessionView } from "../../interfaces";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { App } from "../App";
@@ -7,6 +7,13 @@ import { renderApp } from "./renderApp";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 vi.mock("../../services/api", () => ({
+  getSession: vi.fn().mockResolvedValue({
+    id: "saved-1",
+    title: "Saved transcript",
+    user_id: null,
+    messages: [{ role: "user", content: "Saved question" }],
+  }),
+  listSessions: vi.fn().mockResolvedValue({ sessions: [], has_more: false }),
   createSession: vi.fn().mockResolvedValue({ id: "s1", messages: [], title: null, user_id: null }),
   runAgent: vi.fn(),
   streamAgent: vi.fn(),
@@ -44,6 +51,7 @@ const baseResponse = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  window.history.replaceState({}, "", "/assist/new");
 });
 
 async function submitQuery(query = "explain FAISS") {
@@ -509,9 +517,9 @@ describe("page navigation", () => {
     window.history.replaceState({}, "", "/");
   });
 
-  it("renders the assistant page at /", () => {
+  it("renders the assistant session list at /", () => {
     renderApp();
-    expect(screen.getByRole("textbox", { name: /question/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Saved sessions" })).toBeInTheDocument();
     expect(window.location.pathname).toBe("/assist");
   });
 
@@ -529,15 +537,50 @@ describe("page navigation", () => {
     expect(screen.getByRole("link", { current: "page" })).toHaveAttribute("href", pathname);
   });
 
-  it("preserves shared layout state when changing pages", async () => {
+  it("shares the same sidebar and panel state across child pages", async () => {
     renderApp();
-    const manageTools = screen.getByRole("button", { name: /manage tools/i });
+    const sidebar = screen.getByRole("complementary", { name: "Common navigation" });
+    const manageTools = within(sidebar).getByRole("button", { name: /manage tools/i });
     await userEvent.click(manageTools);
     expect(manageTools).toHaveClass("active");
-    await userEvent.click(screen.getByRole("link", { name: /^chat$/i }));
-    expect(screen.getByRole("button", { name: /manage tools/i })).toBe(manageTools);
+    await userEvent.click(within(sidebar).getByRole("link", { name: /^chat$/i }));
+    expect(screen.getByRole("complementary", { name: "Common navigation" })).toBe(sidebar);
+    await userEvent.click(screen.getByRole("link", { name: "Start new" }));
+    expect(screen.getByRole("textbox", { name: "Chat message" })).toBeInTheDocument();
+    expect(screen.getByRole("complementary", { name: "Common navigation" })).toBe(sidebar);
+    expect(within(sidebar).getByRole("button", { name: /manage tools/i })).toBe(manageTools);
     expect(manageTools).toHaveClass("active");
+    expect(within(sidebar).getByRole("link", { name: "Chat" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
+
+  it.each([
+    ["/assist", /question/i],
+    ["/search", /search query/i],
+    ["/chat", /chat message/i],
+    ["/tools", /tool agent message/i],
+  ])("opens the existing workspace from the %s list", async (surface, label) => {
+    window.history.replaceState({}, "", surface as string);
+    renderApp();
+    expect(screen.getByRole("region", { name: "Saved sessions" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("link", { name: "Start new" }));
+    expect(window.location.pathname).toBe(`${surface}/new`);
+    expect(screen.getByRole("textbox", { name: label })).toBeInTheDocument();
+    expect(screen.getByRole("link", { current: "page" })).toHaveAttribute("href", surface);
+  });
+
+  it.each(["/assist", "/search", "/chat", "/tools"])(
+    "loads a saved-session deep link under %s",
+    async (surface) => {
+      window.history.replaceState({}, "", `${surface}/saved-1`);
+      renderApp();
+      expect(await screen.findByText("Saved question")).toBeInTheDocument();
+      expect(window.location.pathname).toBe(`${surface}/saved-1`);
+      expect(screen.getByRole("link", { current: "page" })).toHaveAttribute("href", surface);
+    },
+  );
 
   it("exposes the four surfaces as links, not tabs", () => {
     renderApp();
@@ -567,7 +610,7 @@ describe("page navigation", () => {
   });
 
   it("mounts the requested page on a deep link without passing through assist", () => {
-    window.history.replaceState({}, "", "/search");
+    window.history.replaceState({}, "", "/search/new");
     renderApp();
     expect(screen.getByRole("textbox", { name: /search query/i })).toBeInTheDocument();
     expect(screen.queryByRole("textbox", { name: /question/i })).not.toBeInTheDocument();
@@ -578,7 +621,7 @@ describe("page navigation", () => {
     await userEvent.click(screen.getByRole("link", { name: /^tools$/i }));
     expect(window.location.pathname).toBe("/tools");
     act(() => {
-      window.history.replaceState({}, "", "/assist");
+      window.history.replaceState({}, "", "/assist/new");
       window.dispatchEvent(new PopStateEvent("popstate"));
     });
     expect(screen.getByRole("textbox", { name: /question/i })).toBeInTheDocument();

@@ -10,7 +10,8 @@ import { AdminOverview } from "../components/AdminOverview";
 import { AnalyticsDashboard } from "../components/AnalyticsDashboard";
 import { QueryHistoryPanel } from "../components/QueryHistoryPanel";
 import { ToolAdminPanel } from "../components/ToolAdminPanel";
-import { NavLink, useCanonicalRoute } from "../routes";
+import { useCanonicalRoute } from "../routes";
+import { AppSidebar } from "../components/AppSidebar";
 import type { AdminSurfaceSummary, BreakdownAnalytics } from "../interfaces";
 
 export function App() {
@@ -55,45 +56,12 @@ export function App() {
 
   return (
     <div className="app-shell">
-      <header className="topbar">
-        <div className="header-navigation">
-          <div className="brand">
-            <h1>Agentic Search</h1>
-          </div>
-          <nav className="surface-nav" aria-label="Surfaces">
-            <NavLink to="/assist" className="nav-link">
-              Assistant
-            </NavLink>
-            <NavLink to="/search" className="nav-link">
-              Search
-            </NavLink>
-            <NavLink to="/chat" className="nav-link">
-              Chat
-            </NavLink>
-            <NavLink to="/tools" className="nav-link">
-              Tools
-            </NavLink>
-          </nav>
-        </div>
-        <div className="topbar-actions">
-          <button
-            className={`icon-button${showTools ? " active" : ""}`}
-            type="button"
-            onClick={() => setShowTools((v) => !v)}
-            title="Manage tools"
-          >
-            <span>Manage tools</span>
-          </button>
-          <button
-            className={`icon-button${showQueryHistory ? " active" : ""}`}
-            type="button"
-            onClick={() => setShowQueryHistory((v) => !v)}
-            title="Query history audit"
-          >
-            <span>History</span>
-          </button>
-        </div>
-      </header>
+      <AppSidebar
+        showTools={showTools}
+        showQueryHistory={showQueryHistory}
+        onToggleTools={() => setShowTools((value) => !value)}
+        onToggleQueryHistory={() => setShowQueryHistory((value) => !value)}
+      />
       <main className="workspace" aria-label="Agentic Search workspace">
         <div className="page-intro min-w-0">
           <h2>{page.title}</h2>

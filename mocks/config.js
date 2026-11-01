@@ -1,6 +1,7 @@
 // Sample API fixtures used only by webpack-dev-server with --env mock.
 // Restart the dev server after editing this file. Unlisted routes use the real backend.
-// Each entry supports method, path, status, headers, delayMs, and response OR events.
+// Each entry supports method, path, status, headers, delayMs, and response OR events;
+// status and response may be functions of the request.
 const answer = "This is a sample answer from the Webpack mock API.";
 const document = {
   title: "Mock search result",
@@ -37,12 +38,40 @@ const history = [
 const feedbackCount = history.filter((item) => item.feedback_type !== null).length;
 const disliked = history.filter((item) => item.feedback_type === "dislike");
 
+// Mock mode starts signed in as an admin so every page is reachable. Signing
+// out lasts until the next sign-in (any credentials work), as with the backend.
+let signedIn = true;
+const unauthorized = { detail: "Unauthorized" };
+
 export default [
-  // Mock mode is always signed in as an admin so every page is reachable.
-  { method: "GET", path: "/me", response: mockUser },
-  { method: "GET", path: "/me/permissions", response: ["basic_access", "full_admin_panel_access"] },
-  { method: "POST", path: "/auth/login", response: mockUser },
-  { method: "POST", path: "/auth/logout", status: 204 },
+  {
+    method: "GET",
+    path: "/me",
+    status: () => (signedIn ? 200 : 401),
+    response: () => (signedIn ? mockUser : unauthorized),
+  },
+  {
+    method: "GET",
+    path: "/me/permissions",
+    status: () => (signedIn ? 200 : 401),
+    response: () => (signedIn ? ["basic_access", "full_admin_panel_access"] : unauthorized),
+  },
+  {
+    method: "POST",
+    path: "/auth/login",
+    response: () => {
+      signedIn = true;
+      return mockUser;
+    },
+  },
+  {
+    method: "POST",
+    path: "/auth/logout",
+    status: 204,
+    response: () => {
+      signedIn = false;
+    },
+  },
   { method: "GET", path: "/health", response: { status: "ok", mock: true } },
   { method: "GET", path: "/ready", response: { status: "ready", mock: true } },
   {

@@ -2,8 +2,9 @@
 
 The React 19.1 + Webpack + TypeScript + SCSS frontend for
 [Agentic Search](https://github.com/lingduoduo/Agentic-Search-GRPO). It's a
-single-page app with four routes: **Assistant** (`/assist`), **Search**
-(`/search`), **Chat** (`/chat`), and **Tools** (`/tools`). It talks to the
+single-page app whose apps list (`/space/apps`) opens four apps at
+`/space/apps/:app_id`: **Assistant** (`assist`), **Search** (`search`), **Chat**
+(`chat`), and **Tools** (`tools`). It talks to the
 FastAPI backend over same-origin HTTP and SSE.
 
 ## Develop
@@ -87,7 +88,7 @@ flag is exposed to browser code.
 ## Mock API
 
 Start the Webpack dev server at `http://127.0.0.1:5173` with sample API
-responses. Open `/assist`, `/search`, `/chat`, or `/tools` to try the fixtures:
+responses. Open `/space/apps` and pick an app to try the fixtures:
 
 ```bash
 yarn start:mock
@@ -159,7 +160,7 @@ included in production builds or `yarn preview`.
 ```text
 src/
 ├── main.tsx          # React entry point and shared stylesheet import
-├── apps/             # App.tsx shell, navigation, global panels, and tests
+├── App.tsx           # App root: creates the router and renders RouterProvider
 ├── assets/
 │   ├── fonts/        # Local web fonts
 │   ├── icons/        # SVG and other icon assets
@@ -167,32 +168,49 @@ src/
 │   └── styles/       # Shared SCSS and Tailwind CSS entry points
 ├── components/       # Reusable UI, admin panels, and debug inspectors
 ├── config/           # Route definitions and search constants
-├── hooks/            # Route subscriptions and canonical URL hooks
 ├── interfaces/       # Shared API and UI types (index.ts)
-├── pages/            # Assistant, Search, Chat, and Tools route screens
 ├── routes/           # React Router navigation and routing exports
 ├── services/         # Backend HTTP and SSE client (api.ts)
 ├── static/           # Reserved for static assets
 ├── store/            # Reserved for shared application state
 ├── storybook/        # Reserved for component stories
-└── utils/            # Domain selection, tool grouping, and schema helpers
+├── utils/            # Domain selection, tool grouping, and schema helpers
+└── views/
+    ├── auth/         # LoginView and the session guard (session.ts)
+    ├── errors/       # ErrorView (route errors) and NotFoundView
+    ├── layouts/      # DefaultLayout (signed in: sidebar + heading), BlankLayout (public)
+    ├── pages/        # AccountView, AdminView
+    └── space/apps/   # ListView, DetailView, and AssistView, SearchView, ChatView, ToolAgentView
 ```
 
-`main.tsx` loads `assets/styles/tailwind.css` and `assets/styles/styles.scss`,
-then creates a single browser router with `createAppRouter()` and mounts
-React Router’s `RouterProvider`. `routes/router.tsx` defines the route tree
-using `createBrowserRouter`: `apps/App.tsx` is the shared layout, and its
-`AppSidebar` provides the common navigation on the left, while its `Outlet`
-renders the selected screen from `pages/` on the right. The child routes
-`/assist`, `/search`, `/chat`, and `/tools` open their workspaces directly. `config/routes.ts` defines the allowed paths,
-`routes/navigation.ts` normalizes paths, `hooks/useRoute.ts` reads the router
-location and redirects root, unknown, and trailing-slash URLs to canonical paths,
-and `components/NavLink.tsx` wraps React Router’s active navigation links. `routes/index.ts` exports the routing API.
+`main.tsx` loads `assets/styles/tailwind.css` and `assets/styles/styles.scss`
+and mounts `App.tsx`, which creates the browser router with `createAppRouter()`
+and renders React Router’s `RouterProvider`. `routes/router.tsx` defines the
+route tree, following the same logic as a Vue Router setup:
+
+- **Named routes.** Each route's `id` is its name (`auth-login`,
+  `space-apps-list`, `space-apps-detail`, `pages-account`, `pages-admin`), and
+  `routePath(name, params)` in `config/routes.ts` builds its URL.
+- **One guard.** The root route's loader, `guard` in `views/auth/session.ts`,
+  runs before every navigation (like `beforeEach`). Routes marked
+  `handle: { public: true }` need no session, and the sign-in page sends a
+  signed-in visitor on; every other route sends a signed-out visitor to
+  `/auth/login?redirect=<path>`.
+- **Two layouts** from `views/layouts/`, which leave URLs unchanged:
+  `DefaultLayout` (sidebar plus the page heading from `handle.heading`) holds the
+  signed-in pages: `/space/apps` (`ListView`), `/space/apps/:app_id`
+  (`DetailView`, which shows the app and 404s an unknown id), `/account` and
+  `/admin`. `BlankLayout` holds the public pages: `/auth/login` and
+  `NotFoundView` for any other URL.
+- **Lazy pages.** Each page's code loads the first time it opens.
+
+`/` redirects to `/space/apps`. `components/NavLink.tsx` wraps React Router’s
+active navigation links.
 
 The interface uses a shared left sidebar, a page workspace, white surfaces,
 and blue primary actions. On small screens the sidebar becomes compact top
-navigation. Every page requires signing in at `/auth/login`, after which `/home`
-links to the workspaces; admins also get the
+navigation. Every page requires signing in at `/auth/login`, after which the user lands on
+the apps list, `/space/apps`, with the sidebar; admins also get the
 `/admin` page with the admin overview and analytics.
 
 Put imported images, icons, fonts, and SCSS in `src/assets/`. Webpack bundles
@@ -208,9 +226,8 @@ and `storybook/` are empty placeholders in the local layout; Git will track
 them once files are added.
 
 When extending the app, put backend requests in `services/api.ts`, shared
-constants in `config/`, shared data contracts in `interfaces/`, React hooks
-in `hooks/`, pure helpers in `utils/`, and reusable UI in `components/`.
-Route screens in `pages/` compose these pieces, while `apps/` owns the shell.
+constants in `config/`, shared data contracts in `interfaces/`, pure helpers in `utils/`, and reusable UI in `components/`.
+Route screens in `views/pages/` and `views/space/apps/` compose these pieces inside a layout from `views/layouts/`.
 
 ## Check
 
@@ -277,10 +294,13 @@ panels, the dev console, and the UI features.
 
 To add a route screen:
 
-1. Create the screen in `src/pages/` and its tests in `src/pages/__tests__/`.
-2. Add the pathname to `ROUTES` in `src/config/routes.ts` and register the screen
-   as a child route in `src/routes/router.tsx`. Add its navigation link and page
-   heading in `src/apps/App.tsx`. Navigation helpers live in `src/routes/index.ts`.
+1. Create the screen in `src/views/pages/` (or `src/views/space/apps/` for a workspace) with its
+   tests in a `__tests__/` folder beside it.
+2. Name the page in `ROUTE_PATHS` in `src/config/routes.ts` and register it in
+   `src/routes/router.tsx` with that name as its `id`, inside `DefaultLayout`
+   (or `BlankLayout` with `handle: { public: true }` for a public page). A new app
+   only needs an entry in `APPS` and in `DetailView`. Add its navigation link in
+   `src/components/AppSidebar.tsx`; under `DefaultLayout`, give it a page heading as the route's `handle.heading`.
 3. Keep page serving aligned with the backend: update the proxy context filter in
    `webpack.config.cjs` and the shared-prefix location in
    `nginx/default.conf.template` when the route shares a backend API prefix,

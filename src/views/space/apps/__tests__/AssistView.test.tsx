@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { AssistPage } from "../AssistPage";
-import * as api from "../../services/api";
+import { AssistView } from "../AssistView";
+import * as api from "../../../../services/api";
 
-describe("AssistPage claim streaming", () => {
+describe("AssistView claim streaming", () => {
   it("renders claim text as it streams in, joined with a space", async () => {
     vi.spyOn(api, "createSession").mockResolvedValue({
       id: "s1",
@@ -15,7 +15,7 @@ describe("AssistPage claim streaming", () => {
     }
     vi.spyOn(api, "streamAgent").mockImplementation(fake as never);
 
-    render(<AssistPage />);
+    render(<AssistView />);
     fireEvent.change(screen.getByLabelText("Question"), { target: { value: "what is faiss" } });
     fireEvent.click(screen.getByText("Search"));
 
@@ -41,7 +41,7 @@ describe("AssistPage claim streaming", () => {
     }
     vi.spyOn(api, "streamAgent").mockImplementation(fake as never);
 
-    render(<AssistPage />);
+    render(<AssistView />);
     fireEvent.change(screen.getByLabelText("Question"), { target: { value: "what is faiss" } });
     fireEvent.click(screen.getByText("Search"));
 
@@ -54,10 +54,10 @@ describe("AssistPage claim streaming", () => {
   });
 });
 
-describe("AssistPage search-source taxonomy", () => {
+describe("AssistView search-source taxonomy", () => {
   it("keeps web available when discovery fails", async () => {
     vi.spyOn(api, "fetchSearchDomains").mockRejectedValue(new Error("unavailable"));
-    render(<AssistPage />);
+    render(<AssistView />);
     await waitFor(() => expect(api.fetchSearchDomains).toHaveBeenCalled());
     expect(screen.getByRole("checkbox", { name: "web" })).toBeChecked();
   });
@@ -94,7 +94,7 @@ describe("AssistPage search-source taxonomy", () => {
       }
     }
     const stream = vi.spyOn(api, "streamAgent").mockImplementation(fake as never);
-    render(<AssistPage />);
+    render(<AssistView />);
     await screen.findByRole("checkbox", { name: "financial" });
     const typeQuestion = () =>
       fireEvent.change(screen.getByLabelText("Question"), { target: { value: "earnings" } });
@@ -169,7 +169,7 @@ describe("AssistPage search-source taxonomy", () => {
       }
     }
     vi.spyOn(api, "streamAgent").mockImplementation(fake as never);
-    render(<AssistPage />);
+    render(<AssistView />);
     await screen.findByRole("checkbox", { name: "news" });
     fireEvent.click(screen.getByRole("checkbox", { name: "Auto" }));
     fireEvent.change(screen.getByLabelText("Question"), { target: { value: "q" } });

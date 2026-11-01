@@ -1,12 +1,13 @@
-import type { ChatSessionView } from "../../interfaces";
+import type { ChatSessionView } from "../interfaces";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { App } from "../App";
+import { createAppRouter } from "../routes/router";
+import { DefaultLayout } from "../views/layouts/DefaultLayout";
 import { renderApp } from "./renderApp";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-vi.mock("../../services/api", () => ({
+vi.mock("../services/api", () => ({
   // The session loader reads both before the shell mounts; an admin sees every control.
   getCurrentUser: vi.fn().mockResolvedValue({
     id: "u1",
@@ -31,7 +32,7 @@ vi.mock("../../services/api", () => ({
   errorStatus: vi.fn().mockReturnValue(undefined),
 }));
 
-import * as api from "../../services/api";
+import * as api from "../services/api";
 
 const mockStreamAgent = api.streamAgent as ReturnType<typeof vi.fn>;
 const mockSubmitToolApproval = api.submitToolApproval as ReturnType<typeof vi.fn>;
@@ -52,7 +53,7 @@ const baseResponse = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  window.history.replaceState({}, "", "/assist");
+  window.history.replaceState({}, "", "/space/apps/assist");
 });
 
 async function submitQuery(query = "explain FAISS") {
@@ -509,7 +510,10 @@ describe("App admin page", () => {
     expect(document.querySelector(".results-layout")).toBeInTheDocument();
     expect(screen.queryByLabelText(/admin and observability/i)).not.toBeInTheDocument();
     expect(api.getAdminSummary).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByRole("link", { name: "Admin" }));
+    act(() => {
+      window.history.pushState({}, "", "/admin");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
     expect(await screen.findByLabelText(/admin and observability/i)).toBeInTheDocument();
     expect(window.location.pathname).toBe("/admin");
   });
@@ -517,37 +521,62 @@ describe("App admin page", () => {
 
 describe("page navigation", () => {
   beforeEach(() => {
-    window.history.replaceState({}, "", "/");
+    window.history.replaceState({}, "", "/space/apps/assist");
   });
 
-  it("renders the home page at /", async () => {
+  it("lands on the apps list, with the sidebar, at /", async () => {
+    window.history.replaceState({}, "", "/");
     await renderApp();
-    expect(await screen.findByRole("region", { name: "Home" })).toBeInTheDocument();
-    expect(window.location.pathname).toBe("/home");
+    const apps = await screen.findByRole("region", { name: "Apps" });
+    expect(window.location.pathname).toBe("/space/apps");
+    expect(within(apps).getByRole("link", { name: /assistant/i })).toHaveAttribute(
+      "href",
+      "/space/apps/assist",
+    );
+    expect(screen.getByRole("complementary", { name: "Common navigation" })).toBeInTheDocument();
+  });
+
+  it.each(["/home", "/unknown", "/chat"])("shows Not found at %s", async (url) => {
+    window.history.replaceState({}, "", url);
+    const router = createAppRouter();
+    render(<RouterProvider router={router} />);
+    expect(await screen.findByRole("heading", { name: "Page not found" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Go to apps" })).toHaveAttribute("href", "/space/apps");
+    expect(
+      screen.queryByRole("complementary", { name: "Common navigation" }),
+    ).not.toBeInTheDocument();
+    // Public: the guard never asked who is signed in.
+    expect(api.getCurrentUser).not.toHaveBeenCalled();
+    router.dispose();
+  });
+
+  it("shows Not found for an unknown app id", async () => {
+    window.history.replaceState({}, "", "/space/apps/nope");
+    const router = createAppRouter();
+    render(<RouterProvider router={router} />);
+    expect(await screen.findByRole("heading", { name: "Page not found" })).toBeInTheDocument();
+    router.dispose();
   });
 
   it.each([
-    ["/unknown?source=link#answer", "/home"],
-    ["/chat/?source=link#answer", "/chat"],
-  ])("canonicalizes %s while preserving query and fragment", async (url, pathname) => {
+    ["/space/apps/assist", "Assistant"],
+    ["/space/apps/search", "Search"],
+    ["/space/apps/chat/", "Chat"],
+    ["/space/apps/tools", "Tools"],
+    ["/account", "Account"],
+  ])("shows the route's heading at %s", async (url, title) => {
     window.history.replaceState({}, "", url);
-    const historyLength = window.history.length;
     await renderApp();
-    await waitFor(() => expect(window.location.pathname).toBe(pathname));
-    expect(window.location.search).toBe("?source=link");
-    expect(window.location.hash).toBe("#answer");
-    expect(window.history.length).toBe(historyLength);
-    // The URL changes before the active link re-renders.
-    expect(await screen.findByRole("link", { current: "page" })).toHaveAttribute("href", pathname);
+    expect(await screen.findByRole("heading", { level: 2, name: title })).toBeInTheDocument();
   });
 
-  it("shares the same sidebar and panel state across child pages", async () => {
+  it("shares the same sidebar and panel state across DefaultLayout pages", async () => {
     await renderApp();
     const sidebar = screen.getByRole("complementary", { name: "Common navigation" });
     const manageTools = within(sidebar).getByRole("button", { name: /manage tools/i });
     await userEvent.click(manageTools);
-    await userEvent.click(within(sidebar).getByRole("link", { name: /^chat$/i }));
-    expect(screen.getByRole("textbox", { name: "Chat message" })).toBeInTheDocument();
+    await userEvent.click(within(sidebar).getByRole("link", { name: "Account" }));
+    expect(await screen.findByLabelText("Account details")).toBeInTheDocument();
     expect(screen.getByRole("complementary", { name: "Common navigation" })).toBe(sidebar);
     expect(within(sidebar).getByRole("button", { name: /manage tools/i })).toBe(manageTools);
     expect(manageTools).toHaveClass("active");
@@ -555,11 +584,11 @@ describe("page navigation", () => {
   });
 
   it.each([
-    ["/assist", /question/i],
-    ["/search", /search query/i],
-    ["/chat", /chat message/i],
-    ["/tools", /tool agent message/i],
-  ])("opens the original workspace directly at %s", async (surface, label) => {
+    ["/space/apps/assist", /question/i],
+    ["/space/apps/search", /search query/i],
+    ["/space/apps/chat", /chat message/i],
+    ["/space/apps/tools", /tool agent message/i],
+  ])("opens %s inside the shared sidebar layout", async (surface, label) => {
     window.history.replaceState({}, "", surface as string);
     await renderApp();
     expect(screen.getByRole("textbox", { name: label })).toBeInTheDocument();
@@ -573,11 +602,20 @@ describe("page navigation", () => {
     const nav = screen.getByRole("navigation", { name: /surfaces/i });
     expect(within(nav).getByRole("link", { name: /assistant/i })).toHaveAttribute(
       "href",
-      "/assist",
+      "/space/apps/assist",
     );
-    expect(within(nav).getByRole("link", { name: /^search$/i })).toHaveAttribute("href", "/search");
-    expect(within(nav).getByRole("link", { name: /^chat$/i })).toHaveAttribute("href", "/chat");
-    expect(within(nav).getByRole("link", { name: /^tools$/i })).toHaveAttribute("href", "/tools");
+    expect(within(nav).getByRole("link", { name: /^search$/i })).toHaveAttribute(
+      "href",
+      "/space/apps/search",
+    );
+    expect(within(nav).getByRole("link", { name: /^chat$/i })).toHaveAttribute(
+      "href",
+      "/space/apps/chat",
+    );
+    expect(within(nav).getByRole("link", { name: /^tools$/i })).toHaveAttribute(
+      "href",
+      "/space/apps/tools",
+    );
   });
 
   it("names the registry button 'Manage tools' so only the nav link is 'Tools'", async () => {
@@ -593,12 +631,12 @@ describe("page navigation", () => {
   it("swaps the page and the URL when a link is clicked", async () => {
     await renderApp();
     await userEvent.click(screen.getByRole("link", { name: /^chat$/i }));
-    expect(window.location.pathname).toBe("/chat");
+    expect(window.location.pathname).toBe("/space/apps/chat");
     expect(screen.queryByRole("textbox", { name: /question/i })).not.toBeInTheDocument();
   });
 
   it("mounts the requested page on a deep link without passing through assist", async () => {
-    window.history.replaceState({}, "", "/search");
+    window.history.replaceState({}, "", "/space/apps/search");
     await renderApp();
     expect(screen.getByRole("textbox", { name: /search query/i })).toBeInTheDocument();
     expect(screen.queryByRole("textbox", { name: /question/i })).not.toBeInTheDocument();
@@ -607,12 +645,13 @@ describe("page navigation", () => {
   it("goes back to the previous page on popstate", async () => {
     await renderApp();
     await userEvent.click(screen.getByRole("link", { name: /^tools$/i }));
-    expect(window.location.pathname).toBe("/tools");
+    expect(window.location.pathname).toBe("/space/apps/tools");
     act(() => {
-      window.history.replaceState({}, "", "/assist");
+      window.history.replaceState({}, "", "/space/apps/assist");
       window.dispatchEvent(new PopStateEvent("popstate"));
     });
-    expect(screen.getByRole("textbox", { name: /question/i })).toBeInTheDocument();
+    // The guard runs on every navigation, so the page swaps once it resolves.
+    expect(await screen.findByRole("textbox", { name: /question/i })).toBeInTheDocument();
   });
 });
 
@@ -644,10 +683,15 @@ describe("App search domain", () => {
   });
 });
 
-it("renders the shared layout and child page from a data router", () => {
+it("renders DefaultLayout and its child page from a data router", () => {
   const router = createMemoryRouter(
-    [{ element: <App />, children: [{ path: "/search", element: <h3>Routed child</h3> }] }],
-    { initialEntries: ["/search"] },
+    [
+      {
+        element: <DefaultLayout />,
+        children: [{ path: "/space/apps/search", element: <h3>Routed child</h3> }],
+      },
+    ],
+    { initialEntries: ["/space/apps/search"] },
   );
   render(<RouterProvider router={router} />);
   expect(screen.getByRole("heading", { name: "Routed child" })).toBeInTheDocument();

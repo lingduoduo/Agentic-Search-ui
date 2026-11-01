@@ -1,7 +1,7 @@
 import { Form, useActionData, useNavigation } from "react-router";
 
 /** Public sign-in, outside the signed-in sidebar layout. */
-export function LoginPage() {
+export function LoginView() {
   const result = useActionData() as { error: string } | undefined;
   const submitting = useNavigation().state === "submitting";
   return (

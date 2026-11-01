@@ -98,16 +98,16 @@ backend repo's `bin/run_web_stack.sh` starts all of it, using this checkout from
 
 ### Layout
 
-- `src/router.tsx` — the four routes (`/assist`, `/search`, `/chat`, `/tools`) and a small history router
-- `src/App.tsx` — shell: topbar, global panels, and the page for the current route
-- `src/pages/` — one component per route; each owns its state
+- `src/routes/router.tsx` — the route tree: named routes (ids), one `guard` loader honoring `handle.public`, lazy pages; `/space/apps` lists the apps and `/space/apps/:app_id` opens one
+- `src/App.tsx` — app root: creates the router and renders `RouterProvider`
+- `src/views/` — one `*View` component per route, each owning its state: `auth/` (login + session guard), `errors/` (`ErrorView`, `NotFoundView`), `layouts/` (`DefaultLayout`: guarded, sidebar + heading; `BlankLayout`: public pages), `pages/` (Account, Admin), `space/apps/` (`ListView`, `DetailView` and the four app views)
 - `src/components/` — panels, each independently tested (`__tests__/` beside them)
 - `src/api.ts` — every backend call, including the SSE stream (`streamAgent`)
 - `nginx/` + `Dockerfile` — production image: nginx serves `dist/` and proxies the backend prefixes to `BACKEND_URL`
 
 ### Keep in sync
 
-Adding a page touches four places: `ROUTES` in `src/router.tsx`, the `bypass`
+Adding a page touches four places: `ROUTE_PATHS` in `src/config/routes.ts` (plus the route in `src/routes/router.tsx`), the `bypass`
 entries in `vite.config.ts`, the shared-prefix location in
 `nginx/default.conf.template`, and `spa_page` in the backend's
 `src/internal/servers/web/app.py`. A new backend prefix the app calls must be

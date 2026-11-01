@@ -1,8 +1,13 @@
-import { render, renderHook, screen, act } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach } from "vitest";
-import { BrowserRouter, MemoryRouter, useNavigate } from "react-router";
-import { NavLink, normalizeRoute, useCanonicalRoute, useRoute } from "..";
+import { BrowserRouter, matchRoutes } from "react-router";
+import { NavLink } from "../../components/NavLink";
+import { BlankLayout } from "../../views/layouts/BlankLayout";
+import { DefaultLayout } from "../../views/layouts/DefaultLayout";
+import { isRoute, routePath } from "../../config/routes";
+import type { RouteHandle } from "../../config/routes";
+import { appRoutes } from "../router";
 import type { ReactNode } from "react";
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -11,68 +16,6 @@ function wrapper({ children }: { children: ReactNode }) {
 
 beforeEach(() => {
   window.history.replaceState({}, "", "/");
-});
-
-describe("normalizeRoute", () => {
-  it("maps / to the default route", () => {
-    expect(normalizeRoute("/")).toBe("/home");
-  });
-
-  it("keeps a known route", () => {
-    expect(normalizeRoute("/chat")).toBe("/chat");
-  });
-
-  it("strips a trailing slash", () => {
-    expect(normalizeRoute("/chat/")).toBe("/chat");
-  });
-
-  it("falls back to the default for an unknown path", () => {
-    expect(normalizeRoute("/nope")).toBe("/home");
-  });
-});
-
-describe("useRoute", () => {
-  it("reports the route for the current path", () => {
-    window.history.replaceState({}, "", "/tools");
-    const { result } = renderHook(() => useRoute(), { wrapper });
-    expect(result.current).toBe("/tools");
-  });
-
-  it("updates when navigate() is called", () => {
-    const { result } = renderHook(() => ({ route: useRoute(), navigate: useNavigate() }), {
-      wrapper,
-    });
-    act(() => result.current.navigate("/search"));
-    expect(result.current.route).toBe("/search");
-    expect(window.location.pathname).toBe("/search");
-  });
-
-  // Back/forward reach the app as a popstate event; this is what the browser does.
-  it("updates when the browser fires popstate", () => {
-    const { result } = renderHook(() => useRoute(), { wrapper });
-    act(() => {
-      window.history.replaceState({}, "", "/chat");
-      window.dispatchEvent(new PopStateEvent("popstate"));
-    });
-    expect(result.current).toBe("/chat");
-  });
-});
-
-describe("useCanonicalRoute", () => {
-  it("rewrites / to the default route without adding a history entry", () => {
-    const before = window.history.length;
-    const { result } = renderHook(() => useCanonicalRoute(), { wrapper });
-    expect(result.current).toBe("/home");
-    expect(window.location.pathname).toBe("/home");
-    expect(window.history.length).toBe(before);
-  });
-
-  it("leaves a known route alone", () => {
-    window.history.replaceState({}, "", "/tools");
-    const { result } = renderHook(() => useCanonicalRoute(), { wrapper });
-    expect(result.current).toBe("/tools");
-    expect(window.location.pathname).toBe("/tools");
-  });
 });
 
 describe("NavLink", () => {
@@ -113,9 +56,50 @@ describe("NavLink", () => {
   });
 });
 
-it("reads the router location when embedded in a memory router", () => {
-  const { result } = renderHook(() => useRoute(), {
-    wrapper: ({ children }) => <MemoryRouter initialEntries={["/tools"]}>{children}</MemoryRouter>,
+describe("routes", () => {
+  const matchAt = (path: string) => (matchRoutes(appRoutes, path) ?? []).map((m) => m.route);
+
+  it.each([
+    ["/space/apps", "space-apps-list"],
+    ["/space/apps/chat", "space-apps-detail"],
+    ["/account", "pages-account"],
+    ["/admin", "pages-admin"],
+    ["/auth/login", "auth-login"],
+    ["/anything/else", "not-found"],
+  ])("names the route at %s %s", (path, name) => {
+    expect(matchAt(path).at(-1)?.id).toBe(name);
   });
-  expect(result.current).toBe("/tools");
+
+  it.each(["/space/apps", "/space/apps/chat", "/account", "/admin"])(
+    "puts %s in DefaultLayout, behind the guard",
+    (path) => {
+      const routes = matchAt(path);
+      expect(routes.map((r) => r.Component)).toContain(DefaultLayout);
+      expect((routes.at(-1)?.handle as RouteHandle | undefined)?.public).toBeFalsy();
+    },
+  );
+
+  it.each(["/auth/login", "/unknown"])("puts %s in BlankLayout, marked public", (path) => {
+    const routes = matchAt(path);
+    expect(routes.map((r) => r.Component)).toContain(BlankLayout);
+    expect((routes.at(-1)?.handle as RouteHandle).public).toBe(true);
+  });
+});
+
+describe("named routes", () => {
+  it("builds URLs from names", () => {
+    expect(routePath("space-apps-list")).toBe("/space/apps");
+    expect(routePath("space-apps-detail", { app_id: "chat" })).toBe("/space/apps/chat");
+  });
+
+  it.each([
+    ["/space/apps", true],
+    ["/space/apps/tools", true],
+    ["/space/apps/nope", false],
+    ["/account", true],
+    ["/auth/login", false],
+    ["/chat", false],
+  ])("treats %s as a page to return to: %s", (path, expected) => {
+    expect(isRoute(path)).toBe(expected);
+  });
 });

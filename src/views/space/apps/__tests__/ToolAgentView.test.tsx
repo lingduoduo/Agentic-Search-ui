@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolAgentView } from "../ToolAgentView";
-import * as api from "../../services/api";
+import * as api from "../../../../services/api";
 
 describe("ToolAgentView", () => {
   beforeEach(() => vi.restoreAllMocks());

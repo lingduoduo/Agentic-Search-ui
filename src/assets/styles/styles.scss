@@ -2314,12 +2314,7 @@ option:disabled,
   }
 }
 
-.home-page__greeting {
-  margin: 0 0 16px;
-  color: var(--muted);
-}
-
-.home-page__cards {
+.app-list__cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 12px;
@@ -2328,7 +2323,7 @@ option:disabled,
   list-style: none;
 }
 
-.home-card {
+.app-card {
   display: grid;
   align-content: start;
   gap: 6px;

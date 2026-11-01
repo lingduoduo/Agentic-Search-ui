@@ -7,17 +7,17 @@ import {
   streamAgent,
   submitToolApproval,
   submitToolEscalation,
-} from "../services/api";
-import { AUTO } from "../config/search";
-import { AnswerPanel } from "../components/AnswerPanel";
-import { ClarificationPrompt } from "../components/ClarificationPrompt";
-import { DevConsole } from "../components/debug/DevConsole";
-import { SearchComposer } from "../components/SearchComposer";
-import { SessionTimeline } from "../components/SessionTimeline";
-import { SourceGrid } from "../components/SourceGrid";
-import { ToolApprovalCard } from "../components/ToolApprovalCard";
-import { ToolCallTracePanel } from "../components/ToolCallTracePanel";
-import { ToolEscalationCard } from "../components/ToolEscalationCard";
+} from "../../../services/api";
+import { AUTO } from "../../../config/search";
+import { AnswerPanel } from "../../../components/AnswerPanel";
+import { ClarificationPrompt } from "../../../components/ClarificationPrompt";
+import { DevConsole } from "../../../components/debug/DevConsole";
+import { SearchComposer } from "../../../components/SearchComposer";
+import { SessionTimeline } from "../../../components/SessionTimeline";
+import { SourceGrid } from "../../../components/SourceGrid";
+import { ToolApprovalCard } from "../../../components/ToolApprovalCard";
+import { ToolCallTracePanel } from "../../../components/ToolCallTracePanel";
+import { ToolEscalationCard } from "../../../components/ToolEscalationCard";
 import type {
   AgentExperienceRequest,
   ChatMessageView,
@@ -31,7 +31,7 @@ import type {
   ToolApprovalView,
   ToolCallTraceView,
   ToolEscalationView,
-} from "../interfaces";
+} from "../../../interfaces";
 
 const DEFAULT_SEARCH_URL = "http://localhost:8001/retrieve";
 const DEFAULT_BROWSER_SEARCH_URL = "http://localhost:8001/retrieve";
@@ -51,7 +51,7 @@ function upsertTrace(
 const DEV_MODE =
   typeof window !== "undefined" && new URLSearchParams(window.location.search).has("dev");
 
-export function AssistPage() {
+export function AssistView() {
   const [query, setQuery] = useState("");
   const [searchUrl, setSearchUrl] = useState(DEFAULT_SEARCH_URL);
   const [topK, setTopK] = useState(5);

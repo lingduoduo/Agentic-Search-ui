@@ -12,8 +12,12 @@ function linkifyCitations(children: React.ReactNode): React.ReactNode {
       if (parts.length === 1) return [child];
       return parts.map((part, j) =>
         /^\[(?:R\d+Q\d+)?D\d+\]$/.test(part)
-          ? React.createElement("a", { key: `${i}-${j}`, href: `#source-${part}`, className: "citation-link" }, part)
-          : part
+          ? React.createElement(
+              "a",
+              { key: `${i}-${j}`, href: `#source-${part}`, className: "citation-link" },
+              part,
+            )
+          : part,
       );
     });
   }
@@ -22,8 +26,12 @@ function linkifyCitations(children: React.ReactNode): React.ReactNode {
   if (parts.length === 1) return children;
   return parts.map((part, i) =>
     /^\[(?:R\d+Q\d+)?D\d+\]$/.test(part)
-      ? React.createElement("a", { key: i, href: `#source-${part}`, className: "citation-link" }, part)
-      : part
+      ? React.createElement(
+          "a",
+          { key: i, href: `#source-${part}`, className: "citation-link" },
+          part,
+        )
+      : part,
   );
 }
 
@@ -33,9 +41,13 @@ const markdownComponents: Components = {
   },
   code({ className, children }) {
     const isBlock = Boolean(className);
-    return isBlock
-      ? <pre><code className={className}>{children}</code></pre>
-      : <code>{children}</code>;
+    return isBlock ? (
+      <pre>
+        <code className={className}>{children}</code>
+      </pre>
+    ) : (
+      <code>{children}</code>
+    );
   },
 };
 

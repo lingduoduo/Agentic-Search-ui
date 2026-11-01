@@ -65,10 +65,10 @@ Development uses hot module replacement and source maps. Production cleans
 `dist/`, extracts CSS, and splits React, icons, and dynamically imported code
 into hashed assets without source maps.
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `BACKEND_URL` | `http://127.0.0.1:7860` in development | Backend proxy target; nginx uses `http://web:7860` by default. |
-| `VITE_DEBUG_PANELS` | Disabled | Set to `1` to enable debug panels; the existing name is preserved for compatibility. |
+| Variable            | Default                                | Purpose                                                                              |
+| ------------------- | -------------------------------------- | ------------------------------------------------------------------------------------ |
+| `BACKEND_URL`       | `http://127.0.0.1:7860` in development | Backend proxy target; nginx uses `http://web:7860` by default.                       |
+| `VITE_DEBUG_PANELS` | Disabled                               | Set to `1` to enable debug panels; the existing name is preserved for compatibility. |
 
 For example:
 
@@ -104,18 +104,18 @@ matching. For example:
 ```js
 export default [
   {
-    method: 'GET',
-    path: '/api/example',
+    method: "GET",
+    path: "/api/example",
     status: 200,
     delayMs: 150,
-    response: { message: 'Hello from the mock API' },
+    response: { message: "Hello from the mock API" },
   },
   {
-    method: 'POST',
-    path: '/chat/send-chat-message',
+    method: "POST",
+    path: "/chat/send-chat-message",
     events: [
-      { type: 'answer', text: 'Mock streaming answer' },
-      { type: 'done', session_id: 'mock-session' },
+      { type: "answer", text: "Mock streaming answer" },
+      { type: "done", session_id: "mock-session" },
     ],
   },
 ];
@@ -123,14 +123,14 @@ export default [
 
 Each fixture supports these fields:
 
-| Field | Behavior |
-| --- | --- |
-| `method`, `path` | Required exact HTTP method and pathname, such as `POST` and `/api/agent/stream`. |
-| `status` | HTTP status; defaults to `200`. Use `503` to simulate a service failure. |
-| `response` | JSON value, or a function receiving the Node request and returning a JSON value. |
-| `events` | Array of SSE event objects, sent in order as `data: <JSON>` frames. Use this instead of `response`. |
-| `delayMs` | Delay before a JSON reply or before each SSE event. |
-| `headers` | Additional response headers. |
+| Field            | Behavior                                                                                            |
+| ---------------- | --------------------------------------------------------------------------------------------------- |
+| `method`, `path` | Required exact HTTP method and pathname, such as `POST` and `/api/agent/stream`.                    |
+| `status`         | HTTP status; defaults to `200`. Use `503` to simulate a service failure.                            |
+| `response`       | JSON value, or a function receiving the Node request and returning a JSON value.                    |
+| `events`         | Array of SSE event objects, sent in order as `data: <JSON>` frames. Use this instead of `response`. |
+| `delayMs`        | Delay before a JSON reply or before each SSE event.                                                 |
+| `headers`        | Additional response headers.                                                                        |
 
 The sample file includes health, search, chat, assistant, tool-agent,
 analytics, query history, audit summaries, and error responses. History fixtures
@@ -208,13 +208,30 @@ Route screens in `pages/` compose these pieces, while `apps/` owns the shell.
 ## Check
 
 ```bash
+yarn lint              # ESLint: React hooks, TypeScript, and JavaScript
+yarn lint:fix          # Fix lint issues where possible
+yarn format            # Format source, SCSS, configuration, and docs
+yarn format:check      # Check formatting without changing files
 yarn typecheck         # TypeScript
 yarn test:build-config # Webpack proxy and production configuration
 yarn test:unit         # Vitest
 yarn test:unit:watch   # Vitest in watch mode
 yarn test              # typecheck, build configuration, and unit tests
-yarn test:ci           # typecheck, production build, and all tests
+yarn test:ci           # lint, formatting, typecheck, production build, and all tests
 ```
+
+ESLint uses `eslint.config.mjs` with JavaScript and TypeScript recommended
+rules plus React hook checks. Prettier uses `.prettierrc.json` with two-space
+indentation, double quotes, semicolons, and a 100-character line width.
+`eslint-config-prettier` keeps formatting rules separate from lint checks.
+Generated output, dependencies, local environment files, and the Yarn lockfile
+are excluded from formatting. CI runs lint and formatting checks before the
+build and tests.
+
+Type checking continues to use TypeScript 7 through the `@typescript/native`
+alias. The `typescript` alias supplies the TypeScript 6 API required by the
+ESLint parser, following Microsoft's
+[side-by-side setup](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/#running-side-by-side-with-typescript-6-0).
 
 ## Deploy
 

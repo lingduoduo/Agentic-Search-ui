@@ -1,3 +1,4 @@
+import type { ChatSessionView } from "../../interfaces";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -27,12 +28,21 @@ const mockSubmitToolApproval = api.submitToolApproval as ReturnType<typeof vi.fn
 const mockCreateSession = api.createSession as ReturnType<typeof vi.fn>;
 
 const baseResponse = {
-  session_id: "s1", answer: "The answer", citations: ["[D1]"],
-  documents: [{ id: "D1", citation: "[D1]", title: "Doc", content: "c", url: null, score: 0.9, metadata: {} }],
-  messages: [{ role: "user", content: "q", metadata: {} }, { role: "assistant", content: "The answer", metadata: {} }],
+  session_id: "s1",
+  answer: "The answer",
+  citations: ["[D1]"],
+  documents: [
+    { id: "D1", citation: "[D1]", title: "Doc", content: "c", url: null, score: 0.9, metadata: {} },
+  ],
+  messages: [
+    { role: "user", content: "q", metadata: {} },
+    { role: "assistant", content: "The answer", metadata: {} },
+  ],
 };
 
-beforeEach(() => { vi.clearAllMocks(); });
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 async function submitQuery(query = "explain FAISS") {
   const textarea = screen.getByRole("textbox", { name: /question/i });
@@ -50,7 +60,13 @@ function answerPanelText(): string {
 function fakeStream(intent: string, documents = baseResponse.documents) {
   async function* gen() {
     yield { type: "answer" as const, text: baseResponse.answer };
-    yield { type: "done" as const, session_id: baseResponse.session_id, citations: baseResponse.citations, documents, intent };
+    yield {
+      type: "done" as const,
+      session_id: baseResponse.session_id,
+      citations: baseResponse.citations,
+      documents,
+      intent,
+    };
   }
   return gen();
 }
@@ -70,7 +86,6 @@ describe("App adaptive layout", () => {
     expect(layout?.classList).not.toContain("intent-chat");
     expect(layout?.classList).not.toContain("intent-tool");
   });
-
 
   it("adds intent-search class to results layout on search response", async () => {
     mockStreamAgent.mockReturnValue(fakeStream("search"));
@@ -164,9 +179,7 @@ describe("App answer-state reset", () => {
     );
 
     await submitQuery("second query");
-    await waitFor(() =>
-      expect(screen.getByText(/second failed/i)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/second failed/i)).toBeInTheDocument());
 
     const answerColumn = document.querySelector(".answer-column");
     expect(answerColumn?.querySelector(".citation-link")).toBeNull();
@@ -179,9 +192,7 @@ describe("App session timeline", () => {
     mockStreamAgent.mockReturnValue(fakeStream("chat"));
     render(<App />);
     await submitQuery("what is FAISS");
-    await waitFor(() =>
-      expect(answerPanelText()).toContain(baseResponse.answer),
-    );
+    await waitFor(() => expect(answerPanelText()).toContain(baseResponse.answer));
 
     const rows = document.querySelectorAll(".session-panel .chat-row");
     expect(rows.length).toBe(2);
@@ -197,9 +208,7 @@ describe("App grounding status", () => {
     mockStreamAgent.mockReturnValue(fakeStream("chat"));
     render(<App />);
     await submitQuery("explain FAISS");
-    await waitFor(() =>
-      expect(answerPanelText()).toContain(baseResponse.answer),
-    );
+    await waitFor(() => expect(answerPanelText()).toContain(baseResponse.answer));
     expect(document.querySelector(".status-pill")?.textContent).toBe("Grounded");
   });
 
@@ -217,9 +226,7 @@ describe("App grounding status", () => {
     mockStreamAgent.mockReturnValue(noCitationsStream());
     render(<App />);
     await submitQuery("FAISS");
-    await waitFor(() =>
-      expect(answerPanelText()).toContain(baseResponse.answer),
-    );
+    await waitFor(() => expect(answerPanelText()).toContain(baseResponse.answer));
     expect(document.querySelector(".status-pill")?.textContent).toBe("Answered");
   });
 
@@ -239,9 +246,7 @@ describe("App grounding status", () => {
     mockStreamAgent.mockReturnValue(routedStream());
     render(<App />);
     await submitQuery("FAISS");
-    await waitFor(() =>
-      expect(answerPanelText()).toContain(baseResponse.answer),
-    );
+    await waitFor(() => expect(answerPanelText()).toContain(baseResponse.answer));
     const pill = document.querySelector(".route-pill");
     expect(pill?.textContent).toContain("search_agent");
     expect(pill?.getAttribute("title")).toContain("degraded: no_local_model");
@@ -252,9 +257,7 @@ describe("App grounding status", () => {
     mockStreamAgent.mockReturnValue(fakeStream("chat"));
     render(<App />);
     await submitQuery("explain FAISS");
-    await waitFor(() =>
-      expect(answerPanelText()).toContain(baseResponse.answer),
-    );
+    await waitFor(() => expect(answerPanelText()).toContain(baseResponse.answer));
     expect(document.querySelector(".route-pill")).toBeNull();
   });
 });
@@ -303,7 +306,9 @@ describe("App tool approvals", () => {
     "submits an %s decision without restarting the stream",
     async (decision) => {
       let resumeStream!: () => void;
-      const decisionSubmitted = new Promise<void>((resolve) => { resumeStream = resolve; });
+      const decisionSubmitted = new Promise<void>((resolve) => {
+        resumeStream = resolve;
+      });
       async function* approvalStream() {
         yield { type: "approval_required" as const, approval };
         await decisionSubmitted;
@@ -317,13 +322,17 @@ describe("App tool approvals", () => {
         };
       }
       mockStreamAgent.mockReturnValue(approvalStream());
-      mockSubmitToolApproval.mockImplementation(async () => { resumeStream(); });
+      mockSubmitToolApproval.mockImplementation(async () => {
+        resumeStream();
+      });
 
       render(<App />);
       await submitQuery("send an email");
-      await userEvent.click(await screen.findByRole("button", {
-        name: decision === "approve" ? /approve/i : /deny/i,
-      }));
+      await userEvent.click(
+        await screen.findByRole("button", {
+          name: decision === "approve" ? /approve/i : /deny/i,
+        }),
+      );
 
       await waitFor(() => expect(answerPanelText()).toContain(baseResponse.answer));
       expect(mockSubmitToolApproval).toHaveBeenCalledTimes(1);
@@ -357,7 +366,9 @@ describe("App tool approvals", () => {
   it("does not let an aborted older search clear a newer search's approval", async () => {
     let rejectOlder!: (reason: unknown) => void;
     let olderSettled = false;
-    const olderFailure = new Promise<never>((_, reject) => { rejectOlder = reject; });
+    const olderFailure = new Promise<never>((_, reject) => {
+      rejectOlder = reject;
+    });
     async function* olderStream() {
       try {
         await olderFailure;
@@ -370,9 +381,7 @@ describe("App tool approvals", () => {
       yield { type: "approval_required" as const, approval };
       await new Promise(() => undefined);
     }
-    mockStreamAgent
-      .mockReturnValueOnce(olderStream())
-      .mockReturnValueOnce(newerStream());
+    mockStreamAgent.mockReturnValueOnce(olderStream()).mockReturnValueOnce(newerStream());
 
     render(<App />);
     await submitQuery("first search");
@@ -389,8 +398,7 @@ describe("App tool approvals", () => {
   });
 
   it("clears approvals immediately when starting a new session", async () => {
-    const newSession = { id: "s2", messages: [], title: null, user_id: null };
-    const pendingSession = new Promise<typeof newSession>(() => undefined);
+    const pendingSession = new Promise<ChatSessionView>(() => undefined);
     mockCreateSession
       .mockResolvedValueOnce({ id: "s1", messages: [], title: null, user_id: null })
       .mockReturnValueOnce(pendingSession);
@@ -422,7 +430,9 @@ describe("App tool approvals", () => {
     render(<App />);
     await submitQuery("send an email");
 
-    expect(await screen.findByLabelText(/approval required for send_updated_email/i)).toBeInTheDocument();
+    expect(
+      await screen.findByLabelText(/approval required for send_updated_email/i),
+    ).toBeInTheDocument();
     expect(screen.queryByLabelText(/^approval required for send_email$/i)).not.toBeInTheDocument();
   });
 
@@ -446,7 +456,9 @@ describe("App tool approvals", () => {
 
   it.each(["done", "error"] as const)("clears approvals on stream %s", async (ending) => {
     let finish!: () => void;
-    const readyToFinish = new Promise<void>((resolve) => { finish = resolve; });
+    const readyToFinish = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
     async function* approvalStream() {
       yield { type: "approval_required" as const, approval };
       await readyToFinish;
@@ -486,9 +498,7 @@ describe("App dashboard layout order", () => {
     const admin = await screen.findByLabelText(/admin and observability/i);
     const layout = document.querySelector(".results-layout");
     expect(layout).toBeInTheDocument();
-    expect(
-      layout!.compareDocumentPosition(admin) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    expect(layout!.compareDocumentPosition(admin) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });
 
@@ -517,9 +527,7 @@ describe("page navigation", () => {
     // The header used to carry two controls both labelled "Tools": this nav link
     // (the agent surface) and the wrench button (the admin registry panel).
     render(<App />);
-    expect(
-      screen.getByRole("button", { name: /manage tools/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /manage tools/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^tools$/i })).not.toBeInTheDocument();
     // Exactly one control is named exactly "Tools", and it is the link.
     expect(screen.getAllByRole("link", { name: /^tools$/i })).toHaveLength(1);

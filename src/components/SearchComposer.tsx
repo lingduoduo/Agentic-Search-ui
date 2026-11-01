@@ -117,7 +117,9 @@ export const SearchComposer = memo(function SearchComposer({
             Source
             <select
               value={sourceProvider}
-              onChange={(e) => onSourceProviderChange(e.currentTarget.value as SearchSourceProvider)}
+              onChange={(e) =>
+                onSourceProviderChange(e.currentTarget.value as SearchSourceProvider)
+              }
             >
               {SOURCE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value} disabled={opt.disabled}>
@@ -175,7 +177,10 @@ export const SearchComposer = memo(function SearchComposer({
         <label>
           Top K
           <input
-            min={1} max={20} type="number" value={topK}
+            min={1}
+            max={20}
+            type="number"
+            value={topK}
             onChange={(e) => onTopKChange(e.currentTarget.valueAsNumber)}
           />
         </label>

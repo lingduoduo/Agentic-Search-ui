@@ -29,9 +29,7 @@ function argumentText(value: unknown): string {
 export function ToolApprovalCard({ approval, onDecision }: ToolApprovalCardProps) {
   const [state, setState] = useState<DecisionState>("idle");
   const [error, setError] = useState("");
-  const [secondsRemaining, setSecondsRemaining] = useState(() =>
-    secondsUntil(approval.expires_at),
-  );
+  const [secondsRemaining, setSecondsRemaining] = useState(() => secondsUntil(approval.expires_at));
 
   useEffect(() => {
     const updateCountdown = () => setSecondsRemaining(secondsUntil(approval.expires_at));
@@ -79,7 +77,11 @@ export function ToolApprovalCard({ approval, onDecision }: ToolApprovalCardProps
         ))}
       </dl>
 
-      {error && <p role="alert" className="tool-approval-error">{error}</p>}
+      {error && (
+        <p role="alert" className="tool-approval-error">
+          {error}
+        </p>
+      )}
       {state === "decided" && <p className="tool-approval-status">Decision submitted</p>}
 
       <div className="tool-approval-actions">

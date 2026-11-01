@@ -4,15 +4,21 @@ import { runAgent, streamAgent, submitToolApproval } from "../api";
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
-beforeEach(() => { mockFetch.mockReset(); });
+beforeEach(() => {
+  mockFetch.mockReset();
+});
 
 describe("runAgent", () => {
   it("passes intent field through from response", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
-        session_id: "s1", answer: "hello", citations: [],
-        documents: [], messages: [], intent: "search",
+        session_id: "s1",
+        answer: "hello",
+        citations: [],
+        documents: [],
+        messages: [],
+        intent: "search",
       }),
     });
     const result = await runAgent({ query: "find docs" });

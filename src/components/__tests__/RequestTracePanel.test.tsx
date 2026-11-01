@@ -28,11 +28,7 @@ describe("RequestTracePanel", () => {
   });
 
   it("renders one bar per event with width proportional to duration_ms", () => {
-    render(
-      <RequestTracePanel
-        events={[ev(1, "planner", 100), ev(2, "search_tool", 50)]}
-      />,
-    );
+    render(<RequestTracePanel events={[ev(1, "planner", 100), ev(2, "search_tool", 50)]} />);
     const bar1 = screen.getByTestId("trace-bar-1");
     const bar2 = screen.getByTestId("trace-bar-2");
     // bar1 is the longest (100ms) → 100%; bar2 is half → 50%
@@ -44,9 +40,7 @@ describe("RequestTracePanel", () => {
 
   it("reveals details when a span is clicked", () => {
     render(
-      <RequestTracePanel
-        events={[ev(1, "route", 12, { retriever: "hybrid", confidence: 0.9 })]}
-      />,
+      <RequestTracePanel events={[ev(1, "route", 12, { retriever: "hybrid", confidence: 0.9 })]} />,
     );
     expect(screen.queryByText(/retriever/i)).not.toBeInTheDocument();
     fireEvent.click(screen.getByTestId("trace-bar-1"));

@@ -7,9 +7,7 @@ describe("SearchView", () => {
   it("renders returned docs", async () => {
     vi.spyOn(api, "sendSearchMessage").mockResolvedValue({
       all_executed_queries: ["q"],
-      search_docs: [
-        { title: "FAISS overview", url: null, content: "…", score: 1, metadata: {} },
-      ],
+      search_docs: [{ title: "FAISS overview", url: null, content: "…", score: 1, metadata: {} }],
     } as never);
     render(<SearchView />);
     fireEvent.change(screen.getByLabelText("Search query"), { target: { value: "faiss" } });

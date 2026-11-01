@@ -35,9 +35,7 @@ export function QueryTransformInspector() {
   }
 
   const activeLegs = result
-    ? Object.entries(result.legs).filter(([, v]) =>
-        Array.isArray(v) ? v.length > 0 : Boolean(v),
-      )
+    ? Object.entries(result.legs).filter(([, v]) => (Array.isArray(v) ? v.length > 0 : Boolean(v)))
     : [];
 
   return (
@@ -60,8 +58,7 @@ export function QueryTransformInspector() {
 
       {result && !result.active && (
         <p className="query-transform__inactive">
-          no transform active — pipeline disabled or no LLM configured (variants =
-          original)
+          no transform active — pipeline disabled or no LLM configured (variants = original)
         </p>
       )}
 
@@ -78,8 +75,7 @@ export function QueryTransformInspector() {
           </ul>
           {activeLegs.length > 0 && (
             <p className="query-transform__legs">
-              active legs:{" "}
-              {activeLegs.map(([k]) => LEG_LABELS[k] ?? k).join(", ")}
+              active legs: {activeLegs.map(([k]) => LEG_LABELS[k] ?? k).join(", ")}
             </p>
           )}
           {Object.keys(result.merged_filters).length > 0 && (

@@ -44,7 +44,10 @@ describe("ChatView", () => {
 
   it("shows the no-model banner on NO_LOCAL_MODEL", async () => {
     vi.spyOn(api, "sendChatMessage").mockImplementation((() => {
-      async function* g() { throw new Error("NO_LOCAL_MODEL"); yield undefined as never; }
+      async function* g() {
+        throw new Error("NO_LOCAL_MODEL");
+        yield undefined as never;
+      }
       return g();
     }) as never);
     render(<ChatView />);
@@ -66,9 +69,8 @@ describe("ChatView", () => {
   }
 
   it("marks a degraded answer with a notice carrying the reason", async () => {
-    vi.spyOn(api, "sendChatMessage").mockImplementation(
-      (() => streamOnce({ degraded: "model_unavailable" }, "fallback text")) as never,
-    );
+    vi.spyOn(api, "sendChatMessage").mockImplementation((() =>
+      streamOnce({ degraded: "model_unavailable" }, "fallback text")) as never);
     render(<ChatView />);
     await send("hi");
     const notice = await screen.findByRole("status");
@@ -85,9 +87,8 @@ describe("ChatView", () => {
   });
 
   it("shows no notice when done carries degraded: null", async () => {
-    vi.spyOn(api, "sendChatMessage").mockImplementation(
-      (() => streamOnce({ degraded: null })) as never,
-    );
+    vi.spyOn(api, "sendChatMessage").mockImplementation((() =>
+      streamOnce({ degraded: null })) as never);
     render(<ChatView />);
     await send("hi");
     await screen.findByText("answer text");

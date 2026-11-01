@@ -16,9 +16,7 @@ describe("ClarificationPrompt", () => {
 
   it("asks the question and reports the chosen route", async () => {
     const onSelect = vi.fn();
-    render(
-      <ClarificationPrompt clarification={clarification} onSelect={onSelect} />,
-    );
+    render(<ClarificationPrompt clarification={clarification} onSelect={onSelect} />);
 
     expect(screen.getByText(clarification.question)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Find the document or facts" }));

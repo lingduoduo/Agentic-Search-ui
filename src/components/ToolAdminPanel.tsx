@@ -6,12 +6,7 @@ import {
   registerOpenAPITools,
 } from "../services/api";
 import type { ToolInvokeResponse, ToolView } from "../interfaces";
-import {
-  buildArguments,
-  initialValues,
-  toolFormFromSchema,
-  validate,
-} from "../utils/toolSchema";
+import { buildArguments, initialValues, toolFormFromSchema, validate } from "../utils/toolSchema";
 import type { ToolField } from "../utils/toolSchema";
 
 // ── Source badge ──────────────────────────────────────────────────────────────
@@ -165,9 +160,7 @@ function FieldControl({
 
 function InvokeModal({ tool, onClose }: InvokeModalProps) {
   const form = useMemo(() => toolFormFromSchema(tool.parameters), [tool.parameters]);
-  const [values, setValues] = useState<Record<string, unknown>>(() =>
-    initialValues(form.fields),
-  );
+  const [values, setValues] = useState<Record<string, unknown>>(() => initialValues(form.fields));
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   // Schemas a flat form cannot express start in JSON mode and stay there.
   const [jsonMode, setJsonMode] = useState(!form.supported);
@@ -471,11 +464,7 @@ export function ToolAdminPanel() {
   const handleRegistered = async (names: string[]) => {
     setShowRegister(false);
     await load();
-    setError(
-      names.length
-        ? null
-        : "No tools were registered from the provided schema.",
-    );
+    setError(names.length ? null : "No tools were registered from the provided schema.");
   };
 
   const handleDeleteProvider = async (providerId: string) => {
@@ -494,9 +483,7 @@ export function ToolAdminPanel() {
 
   return (
     <div className="tool-panel">
-      {invoking && (
-        <InvokeModal tool={invoking} onClose={() => setInvoking(null)} />
-      )}
+      {invoking && <InvokeModal tool={invoking} onClose={() => setInvoking(null)} />}
 
       <div className="tool-panel-header">
         <h2>Tools</h2>
@@ -510,10 +497,7 @@ export function ToolAdminPanel() {
       </div>
 
       {showRegister && (
-        <RegisterForm
-          onRegistered={handleRegistered}
-          onCancel={() => setShowRegister(false)}
-        />
+        <RegisterForm onRegistered={handleRegistered} onCancel={() => setShowRegister(false)} />
       )}
 
       {error && <div className="error-banner">{error}</div>}
@@ -522,8 +506,8 @@ export function ToolAdminPanel() {
         <p className="tool-empty">Loading tools…</p>
       ) : tools.length === 0 ? (
         <p className="tool-empty">
-          No tools registered. Built-in function tools load automatically; add
-          OpenAPI schemas to register external API tools.
+          No tools registered. Built-in function tools load automatically; add OpenAPI schemas to
+          register external API tools.
         </p>
       ) : (
         <>

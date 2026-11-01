@@ -25,7 +25,9 @@ export const ToolCallTracePanel = memo(function ToolCallTracePanel({
             className={`tool-trace-card ${call.status === "failed" ? "tool-trace-card--failed" : ""}`}
           >
             <div className="tool-trace-header">
-              <span className={`tool-trace-status ${call.status === "failed" ? "tool-trace-status--failed" : "tool-trace-status--ok"}`}>
+              <span
+                className={`tool-trace-status ${call.status === "failed" ? "tool-trace-status--failed" : "tool-trace-status--ok"}`}
+              >
                 {call.status === "completed" ? "✓" : "✗"}
               </span>
               <strong className="tool-trace-name">{call.tool_name}</strong>
@@ -34,9 +36,7 @@ export const ToolCallTracePanel = memo(function ToolCallTracePanel({
 
             <div className="tool-trace-section">
               <span className="tool-trace-label">Arguments</span>
-              <code className="tool-trace-code">
-                {JSON.stringify(call.arguments, null, 2)}
-              </code>
+              <code className="tool-trace-code">{JSON.stringify(call.arguments, null, 2)}</code>
             </div>
 
             {call.status === "completed" ? (

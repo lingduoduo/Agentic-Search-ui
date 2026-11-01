@@ -31,9 +31,7 @@ export function RequestTracePanel({ events }: Props) {
       <div className="request-trace__rows">
         {events.map((e) => {
           const pct =
-            e.duration_ms && maxDuration
-              ? Math.max(2, (e.duration_ms / maxDuration) * 100)
-              : 2;
+            e.duration_ms && maxDuration ? Math.max(2, (e.duration_ms / maxDuration) * 100) : 2;
           return (
             <button
               key={e.sequence}
@@ -41,9 +39,7 @@ export function RequestTracePanel({ events }: Props) {
               className={`request-trace__row request-trace__row--${e.status}${
                 selected === e.sequence ? " request-trace__row--selected" : ""
               }`}
-              onClick={() =>
-                setSelected(selected === e.sequence ? null : e.sequence)
-              }
+              onClick={() => setSelected(selected === e.sequence ? null : e.sequence)}
             >
               <span className="request-trace__label">
                 T{e.turn} · {e.component} · {e.action}

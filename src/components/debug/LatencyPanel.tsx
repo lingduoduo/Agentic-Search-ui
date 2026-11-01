@@ -96,7 +96,9 @@ export function LatencyPanel() {
 
   const stagesUsed =
     stages !== null &&
-    (stages.retrieval.count > 0 || stages.generation.count > 0 || (stages.auxiliary?.count ?? 0) > 0);
+    (stages.retrieval.count > 0 ||
+      stages.generation.count > 0 ||
+      (stages.auxiliary?.count ?? 0) > 0);
 
   return (
     <section className="latency-panel" aria-label="Route latency">

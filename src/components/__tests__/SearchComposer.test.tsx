@@ -161,18 +161,11 @@ describe("SearchComposer domain selector", () => {
 
   it("labels underscored identifiers readably", () => {
     render(<SearchComposer {...domainProps} />);
-    expect(
-      screen.getByRole("checkbox", { name: "social media" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "social media" })).toBeInTheDocument();
   });
 
   it("keeps selected options enabled and shows the limit hint", () => {
-    render(
-      <SearchComposer
-        {...domainProps}
-        domains={["financial", "news", "social_media"]}
-      />,
-    );
+    render(<SearchComposer {...domainProps} domains={["financial", "news", "social_media"]} />);
     expect(screen.getByRole("checkbox", { name: "news" })).toBeEnabled();
     expect(screen.getByText("Up to 3 search sources")).toBeInTheDocument();
   });

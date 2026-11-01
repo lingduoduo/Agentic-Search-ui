@@ -29,9 +29,7 @@ describe("QueryTransformInspector", () => {
     await waitFor(() => {
       expect(mockRun).toHaveBeenCalledWith("vector db");
     });
-    expect(
-      screen.getByText("what is a vector database"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("what is a vector database")).toBeInTheDocument();
     expect(screen.getByText(/how do embeddings index/i)).toBeInTheDocument();
   });
 

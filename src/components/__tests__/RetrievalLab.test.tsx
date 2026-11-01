@@ -75,10 +75,7 @@ describe("RetrievalLab", () => {
     fireEvent.click(screen.getByRole("button", { name: /run/i }));
 
     await waitFor(() => {
-      expect(mockRun).toHaveBeenCalledWith(
-        "sparse",
-        expect.objectContaining({ rerank: true }),
-      );
+      expect(mockRun).toHaveBeenCalledWith("sparse", expect.objectContaining({ rerank: true }));
     });
     expect(screen.getAllByText(/sparse\+reranked/i).length).toBeGreaterThan(0);
   });

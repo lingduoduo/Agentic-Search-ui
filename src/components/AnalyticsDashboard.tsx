@@ -46,19 +46,9 @@ function BarChart({ items }: { items: BreakdownItem[] }) {
               textAnchor="end"
               className="analytics-bar-label"
             >
-              {item.label.length > 14
-                ? `${item.label.slice(0, 13)}…`
-                : item.label}
+              {item.label.length > 14 ? `${item.label.slice(0, 13)}…` : item.label}
             </text>
-            <rect
-              x={labelW}
-              y={y}
-              width={barW}
-              height={barH}
-              rx={4}
-              fill={color}
-              opacity={0.85}
-            />
+            <rect x={labelW} y={y} width={barW} height={barH} rx={4} fill={color} opacity={0.85} />
             <text
               x={labelW + barW + 6}
               y={y + barH / 2}
@@ -74,22 +64,12 @@ function BarChart({ items }: { items: BreakdownItem[] }) {
   );
 }
 
-function BreakdownPanel({
-  title,
-  data,
-}: {
-  title: string;
-  data: BreakdownAnalytics | null;
-}) {
+function BreakdownPanel({ title, data }: { title: string; data: BreakdownAnalytics | null }) {
   return (
     <div className="analytics-panel">
       <div className="analytics-panel-header">
         <h3>{title}</h3>
-        {data && (
-          <span className="analytics-total">
-            {data.total_sessions} total
-          </span>
-        )}
+        {data && <span className="analytics-total">{data.total_sessions} total</span>}
       </div>
       {!data ? (
         <p className="analytics-empty">Loading…</p>
@@ -102,11 +82,7 @@ function BreakdownPanel({
   );
 }
 
-export function AnalyticsDashboard({
-  byLLM,
-  byPersona,
-  byFlow,
-}: AnalyticsDashboardProps) {
+export function AnalyticsDashboard({ byLLM, byPersona, byFlow }: AnalyticsDashboardProps) {
   return (
     <section className="analytics-dashboard" aria-label="Usage analytics">
       <h2 className="analytics-heading">Usage breakdown</h2>

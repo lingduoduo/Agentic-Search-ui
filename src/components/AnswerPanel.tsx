@@ -101,7 +101,11 @@ function FeedbackBar({ sessionId }: { sessionId: string }) {
 const markdownModule = import("./Markdown");
 const Markdown = lazy(() => markdownModule);
 
-function IntentBadge({ intent, citations, documentCount, toolCallCount }: {
+function IntentBadge({
+  intent,
+  citations,
+  documentCount,
+}: {
   intent: "search" | "chat" | "tool";
   citations: string[];
   documentCount?: number;
@@ -109,11 +113,19 @@ function IntentBadge({ intent, citations, documentCount, toolCallCount }: {
 }) {
   if (intent === "search") {
     const n = documentCount ?? 0;
-    return <span className="intent-badge">Searched · {n} {n === 1 ? "source" : "sources"}</span>;
+    return (
+      <span className="intent-badge">
+        Searched · {n} {n === 1 ? "source" : "sources"}
+      </span>
+    );
   }
   if (intent === "chat") {
     const n = citations.length;
-    return <span className="intent-badge">Answered · {n} {n === 1 ? "citation" : "citations"}</span>;
+    return (
+      <span className="intent-badge">
+        Answered · {n} {n === 1 ? "citation" : "citations"}
+      </span>
+    );
   }
   return <span className="intent-badge">Used tools</span>;
 }
@@ -153,7 +165,9 @@ function ProgressLog({
           onClick={() => setExpanded(true)}
           aria-label={`show reasoning — ${n} ${n === 1 ? "turn" : "turns"}`}
         >
-          <span>&#10003; {n} {n === 1 ? "turn" : "turns"}</span>
+          <span>
+            &#10003; {n} {n === 1 ? "turn" : "turns"}
+          </span>
           <span className="show-reasoning">show reasoning &#9658;</span>
         </button>
       );
@@ -195,9 +209,7 @@ export const AnswerPanel = memo(function AnswerPanel({
 }: AnswerPanelProps) {
   if (!answer && progressSteps.length === 0) {
     return (
-      <div className="empty-state">
-        Results will appear here once the agent retrieves context.
-      </div>
+      <div className="empty-state">Results will appear here once the agent retrieves context.</div>
     );
   }
 

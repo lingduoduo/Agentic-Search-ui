@@ -26,29 +26,56 @@ export function App() {
   const route = useCanonicalRoute();
 
   useEffect(() => {
-    getAdminSummary().then(setAdminSummary).catch(() => undefined);
-    getAnalyticsByLLM().then(setAnalyticsByLLM).catch(() => undefined);
-    getAnalyticsByPersona().then(setAnalyticsByPersona).catch(() => undefined);
-    getAnalyticsByFlow().then(setAnalyticsByFlow).catch(() => undefined);
+    getAdminSummary()
+      .then(setAdminSummary)
+      .catch(() => undefined);
+    getAnalyticsByLLM()
+      .then(setAnalyticsByLLM)
+      .catch(() => undefined);
+    getAnalyticsByPersona()
+      .then(setAnalyticsByPersona)
+      .catch(() => undefined);
+    getAnalyticsByFlow()
+      .then(setAnalyticsByFlow)
+      .catch(() => undefined);
   }, []);
 
   const page = {
-    "/assist": { title: "Assistant", description: "Ask a question, search your sources, and follow the answer trail." },
-    "/search": { title: "Search", description: "Find relevant documents and explore the sources behind each result." },
+    "/assist": {
+      title: "Assistant",
+      description: "Ask a question, search your sources, and follow the answer trail.",
+    },
+    "/search": {
+      title: "Search",
+      description: "Find relevant documents and explore the sources behind each result.",
+    },
     "/chat": { title: "Chat", description: "Start a conversation with your model." },
-    "/tools": { title: "Tools", description: "Ask the tool agent to complete a task and inspect its results." },
+    "/tools": {
+      title: "Tools",
+      description: "Ask the tool agent to complete a task and inspect its results.",
+    },
   }[route];
 
   return (
     <div className="app-shell">
       <header className="topbar">
         <div className="header-navigation">
-          <div className="brand"><h1>Agentic Search</h1></div>
+          <div className="brand">
+            <h1>Agentic Search</h1>
+          </div>
           <nav className="surface-nav" aria-label="Surfaces">
-            <NavLink to="/assist" className="nav-link">Assistant</NavLink>
-            <NavLink to="/search" className="nav-link">Search</NavLink>
-            <NavLink to="/chat" className="nav-link">Chat</NavLink>
-            <NavLink to="/tools" className="nav-link">Tools</NavLink>
+            <NavLink to="/assist" className="nav-link">
+              Assistant
+            </NavLink>
+            <NavLink to="/search" className="nav-link">
+              Search
+            </NavLink>
+            <NavLink to="/chat" className="nav-link">
+              Chat
+            </NavLink>
+            <NavLink to="/tools" className="nav-link">
+              Tools
+            </NavLink>
           </nav>
         </div>
         <div className="topbar-actions">
@@ -95,7 +122,11 @@ export function App() {
             <summary>Admin and analytics</summary>
             {adminSummary && <AdminOverview summary={adminSummary} />}
             {(analyticsByLLM || analyticsByPersona || analyticsByFlow) && (
-              <AnalyticsDashboard byLLM={analyticsByLLM} byPersona={analyticsByPersona} byFlow={analyticsByFlow} />
+              <AnalyticsDashboard
+                byLLM={analyticsByLLM}
+                byPersona={analyticsByPersona}
+                byFlow={analyticsByFlow}
+              />
             )}
           </details>
         )}

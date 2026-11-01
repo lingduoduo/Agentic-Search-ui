@@ -42,12 +42,7 @@ function noop() {}
 describe("ToolCatalog", () => {
   it("shows the registered count and each server's tools", () => {
     render(
-      <ToolCatalog
-        servers={servers}
-        registeredCount={3}
-        discovery={null}
-        onDiscover={noop}
-      />,
+      <ToolCatalog servers={servers} registeredCount={3} discovery={null} onDiscover={noop} />,
     );
     expect(screen.getByText(/3 registered across 1 server/)).toBeInTheDocument();
     expect(screen.getByText("local")).toBeInTheDocument();
@@ -56,12 +51,7 @@ describe("ToolCatalog", () => {
 
   it("badges only the tools the flags apply to", () => {
     render(
-      <ToolCatalog
-        servers={servers}
-        registeredCount={3}
-        discovery={null}
-        onDiscover={noop}
-      />,
+      <ToolCatalog servers={servers} registeredCount={3} discovery={null} onDiscover={noop} />,
     );
     // One tool has agent_callable: false, one has user_scoped: true.
     expect(screen.getAllByText("not offered to agents")).toHaveLength(1);
@@ -76,9 +66,7 @@ describe("ToolCatalog", () => {
           {
             name: "local",
             description: "local",
-            tools: [
-              { name: "x", description: "d", source: "function", server: "local" },
-            ],
+            tools: [{ name: "x", description: "d", source: "function", server: "local" }],
           },
         ]}
         registeredCount={1}
@@ -163,33 +151,19 @@ describe("ToolCatalog", () => {
         note="Tool inventory needs an admin session."
       />,
     );
-    expect(
-      screen.getByText("Tool inventory needs an admin session."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Tool inventory needs an admin session.")).toBeInTheDocument();
     expect(screen.queryByText(/registered across/)).not.toBeInTheDocument();
   });
 
   it("shows a loading state while servers are null", () => {
-    render(
-      <ToolCatalog
-        servers={null}
-        registeredCount={0}
-        discovery={null}
-        onDiscover={noop}
-      />,
-    );
+    render(<ToolCatalog servers={null} registeredCount={0} discovery={null} onDiscover={noop} />);
     expect(screen.getByText("Loading…")).toBeInTheDocument();
   });
 
   it("warns that ranking is not how the agent picks", () => {
     // The whole reason the panel exists: not mistaking this for agent behavior.
     render(
-      <ToolCatalog
-        servers={servers}
-        registeredCount={3}
-        discovery={null}
-        onDiscover={noop}
-      />,
+      <ToolCatalog servers={servers} registeredCount={3} discovery={null} onDiscover={noop} />,
     );
     expect(screen.getByText(/no model involved/)).toBeInTheDocument();
   });

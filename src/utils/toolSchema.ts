@@ -10,7 +10,8 @@
  * falls back to the raw JSON editor rather than silently dropping arguments.
  */
 
-export type FieldKind = "string" | "text" | "number" | "integer" | "boolean" | "enum" | "stringList";
+export type FieldKind =
+  "string" | "text" | "number" | "integer" | "boolean" | "enum" | "stringList";
 
 export interface ToolField {
   name: string;

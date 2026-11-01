@@ -182,17 +182,13 @@ export function getSession(
   });
 }
 
-export function getAdminSummary(
-  init?: Pick<RequestInit, "signal">,
-): Promise<AdminSurfaceSummary> {
+export function getAdminSummary(init?: Pick<RequestInit, "signal">): Promise<AdminSurfaceSummary> {
   return requestJson<AdminSurfaceSummary>("/admin/observability/summary", {
     signal: init?.signal,
   });
 }
 
-export function getAnalyticsByLLM(
-  init?: Pick<RequestInit, "signal">,
-): Promise<BreakdownAnalytics> {
+export function getAnalyticsByLLM(init?: Pick<RequestInit, "signal">): Promise<BreakdownAnalytics> {
   return requestJson<BreakdownAnalytics>("/analytics/by-llm", {
     signal: init?.signal,
   });
@@ -314,10 +310,9 @@ export function getQueryHistory(
   if (params.user_id) qs.set("user_id", params.user_id);
   if (params.feedback_type) qs.set("feedback_type", params.feedback_type);
   const query = qs.toString();
-  return requestJson<QueryHistoryPage>(
-    `/admin/chat-session-history${query ? `?${query}` : ""}`,
-    { signal: init?.signal },
-  );
+  return requestJson<QueryHistoryPage>(`/admin/chat-session-history${query ? `?${query}` : ""}`, {
+    signal: init?.signal,
+  });
 }
 
 export function getAuditSummary(
@@ -328,15 +323,12 @@ export function getAuditSummary(
   if (params.start_time) qs.set("start_time", params.start_time);
   if (params.end_time) qs.set("end_time", params.end_time);
   const query = qs.toString();
-  return requestJson<AuditSummary>(
-    `/admin/query-history/audit${query ? `?${query}` : ""}`,
-    { signal: init?.signal },
-  );
+  return requestJson<AuditSummary>(`/admin/query-history/audit${query ? `?${query}` : ""}`, {
+    signal: init?.signal,
+  });
 }
 
-export function listTools(
-  init?: Pick<RequestInit, "signal">,
-): Promise<ToolView[]> {
+export function listTools(init?: Pick<RequestInit, "signal">): Promise<ToolView[]> {
   return requestJson<ToolView[]>("/admin/tools", { signal: init?.signal });
 }
 
@@ -357,7 +349,6 @@ export function discoverAdminTools(
     signal: init?.signal,
   });
 }
-
 
 export function registerOpenAPITools(
   req: OpenAPIRegisterRequest,
@@ -457,9 +448,7 @@ export function fetchSearchDomains(): Promise<{
   return requestJson<{ domains: SearchDomainOption[] }>("/api/search-domains");
 }
 
-export function sendSearchMessage(
-  body: SendSearchMessageBody,
-): Promise<SearchFullResponse> {
+export function sendSearchMessage(body: SendSearchMessageBody): Promise<SearchFullResponse> {
   return requestJson<SearchFullResponse>("/search/send-search-message", {
     method: "POST",
     body: JSON.stringify({

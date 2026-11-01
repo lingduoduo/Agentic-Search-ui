@@ -5,9 +5,7 @@
     ":dependencyDashboard",
     "helpers:pinGitHubActionDigestsToSemver"
   ],
-  "labels": [
-    "dependencies"
-  ],
+  "labels": ["dependencies"],
   "commitMessagePrefix": "chore(deps):",
   "prConcurrentLimit": 5,
   "prHourlyLimit": 2,
@@ -19,20 +17,13 @@
   "packageRules": [
     {
       "description": "Major upgrades are never opened automatically: request them from the Dependency Dashboard.",
-      "matchUpdateTypes": [
-        "major"
-      ],
+      "matchUpdateTypes": ["major"],
       "dependencyDashboardApproval": true
     },
     {
       "description": "Group npm minor/patch updates into one PR.",
-      "matchManagers": [
-        "npm"
-      ],
-      "matchUpdateTypes": [
-        "minor",
-        "patch"
-      ],
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch"],
       "groupName": "npm minor and patch"
     }
   ]

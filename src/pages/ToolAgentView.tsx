@@ -95,10 +95,8 @@ export function ToolAgentView() {
           patchLastAssistant((t) => ({ ...t, progress: [...(t.progress ?? []), e.text] }));
         else if (e.type === "tool_call")
           patchLastAssistant((t) => ({ ...t, toolCalls: [...(t.toolCalls ?? []), e] }));
-        else if (e.type === "answer")
-          patchLastAssistant((t) => ({ ...t, content: e.text }));
-        else if (e.type === "approval_required")
-          setPendingApprovals((a) => [...a, e.approval]);
+        else if (e.type === "answer") patchLastAssistant((t) => ({ ...t, content: e.text }));
+        else if (e.type === "approval_required") setPendingApprovals((a) => [...a, e.approval]);
         else if (e.type === "escalation_required")
           setPendingEscalations((a) => [
             ...a.filter((escalation) => escalation.id !== e.escalation.id),
@@ -140,8 +138,8 @@ export function ToolAgentView() {
       {truncated && (
         <p className="truncation-notice" role="status">
           This answer was cut short — generation hit the time limit. Raise{" "}
-          <code>AGENTIC_SEARCH_GENERATION_TIMEOUT</code> (seconds, <code>0</code>{" "}
-          disables) and restart the backend for longer answers.
+          <code>AGENTIC_SEARCH_GENERATION_TIMEOUT</code> (seconds, <code>0</code> disables) and
+          restart the backend for longer answers.
         </p>
       )}
       <Transcript turns={turns} />
@@ -185,9 +183,7 @@ export function ToolAgentView() {
         servers={servers}
         registeredCount={registeredCount}
         discovery={discovery}
-        onDiscover={(q) =>
-          discoverAdminTools(q).then(setDiscovery, () => setDiscovery(null))
-        }
+        onDiscover={(q) => discoverAdminTools(q).then(setDiscovery, () => setDiscovery(null))}
         note={catalogNote}
       />
     </section>

@@ -69,11 +69,7 @@ export function RetrievalLab() {
         </label>
         <label>
           rrf_k
-          <input
-            type="number"
-            value={rrfK}
-            onChange={(e) => setRrfK(Number(e.target.value))}
-          />
+          <input type="number" value={rrfK} onChange={(e) => setRrfK(Number(e.target.value))} />
         </label>
         <label>
           mmr_lambda
@@ -93,11 +89,7 @@ export function RetrievalLab() {
           />
         </label>
         <label className="retrieval-lab__rerank">
-          <input
-            type="checkbox"
-            checked={rerank}
-            onChange={(e) => setRerank(e.target.checked)}
-          />
+          <input type="checkbox" checked={rerank} onChange={(e) => setRerank(e.target.checked)} />
           rerank
         </label>
         <button type="button" onClick={run} disabled={running}>
@@ -135,29 +127,22 @@ function ModeColumn({
   rerankRequested: boolean;
 }) {
   const rerankInactive =
-    rerankRequested &&
-    outcome?.ok &&
-    !outcome.data?.retrieval_mode.includes("+reranked");
+    rerankRequested && outcome?.ok && !outcome.data?.retrieval_mode.includes("+reranked");
   return (
     <div className="retrieval-lab__mode">
       <h3>{mode}</h3>
-      {rerankInactive && (
-        <p className="retrieval-lab__note">no reranker active</p>
-      )}
+      {rerankInactive && <p className="retrieval-lab__note">no reranker active</p>}
       {!outcome && <p className="retrieval-lab__idle">—</p>}
       {outcome && outcome.status === 404 && (
         <p className="retrieval-lab__error">
-          Endpoint not available (404). This server does not expose
-          /internal/search/{mode}.
+          Endpoint not available (404). This server does not expose /internal/search/{mode}.
         </p>
       )}
       {outcome && outcome.status === 503 && (
         <p className="retrieval-lab__error">Dense not configured (503).</p>
       )}
       {outcome && !outcome.ok && outcome.status !== 404 && outcome.status !== 503 && (
-        <p className="retrieval-lab__error">
-          {outcome.detail ?? `Failed (${outcome.status})`}
-        </p>
+        <p className="retrieval-lab__error">{outcome.detail ?? `Failed (${outcome.status})`}</p>
       )}
       {outcome?.ok && outcome.data && (
         <>

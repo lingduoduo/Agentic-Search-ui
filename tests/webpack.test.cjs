@@ -24,3 +24,65 @@ test('production emits assets into dist and has no development login middleware'
   assert.equal(prod.devtool, false);
   assert.match(prod.output.filename, /contenthash/);
 });
+
+test('SCSS is compiled before CSS injection or extraction in both modes', () => {
+  for (const mode of ['development', 'production']) {
+    const rules = config({}, { mode }).module.rules;
+    const scss = rules.find((rule) => rule.test.test('styles.scss'));
+    assert.ok(scss, `${mode}: SCSS loader rule`);
+    assert.deepEqual(scss.use.slice(-2), ['css-loader', 'sass-loader']);
+    assert.equal(scss.use[0], mode === 'development' ? 'style-loader' : require('mini-css-extract-plugin').loader);
+  }
+});
+
+test('a named environment loads its backend URL without changing development mode', () => {
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const { execFileSync } = require('node:child_process');
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'search-ui-env-'));
+  try {
+    fs.writeFileSync(path.join(cwd, '.env.keepghost'), 'BACKEND_URL=http://keepghost.example:7860\n');
+    const script = `const config = require(${JSON.stringify(require.resolve('../webpack.config.cjs'))})({ keepghost: true }, { mode: 'development' }); console.log(JSON.stringify({ mode: config.mode, target: config.devServer.proxy[0].target }));`;
+    const env = { ...process.env };
+    delete env.BACKEND_URL;
+    const result = JSON.parse(execFileSync(process.execPath, ['-e', script], { cwd, env, encoding: 'utf8' }));
+    assert.deepEqual(result, { mode: 'development', target: 'http://keepghost.example:7860' });
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('mock flag works alongside named environments and is development-only', () => {
+  const dev = config({ keepghost: true, mock: true }, { mode: 'development' });
+  const middlewares = dev.devServer.setupMiddlewares([]);
+  assert.equal(middlewares[0].name, 'mock-api');
+  assert.equal(config({}, { mode: 'development' }).devServer.setupMiddlewares([]).some((m) => m.name === 'mock-api'), false);
+  assert.equal(config({ mock: true }, { mode: 'production' }).devServer, undefined);
+});
+
+test('mock middleware returns JSON, errors and SSE, and passes unmatched requests through', async () => {
+  const { createMockMiddleware } = await import('../mocks/middleware.js');
+  const http = require('node:http');
+  const mock = createMockMiddleware([
+    { method: 'GET', path: '/api/example', response: { ok: true } },
+    { method: 'GET', path: '/api/failure', status: 503, response: { detail: 'Sample failure' } },
+    { method: 'POST', path: '/chat/example', events: [{ type: 'answer', text: 'Mock answer' }, { type: 'done', session_id: 'mock' }] },
+  ]);
+  const server = http.createServer((req, res) => mock(req, res, () => { res.statusCode = 418; res.end('fallback'); }));
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    assert.deepEqual(await (await fetch(`${base}/api/example?query=ignored`)).json(), { ok: true });
+    assert.equal((await fetch(`${base}/api/example`, { method: 'POST' })).status, 418);
+    assert.equal((await fetch(`${base}/search`, { headers: { Accept: 'text/html' } })).status, 418);
+    const failure = await fetch(`${base}/api/failure`);
+    assert.equal(failure.status, 503);
+    assert.deepEqual(await failure.json(), { detail: 'Sample failure' });
+    const stream = await fetch(`${base}/chat/example`, { method: 'POST' });
+    assert.match(stream.headers.get('content-type'), /text\/event-stream/);
+    assert.match(await stream.text(), /data: {"type":"answer","text":"Mock answer"}\n\ndata: {"type":"done"/);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});

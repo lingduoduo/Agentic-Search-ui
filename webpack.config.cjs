@@ -124,6 +124,9 @@ module.exports = (env = {}, argv = {}) => {
             hot: true,
             static: false,
             historyApiFallback: true,
+            // gzip buffers proxied SSE until the stream ends, so streamed
+            // answers would arrive all at once.
+            compress: false,
             proxy: [
               {
                 target: backend,

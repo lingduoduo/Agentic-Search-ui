@@ -18,6 +18,24 @@ describe("ChatView", () => {
     await waitFor(() => expect(screen.getByText("hello there")).toBeInTheDocument());
   });
 
+  it("renders token events before the final answer arrives", async () => {
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => (release = resolve));
+    async function* fake() {
+      yield { type: "token", text: "hel" } as const;
+      yield { type: "token", text: "lo" } as const;
+      await held;
+      yield { type: "answer", text: "hello" } as const;
+      yield { type: "done", session_id: "s1" } as const;
+    }
+    vi.spyOn(api, "sendChatMessage").mockImplementation(fake as never);
+    render(<ChatView />);
+    fireEvent.change(screen.getByLabelText("Chat message"), { target: { value: "hi" } });
+    fireEvent.click(screen.getByText("Send"));
+    await waitFor(() => expect(screen.getByText("hello")).toBeInTheDocument());
+    release();
+  });
+
   it("keeps prior turns visible across two submits", async () => {
     const answers = ["first answer", "second answer"];
     let call = 0;

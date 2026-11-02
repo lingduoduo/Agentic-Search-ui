@@ -483,6 +483,8 @@ export interface SendToolMessageBody {
 // ---------------------------------------------------------------------------
 
 export type ChatStreamEvent =
+  // One generated chunk; the closing `answer` carries the authoritative text.
+  | { type: "token"; text: string }
   | { type: "answer"; text: string }
   // `degraded` names why the answer is a fallback (e.g. "model_unavailable").
   | { type: "done"; session_id: string; degraded?: string | null }

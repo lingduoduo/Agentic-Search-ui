@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SESSION_CLEARED_EVENT } from "../../config/session";
-import { RequestError, get, post, stream } from "../request";
+import { RequestError, get, patch, post, stream } from "../request";
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 
@@ -56,6 +56,16 @@ describe("request", () => {
     const [, formInit] = fetchMock.mock.calls[1];
     expect(formInit.body).toBeInstanceOf(URLSearchParams);
     expect(new Headers(formInit.headers).has("Content-Type")).toBe(false);
+  });
+
+  it("sends patch as a PATCH with a JSON body", async () => {
+    const fetchMock = stubFetch(() => json({ id: "g1" }));
+    await expect(patch("/admin/user-group/g1", { body: { name: "Ops" } })).resolves.toEqual({
+      id: "g1",
+    });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/admin/user-group/g1");
+    expect(init).toMatchObject({ method: "PATCH", body: '{"name":"Ops"}' });
   });
 
   it("rejects with FastAPI's detail and the status, or a generic message", async () => {

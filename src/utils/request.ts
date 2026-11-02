@@ -114,6 +114,9 @@ export const get = <T>(url: string, options: FetchOptionType = {}) =>
 export const post = <T>(url: string, options: FetchOptionType = {}) =>
   request<T>(url, { ...options, method: "POST" });
 
+export const patch = <T>(url: string, options: FetchOptionType = {}) =>
+  request<T>(url, { ...options, method: "PATCH" });
+
 export const del = <T>(url: string, options: FetchOptionType = {}) =>
   request<T>(url, { ...options, method: "DELETE" });
 

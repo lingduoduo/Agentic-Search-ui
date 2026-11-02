@@ -36,8 +36,12 @@ export function ChatView() {
       { role: "assistant", content: "", pending: true },
     ]);
     try {
+      let streamed = "";
       for await (const e of sendChatMessage({ message: text, session_id: sessionId })) {
-        if (e.type === "answer") patchLastAssistant({ content: e.text });
+        if (e.type === "token") {
+          streamed += e.text;
+          patchLastAssistant({ content: streamed });
+        } else if (e.type === "answer") patchLastAssistant({ content: e.text });
         else if (e.type === "done") {
           setSessionId(e.session_id);
           patchLastAssistant({ pending: false, degraded: e.degraded ?? null });

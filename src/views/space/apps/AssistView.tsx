@@ -11,6 +11,7 @@ import {
 import { AUTO } from "../../../config/search";
 import { AnswerPanel } from "../../../components/AnswerPanel";
 import { ClarificationPrompt } from "../../../components/ClarificationPrompt";
+import { RetrievalStatus } from "../../../components/RetrievalStatus";
 import { DevConsole } from "../../../components/debug/DevConsole";
 import { SearchComposer } from "../../../components/SearchComposer";
 import { SessionTimeline } from "../../../components/SessionTimeline";
@@ -432,6 +433,7 @@ export function AssistView() {
             <Search size={18} />
             <h2>Sources</h2>
             <span className="count">{documents.length}</span>
+            <RetrievalStatus />
           </div>
           <SourceGrid documents={documents} />
         </section>

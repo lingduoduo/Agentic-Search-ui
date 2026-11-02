@@ -347,6 +347,14 @@ export interface DebugRetrievalOutcome {
   detail: string | null;
 }
 
+export interface RetrievalStatusView {
+  /** Scheme, host and port only. */
+  url: string;
+  /** Served in-process by the API rather than a separate server. */
+  embedded: boolean;
+  ok: boolean;
+}
+
 export interface ServerHealth {
   name: string;
   url: string;

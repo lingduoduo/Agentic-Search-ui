@@ -16,6 +16,7 @@ import type {
   FeedbackTarget,
   Permission,
   RouteLatencyResponse,
+  RetrievalStatusView,
   ServerHealth,
   DebugToolsResult,
   ToolDiscoverResult,
@@ -60,6 +61,11 @@ export async function runDebugRetrieval(
     if (!(err instanceof RequestError) || err.status === undefined) throw err;
     return { status: err.status, ok: false, data: null, detail: err.message };
   }
+}
+
+/** Which retrieval server answers queries, and whether it is reachable. */
+export function getRetrievalStatus(): Promise<RetrievalStatusView> {
+  return get<RetrievalStatusView>("/api/retrieval/status");
 }
 
 /** Fetch reachability of the configured backend servers (dev console). */

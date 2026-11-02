@@ -21,6 +21,8 @@ vi.mock("../services/api", () => ({
   streamAgent: vi.fn(),
   // The Assist composer loads the domain taxonomy on mount.
   fetchSearchDomains: vi.fn().mockResolvedValue({ domains: [] }),
+  // The Sources header shows the retrieval server on mount.
+  getRetrievalStatus: vi.fn().mockRejectedValue(new Error("no status")),
   submitToolApproval: vi.fn(),
   getAdminSummary: vi.fn().mockRejectedValue(new Error("no admin")),
   getAnalyticsByLLM: vi.fn().mockRejectedValue(new Error()),

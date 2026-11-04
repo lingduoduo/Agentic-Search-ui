@@ -82,6 +82,18 @@ describe("SessionTimeline", () => {
     expect(meta?.textContent).toMatch(/3 rounds/);
   });
 
+  it("styles history turns like the transcript: role avatars and names", () => {
+    render(<SessionTimeline messages={[userMsg, assistantMsg]} />);
+    const user = document.querySelector(".chat-row--user");
+    const assistant = document.querySelector(".chat-row--assistant");
+    expect(user).toHaveClass("turn", "turn--user");
+    expect(user?.querySelector(".turn__avatar--user")).toHaveTextContent("You");
+    expect(user?.querySelector(".turn__name")).toHaveTextContent("You");
+    expect(assistant).toHaveClass("turn", "turn--assistant");
+    expect(assistant?.querySelector(".turn__avatar--assistant svg")).not.toBeNull();
+    expect(assistant?.querySelector(".turn__name")).toHaveTextContent("Assistant");
+  });
+
   it("shows empty state when only system messages exist", () => {
     render(<SessionTimeline messages={[systemMsg]} />);
     expect(screen.getByText(/start a query/i)).toBeInTheDocument();

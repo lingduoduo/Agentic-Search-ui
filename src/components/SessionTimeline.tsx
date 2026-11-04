@@ -1,5 +1,6 @@
 import { memo } from "react";
 import type { ChatMessageView } from "../interfaces";
+import { TurnAvatar } from "./Transcript";
 
 interface SessionTimelineProps {
   messages: ChatMessageView[];
@@ -15,24 +16,21 @@ export const SessionTimeline = memo(function SessionTimeline({ messages }: Sessi
   return (
     <div className="chat-thread">
       {visible.map(({ m: message, i: origIdx }) => {
-        const isUser = message.role === "user";
+        const role = message.role === "user" ? "user" : "assistant";
         const roundsUsed = message.metadata?.rounds_used as number | undefined;
         const numTurns = message.metadata?.num_turns as number | undefined;
 
+        // The transcript's turn layout; chat-row--* stays as this panel's hook.
         return (
           <div
             key={`${message.role}-${origIdx}`}
-            className={`chat-row ${isUser ? "chat-row--user" : "chat-row--assistant"}`}
+            className={`turn turn--${role} chat-row chat-row--${role}`}
           >
-            {isUser && <div className="chat-avatar chat-avatar--user">U</div>}
-
-            <div className="chat-bubble-wrapper">
-              <div
-                className={`chat-bubble ${isUser ? "chat-bubble--user" : "chat-bubble--assistant"}`}
-              >
-                {message.content}
-              </div>
-              {!isUser && (roundsUsed != null || numTurns != null) && (
+            <TurnAvatar role={role} />
+            <div className="turn__body">
+              <div className="turn__name">{role === "user" ? "You" : "Assistant"}</div>
+              <div className="turn__content">{message.content}</div>
+              {role === "assistant" && (roundsUsed != null || numTurns != null) && (
                 <div className="chat-meta">
                   {roundsUsed != null && `${roundsUsed} rounds`}
                   {roundsUsed != null && numTurns != null && " · "}
@@ -40,8 +38,6 @@ export const SessionTimeline = memo(function SessionTimeline({ messages }: Sessi
                 </div>
               )}
             </div>
-
-            {!isUser && <div className="chat-avatar chat-avatar--assistant">A</div>}
           </div>
         );
       })}

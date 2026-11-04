@@ -1,109 +1,74 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
-const config = require("../webpack.config.cjs");
+const path = require("node:path");
 
-test("development proxies API calls while keeping page navigations local", () => {
-  const dev = config({}, { mode: "development" });
-  const matches = dev.devServer.proxy[0].context;
-  for (const path of [
-    "/api/search-domains",
-    "/auth/login",
-    "/me",
-    "/admin/tools",
-    "/analytics/flow",
-    "/health",
-    "/ready",
-    "/tool/invoke",
-    "/chat/send",
-    "/search/send",
-    "/tools/discover",
-    "/admin",
-  ]) {
-    assert.equal(matches(path, { headers: { accept: "application/json" } }), true, path);
-  }
-  for (const path of [
-    "/home",
-    "/assist",
-    "/chat",
-    "/search",
-    "/tools",
-    "/chat/session",
-    "/admin",
-    "/auth/login",
-  ]) {
-    assert.equal(matches(path, { headers: { accept: "text/html" } }), false, path);
-  }
-  assert.equal(matches("/admin/tools", { headers: { accept: "text/html" } }), true);
-  assert.equal(matches("/auth/register", { headers: { accept: "text/html" } }), true);
-  assert.equal(matches("/src/main.tsx", { headers: {} }), false);
-  assert.equal(dev.devServer.static, false);
-});
-
-test("only development builds set import.meta.env.DEV", () => {
-  const define = (mode) =>
-    config({}, { mode }).plugins.find((plugin) => plugin.constructor.name === "DefinePlugin")
-      .definitions["import.meta.env.DEV"];
-  assert.equal(define("development"), "true");
-  assert.equal(define("production"), "false");
-});
-
-test("production emits assets into dist and has no development login middleware", () => {
-  const prod = config({}, { mode: "production" });
-  assert.equal(prod.output.path.endsWith("/dist"), true);
-  assert.equal(prod.output.publicPath, "/");
-  assert.equal(prod.output.clean, true);
-  assert.equal(prod.devServer, undefined);
-  assert.equal(prod.devtool, false);
-  assert.match(prod.output.filename, /contenthash/);
-});
-
-test("SCSS is compiled before CSS injection or extraction in both modes", () => {
-  for (const mode of ["development", "production"]) {
-    const rules = config({}, { mode }).module.rules;
-    const scss = rules.find((rule) => rule.test.test("styles.scss"));
-    assert.ok(scss, `${mode}: SCSS loader rule`);
-    assert.deepEqual(scss.use.slice(-2), ["css-loader", "sass-loader"]);
-    assert.equal(
-      scss.use[0],
-      mode === "development" ? "style-loader" : require("mini-css-extract-plugin").loader,
-    );
-  }
-});
-
-test("a named environment loads its backend URL without changing development mode", () => {
-  const fs = require("node:fs");
-  const os = require("node:os");
-  const path = require("node:path");
-  const { execFileSync } = require("node:child_process");
-  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "search-ui-env-"));
+test("Vite keeps SPA navigations local, proxies APIs, and serves mock JSON and SSE", async () => {
+  const { createServer } = await import("vite");
+  const http = require("node:http");
+  const backend = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ backend: req.url }));
+  });
+  await new Promise((resolve) => backend.listen(0, "127.0.0.1", resolve));
+  const previous = process.env.BACKEND_URL;
+  process.env.BACKEND_URL = `http://127.0.0.1:${backend.address().port}`;
+  let server;
   try {
-    fs.writeFileSync(
-      path.join(cwd, ".env.keepghost"),
-      "BACKEND_URL=http://keepghost.example:7860\n",
+    server = await createServer({
+      configFile: path.resolve("vite.config.js"),
+      server: { port: 0 },
+      logLevel: "error",
+    });
+    await server.listen();
+    const base = `http://127.0.0.1:${server.httpServer.address().port}`;
+    for (const route of [
+      "/chat",
+      "/chat/session",
+      "/search",
+      "/tools",
+      "/admin",
+      "/auth/login",
+      "/space/apps",
+    ]) {
+      const response = await fetch(base + route, { headers: { Accept: "text/html" } });
+      assert.match(await response.text(), /src=.{0,2}\/src\/main.tsx/, route);
+    }
+    for (const route of [
+      "/api/example",
+      "/admin/tools",
+      "/auth/register",
+      "/health",
+      "/ready",
+      "/tool/invoke",
+    ]) {
+      assert.deepEqual(await (await fetch(base + route)).json(), { backend: route });
+    }
+    assert.deepEqual(await (await fetch(base + "/auth/login", { method: "POST" })).json(), {
+      backend: "/auth/login",
+    });
+    assert.match(await (await fetch(base + "/dev-login.html")).text(), /<html/);
+    await server.close();
+    server = await createServer({
+      configFile: path.resolve("vite.config.js"),
+      mode: "mock",
+      server: { port: 0 },
+      logLevel: "error",
+    });
+    await server.listen();
+    const mockBase = `http://127.0.0.1:${server.httpServer.address().port}`;
+    const me = await fetch(mockBase + "/me");
+    assert.equal(me.headers.get("x-mock-api"), "true");
+    assert.equal(me.status, 200);
+    assert.match(
+      await (await fetch(mockBase + "/chat", { headers: { Accept: "text/html" } })).text(),
+      /src\/main.tsx/,
     );
-    const script = `const config = require(${JSON.stringify(require.resolve("../webpack.config.cjs"))})({ keepghost: true }, { mode: 'development' }); console.log(JSON.stringify({ mode: config.mode, target: config.devServer.proxy[0].target }));`;
-    const env = { ...process.env };
-    delete env.BACKEND_URL;
-    const result = JSON.parse(
-      execFileSync(process.execPath, ["-e", script], { cwd, env, encoding: "utf8" }),
-    );
-    assert.deepEqual(result, { mode: "development", target: "http://keepghost.example:7860" });
   } finally {
-    fs.rmSync(cwd, { recursive: true, force: true });
+    await server?.close();
+    await new Promise((resolve) => backend.close(resolve));
+    if (previous === undefined) delete process.env.BACKEND_URL;
+    else process.env.BACKEND_URL = previous;
   }
-});
-
-test("mock flag works alongside named environments and is development-only", () => {
-  const dev = config({ keepghost: true, mock: true }, { mode: "development" });
-  const middlewares = dev.devServer.setupMiddlewares([]);
-  assert.equal(middlewares[0].name, "mock-api");
-  assert.equal(
-    config({}, { mode: "development" })
-      .devServer.setupMiddlewares([])
-      .some((m) => m.name === "mock-api"),
-    false,
-  );
-  assert.equal(config({ mock: true }, { mode: "production" }).devServer, undefined);
 });
 
 test("mock middleware returns JSON, errors and SSE, and passes unmatched requests through", async () => {
@@ -195,14 +160,6 @@ test("sample history mocks serve audit, pagination and feedback filters without 
   }
 });
 
-test("CSS passes through PostCSS in development and production", () => {
-  for (const mode of ["development", "production"]) {
-    const css = config({}, { mode }).module.rules.find((rule) => rule.test.test("tailwind.css"));
-    assert.ok(css, `${mode}: CSS loader rule`);
-    assert.deepEqual(css.use.slice(-2), ["css-loader", "postcss-loader"]);
-  }
-});
-
 test("Tailwind generates a utility used by the app without introducing Preflight", async () => {
   const fs = require("node:fs");
   const path = require("node:path");
@@ -241,5 +198,31 @@ test("mock session signs out until the next sign-in", async () => {
     assert.equal(await status("GET", "/me"), 200);
   } finally {
     server.close();
+  }
+});
+
+test("named environments load backend settings without exposing them to the browser", async () => {
+  const fs = require("node:fs");
+  const os = require("node:os");
+  const { default: config } = await import("../vite.config.js");
+  const cwd = process.cwd();
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "vite-profile-"));
+  const previous = process.env.BACKEND_URL;
+  try {
+    fs.writeFileSync(
+      path.join(directory, ".env.keepghost"),
+      "BACKEND_URL=http://keepghost.example:7860\nMOCK_API=true\n",
+    );
+    delete process.env.BACKEND_URL;
+    process.chdir(directory);
+    const settings = config({ mode: "keepghost", command: "serve" });
+    assert.equal(Object.values(settings.server.proxy)[0].target, "http://keepghost.example:7860");
+    assert.equal(settings.envPrefix, "VITE_DEBUG_PANELS");
+    assert.deepEqual(settings.preview.proxy, {});
+  } finally {
+    process.chdir(cwd);
+    if (previous === undefined) delete process.env.BACKEND_URL;
+    else process.env.BACKEND_URL = previous;
+    fs.rmSync(directory, { recursive: true, force: true });
   }
 });

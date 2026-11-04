@@ -41,7 +41,7 @@ jobs:
       - name: Build production assets
         run: yarn build
 
-      - name: Check Webpack configuration
+      - name: Check Vite configuration
         run: yarn test:build-config
 
       - name: Run unit tests

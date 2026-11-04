@@ -1,6 +1,6 @@
 # Agentic Search UI
 
-The React 19.1 + Webpack + TypeScript + SCSS frontend for
+The React 19.1 + Vite + TypeScript + SCSS frontend for
 [Agentic Search](https://github.com/lingduoduo/Agentic-Search-GRPO). It's a
 single-page app whose apps list (`/space/apps`) opens four apps at
 `/space/apps/:app_id`: **Assistant** (`assist`), **Search** (`search`), **Chat**
@@ -29,26 +29,25 @@ BACKEND_URL=http://127.0.0.1:7861 yarn dev
 To start with a named environment:
 
 ```bash
-yarn start:app --env keepghost
+yarn start:app --mode keepghost
 ```
 
 Set `BACKEND_URL` in `.env.keepghost.local` or `.env.keepghost` for that
 backend. Named environments still run in development mode on port 5173.
-`--env name=keepghost` is also supported. Without a backend override, the
+Use `MOCK_API=true yarn start:app --mode keepghost` to enable mocks with that profile. Without a backend override, the
 proxy uses `http://127.0.0.1:7860`.
 
 For a dev login, open `http://127.0.0.1:5173/dev-login.html` (dev server only).
 
-Webpack compiles TypeScript and React with SWC, compiles SCSS with Dart Sass,
-and generates `index.html` with hashed production assets in `dist/`. React and
-React DOM are constrained to the 19.1 patch series. Configure the build and
-dev server in `webpack.config.cjs`. Vitest uses `vitest.config.ts`; Vite and
-its React plugin are retained only as test tooling.
+Vite serves the React and TypeScript app with React Fast Refresh, compiles SCSS
+with Dart Sass, and emits hashed production assets in `dist/`. React and React
+DOM remain on the 19.1 patch series. Build and server settings live in
+`vite.config.js`; unit tests use `vitest.config.ts`.
 
 For a production build and local static preview:
 
 ```bash
-yarn build           # TypeScript check, then Webpack output → dist/
+yarn build           # TypeScript check, then Vite output → dist/
 yarn preview         # http://127.0.0.1:4173, serves the existing dist/
 ```
 
@@ -57,14 +56,10 @@ nginx container to exercise authenticated requests and streaming against the
 backend. `dev-login.html` is available only through `yarn dev` and is excluded
 from the production bundle.
 
-Webpack configuration lives in `webpack.config.cjs`; `index.html` is the HTML
-template and Webpack injects the generated scripts and stylesheet links.
-Shared styles live in `src/assets/styles/styles.scss`. Webpack processes SCSS through
-`sass-loader` and `css-loader`, injects styles during development, and extracts
-CSS for production. Plain CSS imports remain supported.
+`index.html` is Vite's entry point and imports `src/main.tsx`. Shared styles
+live in `src/assets/styles/styles.scss`; Vite handles SCSS, CSS, and PostCSS.
 Development uses hot module replacement and source maps. Production cleans
-`dist/`, extracts CSS, and splits React, icons, and dynamically imported code
-into hashed assets without source maps.
+`dist/` and generates hashed JavaScript and CSS assets without source maps.
 
 | Variable            | Default                                | Purpose                                                                              |
 | ------------------- | -------------------------------------- | ------------------------------------------------------------------------------------ |
@@ -77,23 +72,23 @@ For example:
 VITE_DEBUG_PANELS=1 BACKEND_URL=http://127.0.0.1:7861 yarn dev
 ```
 
-Webpack reads environment values in this order, with the first value taking
-priority: shell variables, `.env.<mode>.local`, `.env.local`, `.env.<mode>`,
+Vite reads environment values in this order, with the first value taking
+priority: shell variables, `.env.<mode>.local`, `.env.<mode>`, `.env.local`,
 then `.env`. The mode is `development` for `yarn dev` and `production` for
 `yarn build`. A named environment replaces `<mode>` in those file names
-without changing the Webpack build mode. The debug flag is embedded during
+without changing whether the command serves development or builds production. The debug flag is embedded during
 compilation, so restart the dev server or rebuild after changing it. Only the explicitly configured debug
 flag is exposed to browser code.
 
 ## Mock API
 
-Start the Webpack dev server at `http://127.0.0.1:5173` with sample API
+Start the Vite dev server at `http://127.0.0.1:5173` with sample API
 responses. Open `/space/apps` and pick an app to try the fixtures:
 
 ```bash
 yarn start:mock
 # or combine mocks with a named backend environment:
-yarn start:app --env keepghost --env mock
+MOCK_API=true yarn start:app --mode keepghost
 ```
 
 The sample [mocks/config.js](mocks/config.js) contains the response fixtures;
@@ -213,14 +208,14 @@ navigation. Every page requires signing in at `/auth/login`, after which the use
 the apps list, `/space/apps`, with the sidebar; admins also get the
 `/admin` page with the admin overview and analytics.
 
-Put imported images, icons, fonts, and SCSS in `src/assets/`. Webpack bundles
+Put imported images, icons, fonts, and SCSS in `src/assets/`. Vite bundles
 referenced assets with hashed filenames in `dist/assets/`; merely adding a
 file does not include it in the build. Reference images from components and
 fonts or background images with relative `url(...)` paths in SCSS. Empty asset
 folders contain `.gitkeep` files so the structure is retained in Git.
 
 UI and service tests live in `__tests__/` directories alongside the code they
-cover. Webpack configuration checks live in `tests/webpack.test.cjs`.
+cover. Vite configuration checks live in `tests/vite.test.cjs`.
 Component state stays with its owning page or component; only the signed-in
 account is shared, in the Redux store under `store/`. `static/`
 and `storybook/` are empty placeholders in the local layout; Git will track
@@ -239,7 +234,7 @@ yarn lint:fix          # Fix lint issues where possible
 yarn format            # Format source, SCSS, configuration, and docs
 yarn format:check      # Check formatting without changing files
 yarn typecheck         # TypeScript
-yarn test:build-config # Webpack proxy and production configuration
+yarn test:build-config # Vite proxy and production configuration
 yarn test:unit         # Vitest
 yarn test:unit:watch   # Vitest in watch mode
 yarn test              # typecheck, build configuration, and unit tests
@@ -303,7 +298,7 @@ To add a route screen:
    (or `BlankLayout` with `handle: { public: true }` for a public page). A new app
    only needs an entry in `APPS` and in `DetailView`. Add its navigation link in
    `src/components/AppSidebar.tsx`; under `DefaultLayout`, give it a page heading as the route's `handle.heading`.
-3. Keep page serving aligned with the backend: update the proxy context filter in
-   `webpack.config.cjs` and the shared-prefix location in
+3. Keep page serving aligned with the backend: update the proxy bypass in
+   `vite.config.js` and the shared-prefix location in
    `nginx/default.conf.template` when the route shares a backend API prefix,
    and update `spa_page` in the backend's `src/internal/servers/web/app.py`.

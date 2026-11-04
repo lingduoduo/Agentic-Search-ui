@@ -1,8 +1,8 @@
-// Sample API fixtures used only by webpack-dev-server with --env mock.
+// Sample API fixtures used only by Vite with --mode mock.
 // Restart the dev server after editing this file. Unlisted routes use the real backend.
 // Each entry supports method, path, status, headers, delayMs, and response OR events;
 // status and response may be functions of the request.
-const answer = "This is a sample answer from the Webpack mock API.";
+const answer = "This is a sample answer from the Vite mock API.";
 const document = {
   title: "Mock search result",
   url: "https://example.com/docs",

@@ -179,6 +179,15 @@ event with `degraded: "model_unavailable"`. `ChatView` and `ToolAgentView` copy
 it onto the assistant turn, and the transcript shows
 `⚠ Model unavailable — degraded answer` under it (the reason in its `title`).
 
+**Transcript speakers** (`Transcript.tsx`) — each turn carries a name label
+("You" / "Assistant") and an avatar that tells the speakers apart by shape and
+color: the user's is an accent-blue circle on the right, the assistant's a teal
+rounded square with a bot icon on the left. Bubbles match (accent blue with
+white text vs. soft gray), with the corner nearest the avatar kept tight. An
+assistant turn still waiting for content shows three animated dots. Avatars are
+`aria-hidden`; the name label speaks for the turn. The Assistant page's
+Session history (`SessionTimeline`) reuses the same turn layout and `TurnAvatar`.
+
 **Markdown rendering** — Answers render via `react-markdown`: headings, bold/italic, inline code, code blocks, and ordered/unordered lists. Citation markers (`[D1]`, `[D2]`, …) become anchor links that scroll the page to the matching source card.
 
 **Chat history** — Session timeline renders as a chat bubble layout: user messages right-aligned, assistant messages left-aligned. System messages are filtered out. Keys are stable against message prepend/removal.

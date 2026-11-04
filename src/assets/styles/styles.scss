@@ -10,6 +10,8 @@
   --accent-strong: #1535bd;
   --amber: #a16207;
   --rose: #dc2626;
+  --assistant: #0d9488;
+  --assistant-soft: #f1f5f9;
   --shadow: none;
 }
 
@@ -1059,69 +1061,10 @@ option:disabled,
   padding: 4px 0;
 }
 
-.chat-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-}
-.chat-row--user {
-  justify-content: flex-start;
-}
-.chat-row--assistant {
-  justify-content: flex-end;
-}
-
-.chat-avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.6rem;
-  font-weight: 600;
-}
-.chat-avatar--user {
-  background: #3b82f6;
-  color: #fff;
-}
-.chat-avatar--assistant {
-  background: #1e3a5f;
-  color: #38bdf8;
-}
-
-.chat-bubble-wrapper {
-  max-width: 85%;
-  display: flex;
-  flex-direction: column;
-}
-
-.chat-bubble {
-  padding: 7px 11px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  line-height: 1.5;
-  word-break: break-word;
-}
-.chat-bubble--user {
-  background: #1e293b;
-  border-radius: 2px 8px 8px 8px;
-  color: #e2e8f0;
-}
-.chat-bubble--assistant {
-  background: #0d1f33;
-  border: 1px solid #1e3a5f;
-  border-radius: 8px 2px 8px 8px;
-  color: #e2e8f0;
-}
-
+/* Rows reuse the transcript's .turn styles (see Transcript.tsx). */
 .chat-meta {
-  font-size: 0.62rem;
-  color: #475569;
-  margin-top: 3px;
-  text-align: right;
-  padding-right: 2px;
+  color: var(--muted);
+  font-size: 0.72rem;
 }
 
 /* ── Invoke modal ────────────────────────────────────────────────────────────── */
@@ -1960,39 +1903,120 @@ option:disabled,
 
 .turn {
   display: flex;
-  flex-direction: column;
+  gap: 8px;
   max-width: 85%;
 }
 
+/* The user's turns mirror the assistant's: avatar on the right. */
 .turn--user {
+  flex-direction: row-reverse;
   align-self: flex-end;
-  align-items: flex-end;
 }
 
 .turn--assistant {
   align-self: flex-start;
+}
+
+.turn__avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.turn__avatar--user {
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* A rounded square, not a circle, so the two speakers differ by shape too. */
+.turn__avatar--assistant {
+  border-radius: 8px;
+  background: var(--assistant);
+}
+
+.turn__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.turn--user .turn__body {
+  align-items: flex-end;
+}
+
+.turn--assistant .turn__body {
   align-items: flex-start;
+}
+
+.turn__name {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
 }
 
 .turn__content {
   padding: 10px 14px;
-  border-radius: 4px;
+  border-radius: 16px;
   line-height: 1.55;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
+/* The corner nearest the avatar stays tight, pointing the bubble at it. */
 .turn--user .turn__content {
   background: var(--accent);
   color: #fff;
-  border-bottom-right-radius: 4px;
+  border: 1px solid var(--accent-strong);
+  border-top-right-radius: 4px;
 }
 
 .turn--assistant .turn__content {
-  background: var(--panel);
+  background: var(--assistant-soft);
   color: var(--ink);
   border: 1px solid var(--line);
-  border-bottom-left-radius: 4px;
+  border-top-left-radius: 4px;
+}
+
+.turn__typing {
+  display: inline-flex;
+  gap: 4px;
+  padding: 14px;
+}
+
+.turn__typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--assistant);
+  animation: turn-typing 1.2s ease-in-out infinite;
+}
+
+.turn__typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.turn__typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes turn-typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
 }
 
 .turn__progress {

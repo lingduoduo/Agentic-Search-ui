@@ -14,6 +14,29 @@ describe("Transcript", () => {
     expect(screen.getByText("hello")).toBeInTheDocument();
   });
 
+  it("labels each turn with a role-specific avatar and name", () => {
+    const { container } = render(
+      <Transcript
+        turns={[
+          { role: "user", content: "hi" },
+          { role: "assistant", content: "hello" },
+        ]}
+      />,
+    );
+    const [user, assistant] = container.querySelectorAll(".turn");
+    expect(user.querySelector(".turn__avatar--user")).toHaveTextContent("You");
+    expect(user.querySelector(".turn__name")).toHaveTextContent("You");
+    expect(assistant.querySelector(".turn__avatar--assistant svg")).not.toBeNull();
+    expect(assistant.querySelector(".turn__name")).toHaveTextContent("Assistant");
+    // The name label speaks for the turn; the avatar is decoration.
+    expect(user.querySelector(".turn__avatar")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("shows a typing indicator while an assistant turn has no content yet", () => {
+    render(<Transcript turns={[{ role: "assistant", content: "", pending: true }]} />);
+    expect(screen.getByRole("img", { name: "Assistant is responding" })).toBeInTheDocument();
+  });
+
   it("renders an assistant turn's tool calls", () => {
     const turns: ConversationTurn[] = [
       {

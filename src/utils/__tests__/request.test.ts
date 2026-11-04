@@ -31,7 +31,23 @@ function sseResponse(chunks: string[], onCancel?: () => void) {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
   vi.useRealTimers();
+});
+
+describe("direct mode (VITE_API_BASE_URL)", () => {
+  it("calls the backend origin with the session cookie included", async () => {
+    vi.stubEnv("VITE_API_BASE_URL", " http://127.0.0.1:7860/ ");
+    vi.resetModules();
+    const direct = await import("../request");
+    const fetchMock = stubFetch(() => json({}));
+
+    await direct.get("/me", { params: { page_num: 1 } });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("http://127.0.0.1:7860/me?page_num=1");
+    expect(init).toMatchObject({ credentials: "include" });
+  });
 });
 
 describe("request", () => {

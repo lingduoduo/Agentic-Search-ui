@@ -71,6 +71,26 @@ test("Vite keeps SPA navigations local, proxies APIs, and serves mock JSON and S
   }
 });
 
+test("VITE_API_BASE_URL must be a bare backend origin", async () => {
+  const { default: config } = await import("../vite.config.js");
+  const withBase = (value) => {
+    const previous = process.env.VITE_API_BASE_URL;
+    process.env.VITE_API_BASE_URL = value;
+    try {
+      return config({ mode: "development", command: "serve" });
+    } finally {
+      if (previous === undefined) delete process.env.VITE_API_BASE_URL;
+      else process.env.VITE_API_BASE_URL = previous;
+    }
+  };
+  for (const value of ["", "http://127.0.0.1:7860", "https://api.example.com/"]) {
+    assert.doesNotThrow(() => withBase(value), value);
+  }
+  for (const value of ["/api", "127.0.0.1:7860", "http://127.0.0.1:7860/api"]) {
+    assert.throws(() => withBase(value), /must be an origin/, value);
+  }
+});
+
 test("mock middleware returns JSON, errors and SSE, and passes unmatched requests through", async () => {
   const { createMockMiddleware } = await import("../mocks/middleware.js");
   const http = require("node:http");
@@ -217,7 +237,7 @@ test("named environments load backend settings without exposing them to the brow
     process.chdir(directory);
     const settings = config({ mode: "keepghost", command: "serve" });
     assert.equal(Object.values(settings.server.proxy)[0].target, "http://keepghost.example:7860");
-    assert.equal(settings.envPrefix, "VITE_DEBUG_PANELS");
+    assert.deepEqual(settings.envPrefix, ["VITE_DEBUG_PANELS", "VITE_API_BASE_URL"]);
     assert.deepEqual(settings.preview.proxy, {});
   } finally {
     process.chdir(cwd);

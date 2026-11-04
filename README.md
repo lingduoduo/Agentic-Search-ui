@@ -63,6 +63,7 @@ and server settings live in `vite.config.js`; unit tests use
 | ------------------- | -------------------------------------- | -------------------------------------------------------------- |
 | `BACKEND_URL`       | `http://127.0.0.1:7860` in development | Backend proxy target; nginx uses `http://web:7860` by default. |
 | `VITE_DEBUG_PANELS` | Disabled                               | Set to `1` to show the Assistant's debug panels.               |
+| `VITE_API_BASE_URL` | Unset (same-origin)                    | Backend origin for direct cross-origin calls; see below.       |
 
 For example:
 
@@ -77,8 +78,28 @@ then `.env`. The mode is `development` for `yarn dev` and `production` for
 without changing whether the command serves development or builds production.
 The debug flag is embedded during compilation, so restart the dev server or
 rebuild after changing it. Only variables starting with `VITE_DEBUG_PANELS`
-reach browser code (`envPrefix` in `vite.config.js`); `BACKEND_URL` and the
-rest stay on the dev server.
+or `VITE_API_BASE_URL` reach browser code (`envPrefix` in `vite.config.js`);
+`BACKEND_URL` and the rest stay on the dev server.
+
+### Proxied or direct backend calls
+
+By default the browser calls relative paths (`/api/...`, `/auth/login`) and the
+dev server or nginx proxies them to the backend, so no CORS applies. Setting
+`VITE_API_BASE_URL` to the backend's origin makes the browser call it directly,
+with the session cookie included:
+
+```bash
+# Backend, in Agentic-Search-GRPO: allow this page's exact origin.
+AGENTIC_SEARCH_CORS_ORIGINS=http://127.0.0.1:5173 uvicorn src.internal.servers.web.app:app --port 7860
+# Frontend:
+VITE_API_BASE_URL=http://127.0.0.1:7860 yarn dev
+```
+
+The value must be a bare origin (no path); `vite.config.js` rejects anything
+else. It is public and embedded at build time. The backend's session cookie is
+`SameSite=Lax`, so use the same host on both sides (`127.0.0.1`, not
+`localhost` on one and `127.0.0.1` on the other). Direct calls bypass the mock
+API and the dev proxy; `dev-login.html` still goes through the proxy.
 
 ## Mock API
 
@@ -260,7 +281,10 @@ The `Dockerfile` builds the bundle and serves it from nginx (non-root, port
 8080). nginx forwards the backend's routes (`/api`, `/auth`, `/me`, `/admin`,
 `/analytics`, `/health`, `/ready`, `/tool`, and API calls under `/chat`,
 `/search`, `/tools`) to `BACKEND_URL`. Browser and backend stay on one origin,
-so cookies and streaming work without CORS.
+so cookies and streaming work without CORS. To deploy against a backend on
+another origin instead, build with `VITE_API_BASE_URL` and list the UI's origin
+in the backend's `AGENTIC_SEARCH_CORS_ORIGINS`
+([proxied or direct](#proxied-or-direct-backend-calls)).
 
 On macOS with Colima installed, start it and select its Docker context before
 building the image:

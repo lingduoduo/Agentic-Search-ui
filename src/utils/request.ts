@@ -3,9 +3,16 @@ import { clearCredential } from "./auth";
 // For a plain request; streams have no timeout, since an agent run can take longer.
 const TIME_OUT = 100_000;
 
+// Unset (the default), paths stay same-origin: the dev server and nginx proxy the
+// backend. An absolute origin such as http://127.0.0.1:7860 calls the backend
+// directly, which must list this page's origin in AGENTIC_SEARCH_CORS_ORIGINS.
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").trim().replace(/\/+$/, "");
+
 // Defaults for every request; per-request options override them. The session is
-// an HttpOnly cookie on this origin (the dev server and nginx proxy the backend).
-const BASE_FETCH_OPTIONS: RequestInit = { credentials: "same-origin" };
+// an HttpOnly cookie, sent cross-origin only in direct mode.
+const BASE_FETCH_OPTIONS: RequestInit = {
+  credentials: API_BASE_URL ? "include" : "same-origin",
+};
 
 type FetchOptionType = Omit<RequestInit, "body"> & {
   params?: Record<string, string | number | boolean | null | undefined>;
@@ -60,7 +67,7 @@ const errorMessage = async (response: Response) => {
 /** Sends the request; resolves with an ok response or throws a RequestError. */
 const send = async (url: string, { params, body, ...init }: FetchOptionType) => {
   const headers = new Headers(init.headers);
-  const response = await globalThis.fetch(buildUrl(url, params), {
+  const response = await globalThis.fetch(API_BASE_URL + buildUrl(url, params), {
     ...BASE_FETCH_OPTIONS,
     ...init,
     headers,

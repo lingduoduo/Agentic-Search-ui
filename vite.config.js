@@ -29,6 +29,11 @@ const isPage = (req) => {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const mockEnabled = env.MOCK_API === "true" || mode === "mock";
+  // The client prepends it to backend paths, so it must be a bare origin.
+  const apiBase = env.VITE_API_BASE_URL?.trim();
+  if (apiBase && !/^https?:\/\/[^/?#]+\/?$/.test(apiBase)) {
+    throw new Error(`VITE_API_BASE_URL must be an origin like http://127.0.0.1:7860: ${apiBase}`);
+  }
   return {
     plugins: [
       react(),
@@ -53,8 +58,9 @@ export default defineConfig(({ mode }) => {
         },
       },
     ],
-    // Expose only the existing browser debug flag, never backend configuration.
-    envPrefix: "VITE_DEBUG_PANELS",
+    // Expose only these two public settings to browser code: the debug flag and
+    // the optional backend origin for direct cross-origin calls. Never secrets.
+    envPrefix: ["VITE_DEBUG_PANELS", "VITE_API_BASE_URL"],
     server: {
       host: "127.0.0.1",
       port: 5173,

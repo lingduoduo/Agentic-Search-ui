@@ -33,16 +33,11 @@ yarn start:app --mode keepghost
 ```
 
 Set `BACKEND_URL` in `.env.keepghost.local` or `.env.keepghost` for that
-backend. Named environments still run in development mode on port 5173.
-Use `MOCK_API=true yarn start:app --mode keepghost` to enable mocks with that profile. Without a backend override, the
-proxy uses `http://127.0.0.1:7860`.
+backend. Named environments still run in development mode on port 5173. Use
+`MOCK_API=true yarn start:app --mode keepghost` to enable mocks with that
+profile. Without a backend override, the proxy uses `http://127.0.0.1:7860`.
 
 For a dev login, open `http://127.0.0.1:5173/dev-login.html` (dev server only).
-
-Vite serves the React and TypeScript app with React Fast Refresh, compiles SCSS
-with Dart Sass, and emits hashed production assets in `dist/`. React and React
-DOM remain on the 19.1 patch series. Build and server settings live in
-`vite.config.js`; unit tests use `vitest.config.ts`.
 
 For a production build and local static preview:
 
@@ -57,14 +52,17 @@ backend. `dev-login.html` is available only through `yarn dev` and is excluded
 from the production bundle.
 
 `index.html` is Vite's entry point and imports `src/main.tsx`. Shared styles
-live in `src/assets/styles/styles.scss`; Vite handles SCSS, CSS, and PostCSS.
-Development uses hot module replacement and source maps. Production cleans
-`dist/` and generates hashed JavaScript and CSS assets without source maps.
+live in `src/assets/styles/styles.scss`; Vite handles SCSS (with Dart Sass),
+CSS, and PostCSS. Development uses React Fast Refresh and source maps.
+Production cleans `dist/` and generates hashed JavaScript and CSS assets
+without source maps. React and React DOM stay on the 19.1 patch series. Build
+and server settings live in `vite.config.js`; unit tests use
+`vitest.config.ts`.
 
-| Variable            | Default                                | Purpose                                                                              |
-| ------------------- | -------------------------------------- | ------------------------------------------------------------------------------------ |
-| `BACKEND_URL`       | `http://127.0.0.1:7860` in development | Backend proxy target; nginx uses `http://web:7860` by default.                       |
-| `VITE_DEBUG_PANELS` | Disabled                               | Set to `1` to enable debug panels; the existing name is preserved for compatibility. |
+| Variable            | Default                                | Purpose                                                        |
+| ------------------- | -------------------------------------- | -------------------------------------------------------------- |
+| `BACKEND_URL`       | `http://127.0.0.1:7860` in development | Backend proxy target; nginx uses `http://web:7860` by default. |
+| `VITE_DEBUG_PANELS` | Disabled                               | Set to `1` to show the Assistant's debug panels.               |
 
 For example:
 
@@ -76,9 +74,11 @@ Vite reads environment values in this order, with the first value taking
 priority: shell variables, `.env.<mode>.local`, `.env.<mode>`, `.env.local`,
 then `.env`. The mode is `development` for `yarn dev` and `production` for
 `yarn build`. A named environment replaces `<mode>` in those file names
-without changing whether the command serves development or builds production. The debug flag is embedded during
-compilation, so restart the dev server or rebuild after changing it. Only the explicitly configured debug
-flag is exposed to browser code.
+without changing whether the command serves development or builds production.
+The debug flag is embedded during compilation, so restart the dev server or
+rebuild after changing it. Only variables starting with `VITE_DEBUG_PANELS`
+reach browser code (`envPrefix` in `vite.config.js`); `BACKEND_URL` and the
+rest stay on the dev server.
 
 ## Mock API
 

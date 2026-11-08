@@ -57,7 +57,7 @@ describe("SearchComposer", () => {
 
   it("disables submit while loading", () => {
     render(<SearchComposer {...defaultProps} query="hello" isLoading={true} />);
-    expect(screen.getByRole("button")).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^search/i })).toBeDisabled();
   });
 
   it("calls onSubmit when form is submitted", async () => {
@@ -144,33 +144,37 @@ describe("SearchComposer domain selector", () => {
     onDomainsChange: vi.fn(),
   };
 
-  it("renders the selector even without dev mode", () => {
+  it("renders the selector even without dev mode", async () => {
     // Unlike Source and Retrieval URL, the domain is a product control.
     render(<SearchComposer {...domainProps} />);
+    await userEvent.click(screen.getByRole("button", { name: /sources:/i }));
     expect(screen.getByRole("group", { name: "Search source" })).toBeInTheDocument();
-    expect(screen.getByRole("checkbox", { name: "web" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "All sources" })).toBeChecked();
     expect(screen.queryByLabelText(/^Source$/)).not.toBeInTheDocument();
   });
 
   it("reports the selected domains", async () => {
     const onDomainsChange = vi.fn();
     render(<SearchComposer {...domainProps} onDomainsChange={onDomainsChange} />);
+    await userEvent.click(screen.getByRole("button", { name: /sources:/i }));
     await userEvent.click(screen.getByRole("checkbox", { name: "financial" }));
     expect(onDomainsChange).toHaveBeenCalledWith(["financial"]);
   });
 
-  it("labels underscored identifiers readably", () => {
+  it("labels underscored identifiers readably", async () => {
     render(<SearchComposer {...domainProps} />);
+    await userEvent.click(screen.getByRole("button", { name: /sources:/i }));
     expect(screen.getByRole("checkbox", { name: "social media" })).toBeInTheDocument();
   });
 
-  it("keeps selected options enabled and shows the limit hint", () => {
+  it("keeps selected options enabled and shows the limit hint", async () => {
     render(<SearchComposer {...domainProps} domains={["financial", "news", "social_media"]} />);
+    await userEvent.click(screen.getByRole("button", { name: /sources:/i }));
     expect(screen.getByRole("checkbox", { name: "news" })).toBeEnabled();
     expect(screen.getByText("Up to 3 search sources")).toBeInTheDocument();
   });
 
-  it("disables unselected real categories at the limit, with a description", () => {
+  it("disables unselected real categories at the limit, with a description", async () => {
     render(
       <SearchComposer
         {...domainProps}
@@ -178,6 +182,7 @@ describe("SearchComposer domain selector", () => {
         domainOptions={[...domainProps.domainOptions, { name: "code", description: "Code" }]}
       />,
     );
+    await userEvent.click(screen.getByRole("button", { name: /sources:/i }));
     const code = screen.getByRole("checkbox", { name: "code" });
     expect(code).toBeDisabled();
     expect(code).toHaveAccessibleDescription(/Up to 3 search sources/);
@@ -192,7 +197,8 @@ describe("SearchComposer domain selector", () => {
         onDomainsChange={onDomainsChange}
       />,
     );
-    await userEvent.click(screen.getByRole("checkbox", { name: "web" }));
+    await userEvent.click(screen.getByRole("button", { name: /sources:/i }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "All sources" }));
     expect(onDomainsChange).toHaveBeenCalledWith(["web"]);
   });
 
@@ -201,8 +207,9 @@ describe("SearchComposer domain selector", () => {
     const { rerender } = render(
       <SearchComposer {...domainProps} onDomainsChange={onDomainsChange} />,
     );
+    await userEvent.click(screen.getByRole("button", { name: /sources:/i }));
     const group = screen.getByRole("group", { name: "Search source" });
-    expect(within(group).getAllByRole("checkbox")[0]).toHaveAccessibleName("Auto");
+    expect(within(group).getAllByRole("checkbox")[1]).toHaveAccessibleName("Auto");
     await userEvent.click(screen.getByRole("checkbox", { name: "Auto" }));
     expect(onDomainsChange).toHaveBeenCalledWith(["auto"]);
     rerender(

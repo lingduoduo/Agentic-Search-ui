@@ -3,8 +3,7 @@ import { memo } from "react";
 import type { FormEvent } from "react";
 import { Loader2, Search } from "lucide-react";
 import type { SearchDomainOption, SearchSourceProvider } from "../models";
-import { AUTO, MAX_SEARCH_DOMAINS } from "../config/search";
-import { toggleDomain } from "../utils/domains";
+import { SourcePicker } from "./SourcePicker";
 
 const SOURCE_OPTIONS: Array<{
   value: SearchSourceProvider;
@@ -54,8 +53,6 @@ interface SearchComposerProps {
   onExampleSelect?: (value: string) => void;
 }
 
-const LIMIT_HINT_ID = "search-sources-limit";
-
 const DEFAULT_DOMAIN_OPTIONS: SearchDomainOption[] = [
   { name: "web", description: "General information, websites, explanations, references" },
 ];
@@ -78,7 +75,6 @@ export const SearchComposer = memo(function SearchComposer({
   onSubmit,
   onExampleSelect,
 }: SearchComposerProps) {
-  const atLimit = domains.filter((d) => d !== "web").length >= MAX_SEARCH_DOMAINS;
   return (
     <form className="composer" onSubmit={onSubmit}>
       <textarea
@@ -137,42 +133,12 @@ export const SearchComposer = memo(function SearchComposer({
           </label>
         )}
 
-        <fieldset className="search-sources">
-          <legend>Search source</legend>
-          <label title="Pick up to three sources automatically">
-            <input
-              type="checkbox"
-              checked={domains.includes(AUTO)}
-              onChange={() => onDomainsChange(toggleDomain(domains, AUTO))}
-            />
-            Auto
-          </label>
-          {domainOptions.map((opt) => {
-            const checked = domains.includes(opt.name);
-            // "web" stays clickable at the limit: it is how the user resets.
-            const blocked = !checked && atLimit && opt.name !== "web";
-            return (
-              <label
-                key={opt.name}
-                title={[opt.description, opt.typical_sources?.join(", ")]
-                  .filter(Boolean)
-                  .join(" — ")}
-              >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  disabled={blocked}
-                  aria-describedby={blocked ? LIMIT_HINT_ID : undefined}
-                  onChange={() => onDomainsChange(toggleDomain(domains, opt.name))}
-                />
-                {opt.name.replace(/_/g, " ")}
-              </label>
-            );
-          })}
-          <small id={LIMIT_HINT_ID} aria-live="polite">
-            {atLimit ? `Up to ${MAX_SEARCH_DOMAINS} search sources` : ""}
-          </small>
-        </fieldset>
+        <SourcePicker
+          domains={domains}
+          options={domainOptions}
+          onChange={onDomainsChange}
+          disabled={isLoading}
+        />
 
         <label>
           Top K

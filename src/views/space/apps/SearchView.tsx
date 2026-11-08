@@ -1,11 +1,16 @@
-import { useMemo, useState } from "react";
-import { sendSearchMessage } from "../../../services/api";
-import type { SearchDocView, SourceDocumentView } from "../../../models";
+import { SourcePicker } from "../../../components/SourcePicker";
+import { useSearchDomains } from "../../../hooks/useSearchDomains";
+import { useState } from "react";
+import { runAgent } from "../../../services/api";
+import type { SourceDocumentView, AutoDomains } from "../../../models";
 import { SourceGrid } from "../../../components/SourceGrid";
 
 export function SearchView() {
   const [query, setQuery] = useState("");
-  const [docs, setDocs] = useState<SearchDocView[]>([]);
+  const [docs, setDocs] = useState<SourceDocumentView[]>([]);
+  const [domains, setDomains] = useState<string[]>(["web"]);
+  const domainOptions = useSearchDomains();
+  const [autoDomains, setAutoDomains] = useState<AutoDomains | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,32 +20,17 @@ export function SearchView() {
     setBusy(true);
     setError(null);
     setDocs([]);
+    setAutoDomains(null);
     try {
-      const r = await sendSearchMessage({ search_query: q });
-      if (r.error) setError(r.error);
-      setDocs(r.search_docs ?? []);
+      const r = await runAgent({ query: q, mode: "search_tool", top_k: 8, domains });
+      setDocs(r.documents);
+      setAutoDomains(r.auto_domains ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Search failed");
     } finally {
       setBusy(false);
     }
   }
-
-  // Memoized so typing in the query box doesn't hand the memoized SourceGrid a
-  // fresh array, and re-render every card, on each keystroke.
-  const documents: SourceDocumentView[] = useMemo(
-    () =>
-      docs.map((d, i) => ({
-        id: `D${i + 1}`,
-        citation: d.title ?? `D${i + 1}`,
-        title: d.title ?? "",
-        content: d.content,
-        url: d.url,
-        score: d.score,
-        metadata: d.metadata,
-      })),
-    [docs],
-  );
 
   return (
     <section className="search-view" aria-label="Search">
@@ -50,15 +40,28 @@ export function SearchView() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
-          placeholder="Search the corpus…"
+          placeholder="Search your sources…"
           disabled={busy}
         />
         <button onClick={submit} disabled={busy}>
           {busy ? "…" : "Search"}
         </button>
       </div>
+      <SourcePicker
+        domains={domains}
+        options={domainOptions}
+        onChange={setDomains}
+        disabled={busy}
+      />
+      {autoDomains && (
+        <p role="status">
+          {autoDomains.status === "ok"
+            ? `Auto picked: ${autoDomains.selected.join(" · ")}`
+            : "Auto unavailable: searched web"}
+        </p>
+      )}
       {error && <div className="error-banner">{error}</div>}
-      <SourceGrid documents={documents} />
+      <SourceGrid documents={docs} />
     </section>
   );
 }

@@ -59,7 +59,8 @@ describe("AssistView search-source taxonomy", () => {
     vi.spyOn(api, "fetchSearchDomains").mockRejectedValue(new Error("unavailable"));
     render(<AssistView />);
     await waitFor(() => expect(api.fetchSearchDomains).toHaveBeenCalled());
-    expect(screen.getByRole("checkbox", { name: "web" })).toBeChecked();
+    fireEvent.click(screen.getByRole("button", { name: /sources:/i }));
+    expect(screen.getByRole("checkbox", { name: "All sources" })).toBeChecked();
   });
 
   async function submitWith(
@@ -95,6 +96,7 @@ describe("AssistView search-source taxonomy", () => {
     }
     const stream = vi.spyOn(api, "streamAgent").mockImplementation(fake as never);
     render(<AssistView />);
+    fireEvent.click(screen.getByRole("button", { name: /sources:/i }));
     await screen.findByRole("checkbox", { name: "financial" });
     const typeQuestion = () =>
       fireEvent.change(screen.getByLabelText("Question"), { target: { value: "earnings" } });
@@ -170,6 +172,7 @@ describe("AssistView search-source taxonomy", () => {
     }
     vi.spyOn(api, "streamAgent").mockImplementation(fake as never);
     render(<AssistView />);
+    fireEvent.click(screen.getByRole("button", { name: /sources:/i }));
     await screen.findByRole("checkbox", { name: "news" });
     fireEvent.click(screen.getByRole("checkbox", { name: "Auto" }));
     fireEvent.change(screen.getByLabelText("Question"), { target: { value: "q" } });

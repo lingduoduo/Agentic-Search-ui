@@ -3,7 +3,6 @@ import {
   ChevronsUpDown,
   History,
   LayoutGrid,
-  Plus,
   Settings2,
   ShieldCheck,
   UserRound,
@@ -60,10 +59,6 @@ export function AppSidebar({
       <div className="app-sidebar__inner">
         <Link to={routePath("space-apps-list")} className="app-sidebar__brand">
           <h1>Agentic Search</h1>
-        </Link>
-        <Link to={routePath("space-apps-list")} className="app-sidebar__primary">
-          <Plus aria-hidden="true" size={18} />
-          Start an app
         </Link>
         <nav className="app-sidebar__surfaces" aria-label="Surfaces">
           {navigationGroups

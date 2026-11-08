@@ -1,15 +1,18 @@
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   Bot,
+  ChevronsUpDown,
   History,
   LayoutGrid,
   MessagesSquare,
+  Plus,
   Search,
   Settings2,
   ShieldCheck,
   UserRound,
   Wrench,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router";
 import { NavLink } from "./NavLink";
 import { SignOutButton } from "./SignOutButton";
@@ -17,134 +20,186 @@ import { routePath } from "../config/routes";
 import { useAppSelector } from "../store";
 import { selectProfile } from "../store/account";
 
-const navigationGroups = [
+/** Admin panels DefaultLayout shows above the page, toggled from the sidebar. */
+export type PanelId = "tools" | "history";
+
+type NavItem = { label: string; icon: LucideIcon } & (
+  { to: string } | { panel: PanelId; title: string }
+);
+
+const app = (app_id: string) => routePath("space-apps-detail", { app_id });
+
+// Every sidebar entry, in one table. The active one gets a filled icon (CSS).
+const navigationGroups: { label: string; adminOnly?: boolean; items: NavItem[] }[] = [
   {
     label: "Workspace",
     items: [
       { to: routePath("space-apps-list"), label: "Apps", icon: LayoutGrid },
-      { to: routePath("space-apps-detail", { app_id: "assist" }), label: "Assistant", icon: Bot },
-      { to: routePath("space-apps-detail", { app_id: "search" }), label: "Search", icon: Search },
-      {
-        to: routePath("space-apps-detail", { app_id: "chat" }),
-        label: "Chat",
-        icon: MessagesSquare,
-      },
+      { to: app("assist"), label: "Assistant", icon: Bot },
+      { to: app("search"), label: "Search", icon: Search },
+      { to: app("chat"), label: "Chat", icon: MessagesSquare },
     ],
   },
   {
     label: "Explore",
+    items: [{ to: app("tools"), label: "Tools", icon: Wrench }],
+  },
+  {
+    label: "Administration",
+    adminOnly: true,
     items: [
-      { to: routePath("space-apps-detail", { app_id: "tools" }), label: "Tools", icon: Wrench },
+      { to: routePath("pages-admin"), label: "Admin", icon: ShieldCheck },
+      { panel: "tools", label: "Manage tools", title: "Manage tools", icon: Settings2 },
+      { panel: "history", label: "History", title: "Query history audit", icon: History },
     ],
   },
 ];
 
 type AppSidebarProps = {
   isAdmin: boolean;
-  showTools: boolean;
-  showQueryHistory: boolean;
+  panels: Record<PanelId, boolean>;
+  onTogglePanel: (panel: PanelId) => void;
   isLoadingAccount?: boolean;
-  onToggleTools: () => void;
-  onToggleQueryHistory: () => void;
 };
 
-/** Persistent navigation and account footer, shared by all signed-in pages. */
+/** Persistent navigation and account menu, shared by all signed-in pages. */
 export function AppSidebar({
   isAdmin,
-  showTools,
-  showQueryHistory,
+  panels,
+  onTogglePanel,
   isLoadingAccount = false,
-  onToggleTools,
-  onToggleQueryHistory,
 }: AppSidebarProps) {
-  const profile = useAppSelector(selectProfile);
-  const initial = profile.name.trim().charAt(0).toUpperCase() || "U";
-  const [failedAvatar, setFailedAvatar] = useState<string | null>(null);
-
   return (
     <aside className="app-sidebar" aria-label="Common navigation">
       <div className="app-sidebar__inner">
         <Link to={routePath("space-apps-list")} className="app-sidebar__brand">
           <h1>Agentic Search</h1>
         </Link>
+        <Link to={routePath("space-apps-list")} className="app-sidebar__primary">
+          <Plus aria-hidden="true" size={18} />
+          Start an app
+        </Link>
         <nav className="app-sidebar__surfaces" aria-label="Surfaces">
-          {navigationGroups.map((group) => (
-            <div className="app-sidebar__group" key={group.label}>
-              <p className="app-sidebar__group-label">{group.label}</p>
-              <div className="app-sidebar__links">
-                {group.items.map(({ to, label, icon: Icon }) => (
-                  <NavLink key={to} to={to} className="nav-link">
-                    <Icon aria-hidden="true" size={18} />
-                    {label}
-                  </NavLink>
-                ))}
+          {navigationGroups
+            .filter((group) => isAdmin || !group.adminOnly)
+            .map((group) => (
+              <div className="app-sidebar__group" key={group.label}>
+                <p className="app-sidebar__group-label">{group.label}</p>
+                <div className="app-sidebar__links">
+                  {group.items.map(({ label, icon: Icon, ...item }) => {
+                    const content = (
+                      <>
+                        <Icon aria-hidden="true" size={18} />
+                        {label}
+                      </>
+                    );
+                    if ("to" in item)
+                      return (
+                        <NavLink key={label} to={item.to} className="nav-link">
+                          {content}
+                        </NavLink>
+                      );
+                    const pressed = panels[item.panel];
+                    return (
+                      <button
+                        key={label}
+                        className={`app-sidebar__button${pressed ? " active" : ""}`}
+                        type="button"
+                        aria-pressed={pressed}
+                        onClick={() => onTogglePanel(item.panel)}
+                        title={item.title}
+                      >
+                        {content}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
-          {isAdmin && (
-            <div className="app-sidebar__group">
-              <p className="app-sidebar__group-label">Administration</p>
-              <div className="app-sidebar__links">
-                <NavLink to={routePath("pages-admin")} className="nav-link">
-                  <ShieldCheck aria-hidden="true" size={18} />
-                  Admin
-                </NavLink>
-                <button
-                  className={`app-sidebar__button${showTools ? " active" : ""}`}
-                  type="button"
-                  aria-pressed={showTools}
-                  onClick={onToggleTools}
-                  title="Manage tools"
-                >
-                  <Settings2 aria-hidden="true" size={18} />
-                  Manage tools
-                </button>
-                <button
-                  className={`app-sidebar__button${showQueryHistory ? " active" : ""}`}
-                  type="button"
-                  aria-pressed={showQueryHistory}
-                  onClick={onToggleQueryHistory}
-                  title="Query history audit"
-                >
-                  <History aria-hidden="true" size={18} />
-                  History
-                </button>
-              </div>
-            </div>
-          )}
+            ))}
         </nav>
-        <section className="app-sidebar__account" aria-label="Signed-in account">
-          <div className="app-sidebar__identity">
-            <span className="app-sidebar__avatar" role="img" aria-label="Your avatar">
-              {profile.avatar && profile.avatar !== failedAvatar ? (
-                <img src={profile.avatar} alt="" onError={() => setFailedAvatar(profile.avatar)} />
-              ) : (
-                initial
-              )}
-            </span>
-            <div className="app-sidebar__profile">
-              <p className="app-sidebar__name" title={profile.name}>
-                {profile.name || "Your account"}
-              </p>
-              {profile.email && (
-                <p className="app-sidebar__email" title={profile.email}>
-                  {profile.email}
-                </p>
-              )}
-              {isLoadingAccount && (
-                <p className="app-sidebar__email" role="status">
-                  Loading account…
-                </p>
-              )}
-            </div>
-          </div>
-          <NavLink to={routePath("pages-account")} className="nav-link">
+        <AccountMenu isLoadingAccount={isLoadingAccount} />
+      </div>
+    </aside>
+  );
+}
+
+/** The identity card; clicking it opens Account and Sign out above it. */
+function AccountMenu({ isLoadingAccount }: { isLoadingAccount: boolean }) {
+  const profile = useAppSelector(selectProfile);
+  const initial = profile.name.trim().charAt(0).toUpperCase() || "U";
+  const [failedAvatar, setFailedAvatar] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const menuId = useId();
+
+  // Close on a click outside, or on Escape (focus returns to the card).
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      trigger.current?.focus();
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <section ref={root} className="app-sidebar__account" aria-label="Signed-in account">
+      {open && (
+        <div id={menuId} className="app-sidebar__menu">
+          <NavLink
+            to={routePath("pages-account")}
+            className="nav-link"
+            onClick={() => setOpen(false)}
+          >
             <UserRound aria-hidden="true" size={18} />
             Account
           </NavLink>
           <SignOutButton />
-        </section>
-      </div>
-    </aside>
+        </div>
+      )}
+      <button
+        ref={trigger}
+        type="button"
+        className="app-sidebar__identity"
+        aria-label="Account menu"
+        aria-expanded={open}
+        aria-controls={menuId}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span className="app-sidebar__avatar" role="img" aria-label="Your avatar">
+          {profile.avatar && profile.avatar !== failedAvatar ? (
+            <img src={profile.avatar} alt="" onError={() => setFailedAvatar(profile.avatar)} />
+          ) : (
+            initial
+          )}
+        </span>
+        <span className="app-sidebar__profile">
+          <span className="app-sidebar__name" title={profile.name}>
+            {profile.name || "Your account"}
+          </span>
+          {profile.email && (
+            <span className="app-sidebar__email" title={profile.email}>
+              {profile.email}
+            </span>
+          )}
+        </span>
+        <ChevronsUpDown aria-hidden="true" size={16} className="app-sidebar__chevron" />
+      </button>
+      {isLoadingAccount && (
+        <p className="app-sidebar__email" role="status">
+          Loading account…
+        </p>
+      )}
+    </section>
   );
 }

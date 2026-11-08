@@ -264,6 +264,7 @@ describe("permissions", () => {
     const fetchMock = stubBackend(signedIn(["basic_access"]));
     renderAt("/space/apps/assist");
     const sidebar = await screen.findByRole("complementary", { name: "Common navigation" });
+    await userEvent.click(within(sidebar).getByRole("button", { name: "Account menu" }));
     expect(within(sidebar).getByRole("link", { name: "Account" })).toHaveAttribute(
       "href",
       "/account",
@@ -336,6 +337,7 @@ describe("account", () => {
     });
     const router = renderAt("/space/apps/assist");
     const sidebar = await screen.findByRole("complementary", { name: "Common navigation" });
+    await userEvent.click(within(sidebar).getByRole("button", { name: "Account menu" }));
     await userEvent.click(within(sidebar).getByRole("button", { name: "Sign out" }));
     expect(
       await screen.findByRole("heading", { name: "Sign in to Agentic Search" }),
@@ -360,6 +362,7 @@ describe("account", () => {
     });
     renderAt("/space/apps/chat");
     const sidebar = await screen.findByRole("complementary", { name: "Common navigation" });
+    await userEvent.click(within(sidebar).getByRole("button", { name: "Account menu" }));
     const button = within(sidebar).getByRole("button", { name: "Sign out" });
     await userEvent.click(button);
     expect(button).toBeDisabled();
@@ -377,10 +380,32 @@ describe("account", () => {
     });
     const router = renderAt("/space/apps/assist");
     const sidebar = await screen.findByRole("complementary", { name: "Common navigation" });
+    await userEvent.click(within(sidebar).getByRole("button", { name: "Account menu" }));
     await userEvent.click(within(sidebar).getByRole("button", { name: "Sign out" }));
     expect(await within(sidebar).findByRole("alert")).toHaveTextContent("Gateway Timeout");
     expect(router.state.location.pathname).toBe("/space/apps/assist");
     expect(within(sidebar).getByRole("button", { name: "Sign out" })).toBeEnabled();
+  });
+
+  it("keeps Account and Sign out in a menu behind the identity card", async () => {
+    stubBackend(signedIn(["basic_access"]));
+    renderAt("/space/apps/chat");
+    const sidebar = await screen.findByRole("complementary", { name: "Common navigation" });
+    const trigger = within(sidebar).getByRole("button", { name: "Account menu" });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(within(sidebar).queryByRole("button", { name: "Sign out" })).not.toBeInTheDocument();
+
+    await userEvent.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(within(sidebar).getByRole("button", { name: "Sign out" })).toBeInTheDocument();
+
+    await userEvent.keyboard("{Escape}");
+    expect(within(sidebar).queryByRole("link", { name: "Account" })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+
+    await userEvent.click(trigger);
+    await userEvent.click(document.body);
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
 
   it("shows the account identity in the sidebar footer", async () => {

@@ -577,6 +577,7 @@ describe("page navigation", () => {
     const sidebar = screen.getByRole("complementary", { name: "Common navigation" });
     const manageTools = within(sidebar).getByRole("button", { name: /manage tools/i });
     await userEvent.click(manageTools);
+    await userEvent.click(within(sidebar).getByRole("button", { name: "Account menu" }));
     await userEvent.click(within(sidebar).getByRole("link", { name: "Account" }));
     expect(await screen.findByLabelText("Account details")).toBeInTheDocument();
     expect(screen.getByRole("complementary", { name: "Common navigation" })).toBe(sidebar);

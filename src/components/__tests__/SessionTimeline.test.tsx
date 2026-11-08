@@ -87,7 +87,7 @@ describe("SessionTimeline", () => {
     const user = document.querySelector(".chat-row--user");
     const assistant = document.querySelector(".chat-row--assistant");
     expect(user).toHaveClass("turn", "turn--user");
-    expect(user?.querySelector(".turn__avatar--user")).toHaveTextContent("You");
+    expect(user?.querySelector(".turn__avatar--user svg")).not.toBeNull();
     expect(user?.querySelector(".turn__name")).toHaveTextContent("You");
     expect(assistant).toHaveClass("turn", "turn--assistant");
     expect(assistant?.querySelector(".turn__avatar--assistant svg")).not.toBeNull();

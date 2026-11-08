@@ -1,4 +1,4 @@
-import { Bot } from "lucide-react";
+import { Grid2X2, UserRound } from "lucide-react";
 import type { ConversationTurn } from "../interfaces";
 import { ToolCallTracePanel } from "./ToolCallTracePanel";
 
@@ -7,7 +7,7 @@ import { ToolCallTracePanel } from "./ToolCallTracePanel";
 export function TurnAvatar({ role }: { role: "user" | "assistant" }) {
   return (
     <span className={`turn__avatar turn__avatar--${role}`} aria-hidden="true">
-      {role === "user" ? "You" : <Bot size={16} />}
+      {role === "user" ? <UserRound size={18} /> : <Grid2X2 size={16} />}
     </span>
   );
 }

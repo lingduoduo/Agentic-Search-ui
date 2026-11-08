@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { Bot, Gauge, MessageSquarePlus, Search } from "lucide-react";
+import { Gauge, MessageSquarePlus, Search } from "lucide-react";
 import {
   createSession,
   fetchSearchDomains,
@@ -15,6 +15,7 @@ import { RetrievalStatus } from "../../../components/RetrievalStatus";
 import { DevConsole } from "../../../components/debug/DevConsole";
 import { SearchComposer } from "../../../components/SearchComposer";
 import { SessionTimeline } from "../../../components/SessionTimeline";
+import { TurnAvatar } from "../../../components/Transcript";
 import { SourceGrid } from "../../../components/SourceGrid";
 import { ToolApprovalCard } from "../../../components/ToolApprovalCard";
 import { ToolCallTracePanel } from "../../../components/ToolCallTracePanel";
@@ -399,7 +400,7 @@ export function AssistView() {
       <div className={`results-layout${intent ? ` intent-${intent}` : ""}`}>
         <section className="answer-column" aria-label="Answer">
           <div className="section-heading">
-            <Bot size={18} />
+            <TurnAvatar role="assistant" />
             <h2>Answer</h2>
           </div>
           <AnswerPanel

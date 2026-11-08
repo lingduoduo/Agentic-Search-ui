@@ -1931,13 +1931,13 @@ option:disabled,
 
 .turn__avatar--user {
   border-radius: 50%;
-  background: var(--accent);
+  background: #3370ff;
 }
 
 /* A rounded square, not a circle, so the two speakers differ by shape too. */
 .turn__avatar--assistant {
   border-radius: 8px;
-  background: var(--assistant);
+  background: #00a996;
 }
 
 .turn__body {

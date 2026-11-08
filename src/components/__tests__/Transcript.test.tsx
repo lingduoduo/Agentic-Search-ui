@@ -24,7 +24,7 @@ describe("Transcript", () => {
       />,
     );
     const [user, assistant] = container.querySelectorAll(".turn");
-    expect(user.querySelector(".turn__avatar--user")).toHaveTextContent("You");
+    expect(user.querySelector(".turn__avatar--user svg")).not.toBeNull();
     expect(user.querySelector(".turn__name")).toHaveTextContent("You");
     expect(assistant.querySelector(".turn__avatar--assistant svg")).not.toBeNull();
     expect(assistant.querySelector(".turn__name")).toHaveTextContent("Assistant");

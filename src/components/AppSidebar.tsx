@@ -3,6 +3,7 @@ import {
   ChevronsUpDown,
   History,
   LayoutGrid,
+  Library,
   Settings2,
   ShieldCheck,
   UserRound,
@@ -27,7 +28,10 @@ type NavItem = { label: string; icon: LucideIcon } & (
 const navigationGroups: { label: string; adminOnly?: boolean; items: NavItem[] }[] = [
   {
     label: "Workspace",
-    items: [{ to: routePath("space-apps-list"), label: "Apps", icon: LayoutGrid }],
+    items: [
+      { to: routePath("space-apps-list"), label: "Apps", icon: LayoutGrid },
+      { to: routePath("space-sources"), label: "Sources", icon: Library },
+    ],
   },
   {
     label: "Administration",

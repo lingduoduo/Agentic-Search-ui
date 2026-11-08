@@ -41,6 +41,16 @@ export interface SearchDomainOption {
   typical_sources?: string[];
   // Hosts a category's restricted web search runs against; empty for suffix-only categories.
   source_sites?: string[];
+  // The family it is grouped under (a SearchDomainFamily key); empty for "web".
+  category?: string;
+  // Seeded public-data tools that answer inside this category, e.g. "search_arxiv".
+  tools?: string[];
+}
+
+// One entry of the payload's `categories`: the families, in display order.
+export interface SearchDomainFamily {
+  category: string;
+  name: string;
 }
 
 export type SearchSourceProvider = "auto" | "retrieval" | "google" | "serpapi" | "browser" | "all";

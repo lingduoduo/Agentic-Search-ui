@@ -16,13 +16,14 @@ under `DefaultLayout` from `src/views/layouts/`, which renders
 the global Manage tools and History controls persist across pages. The signed-in
 pages are the apps list, `/space/apps` (`ListView`), one app at
 `/space/apps/:app_id` (`DetailView`: `assist`, `search`, `chat` or `tools`; an
-unknown id shows the not-found page), `/account` and `/admin`. Signing in lands
+unknown id shows the not-found page), the search-source catalog at
+`/space/sources` (`SourcesView`), `/account` and `/admin`. Signing in lands
 on `/space/apps`, and `/` redirects there. Public pages, marked
 `handle: { public: true }`, sit under `BlankLayout`, with no sidebar: the sign-in
 page and `NotFoundView` for unknown URLs. Route ids double as route names, and
 `routePath(name, params)` in `src/config/routes.ts` builds URLs from them. Each
 page's code is loaded lazily, the first time it opens.
-The sidebar uses a white inner panel in a gray rail and one entry per page (Workspace: Apps; permission-gated Administration: Admin plus the panel toggles) declared in one table in `AppSidebar`. Individual apps open from the Apps page. A link stays active on every URL under its path, so Apps is highlighted inside `/space/apps/:app_id`, and the active entry's icon is drawn filled. The footer card shows the current profile name, email and avatar (or initial); clicking it opens a menu with Account and Sign out (closed by Escape or a click outside). On small screens it becomes wrapping top navigation. Account-verification errors include a Retry button that revalidates the existing route guard; no second account fetch is started by the layout.
+The sidebar uses a white inner panel in a gray rail and one entry per page (Workspace: Apps, Sources; permission-gated Administration: Admin plus the panel toggles) declared in one table in `AppSidebar`. Individual apps open from the Apps page. A link stays active on every URL under its path, so Apps is highlighted inside `/space/apps/:app_id`, and the active entry's icon is drawn filled. The footer card shows the current profile name, email and avatar (or initial); clicking it opens a menu with Account and Sign out (closed by Escape or a click outside). On small screens it becomes wrapping top navigation. Account-verification errors include a Retry button that revalidates the existing route guard; no second account fetch is started by the layout.
 
 `src/main.tsx` mounts `src/App.tsx`, which creates one router with
 `createAppRouter()` and renders `RouterProvider`. `src/config/routes.ts` holds
@@ -269,5 +270,17 @@ component tests:
 | `SessionTimeline.test.tsx`    | Chat bubble layout, system message filtering, stable React keys                      |
 | `SourceGrid.test.tsx`         | Card expand/collapse, copy button 1.5 s feedback, `id` anchor attribute              |
 | `ToolCallTracePanel.test.tsx` | Empty→null, completed/failed card classes, latency display, JSON arguments           |
+
+**Search sources** (`/space/sources`) is a catalog of the search categories,
+laid out like a tool marketplace: family pills (names and order from the
+payload's `categories`) and a name search over a card grid. Each card shows the
+category's icon, family, site and tool counts, description and typical sources.
+`web` and `auto` are search modes, not categories, so they are left out.
+Opening a card shows a drawer with the sites searched first (or a note that the
+category searches the open web), its typical sources and its built-in tools;
+Escape or the backdrop closes it and focus returns to the card. The drawer tracks
+the category by name, so changing the filter while it is open cannot show a
+different one. The load uses an `AbortController`: Retry and leaving the page
+abort the request in flight.
 
 Search and Assist share the Sources picker. Search uses `POST /api/agent` with `mode: "search_tool"`, which supports category selection and returns source documents without answer generation. `POST /search/send-search-message` remains available for direct corpus searches. The default All sources selection maps to `web` (unrestricted category), not a request to fan out across every category or provider. Auto selects up to three categories; manual selection has the same limit.

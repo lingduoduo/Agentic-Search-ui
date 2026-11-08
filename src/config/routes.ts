@@ -6,6 +6,7 @@ export const ROUTE_PATHS = {
   "auth-login": "/auth/login",
   "space-apps-list": "/space/apps",
   "space-apps-detail": "/space/apps/:app_id",
+  "space-sources": "/space/sources",
   "pages-account": "/account",
   "pages-admin": "/admin",
 } as const;

@@ -42,7 +42,7 @@ export type SourceCategory = {
 export const SOURCE_CATEGORIES: SourceCategory[] = [
   { category: "research", name: "Research", icon: FlaskConical, background: "#ede9fe" },
   { category: "news", name: "News & social", icon: Newspaper, background: "#fee2e2" },
-  { category: "code", name: "Code & docs", icon: Code2, background: "#e0f2fe" },
+  { category: "code", name: "Code & data", icon: Code2, background: "#e0f2fe" },
   { category: "government", name: "Government & law", icon: Landmark, background: "#e2e8f0" },
   { category: "business", name: "Business & money", icon: TrendingUp, background: "#dcfce7" },
   { category: "places", name: "Places & events", icon: MapPin, background: "#fef3c7" },
@@ -80,12 +80,16 @@ const DOMAIN_META: Record<string, { category: string; icon: LucideIcon }> = {
 
 export const domainLabel = (name: string) => name.replace(/_/g, " ");
 
+/** A family's icon and color by key; unknown keys get Other's. */
+export const familyOf = (key: string | undefined) =>
+  SOURCE_CATEGORIES.find((c) => c.category === key) ?? OTHER;
+
 /** How to draw one domain: its label, icon and its family's tile color. */
 export function domainStyle(name: string) {
   if (name === "web") return { label: "All sources", icon: Globe, background: OTHER.background };
   if (name === "auto") return { label: "Auto", icon: Sparkles, background: "#eef2ff" };
   const meta = DOMAIN_META[name];
-  const category = SOURCE_CATEGORIES.find((c) => c.category === meta?.category) ?? OTHER;
+  const category = familyOf(meta?.category);
   return {
     label: domainLabel(name),
     icon: meta?.icon ?? category.icon,

@@ -159,3 +159,132 @@ describe("stream", () => {
     await expect(stream("/tool/send-tool-message").next()).rejects.toMatchObject({ status: 400 });
   });
 });
+
+describe("structured request errors", () => {
+  it("preserves envelope messages and codes on HTTP failures", async () => {
+    stubFetch(() =>
+      json({ code: "quota_exceeded", message: "Daily quota reached", data: null }, 429),
+    );
+    await expect(get("/api/agent")).rejects.toMatchObject({
+      name: "RequestError",
+      status: 429,
+      code: "quota_exceeded",
+      message: "Daily quota reached",
+    });
+  });
+
+  it("explains FastAPI validation failures", async () => {
+    stubFetch(() => json({ detail: [{ loc: ["body", "query"], msg: "Field required" }] }, 422));
+    await expect(post("/api/agent")).rejects.toMatchObject({
+      status: 422,
+      message: "query: Field required",
+    });
+  });
+
+  it("rejects failed response envelopes even with HTTP 200", async () => {
+    stubFetch(() => json({ code: "fail", message: "Search unavailable", data: null }));
+    await expect(get("/search")).rejects.toMatchObject({
+      status: 200,
+      code: "fail",
+      message: "Search unavailable",
+    });
+  });
+
+  it("keeps successful envelopes and ordinary code fields intact", async () => {
+    const envelope = { code: "success", message: "OK", data: { count: 1 } };
+    stubFetch(() => json(envelope));
+    await expect(get("/search")).resolves.toEqual(envelope);
+    stubFetch(() => json({ code: "python", content: "print(1)" }));
+    await expect(get("/document")).resolves.toEqual({ code: "python", content: "print(1)" });
+  });
+
+  it("normalizes network failures without losing their cause", async () => {
+    const cause = new TypeError("Failed to fetch");
+    stubFetch(() => Promise.reject(cause));
+    await expect(get("/me")).rejects.toMatchObject({
+      name: "RequestError",
+      code: "NETWORK_ERROR",
+      cause,
+    });
+  });
+
+  it("reports JSON errors returned instead of SSE", async () => {
+    stubFetch(
+      () =>
+        new Response(JSON.stringify({ code: "fail", message: "Stream unavailable", data: null }), {
+          headers: { "Content-Type": "application/json" },
+        }),
+    );
+    await expect(stream("/api/agent/stream").next()).rejects.toMatchObject({
+      message: "Stream unavailable",
+      code: "fail",
+    });
+  });
+
+  it("discards a successful JSON body if cancelled while decoding", async () => {
+    const controller = new AbortController();
+    stubFetch(
+      () =>
+        ({
+          ok: true,
+          status: 200,
+          json: async () => {
+            controller.abort(new Error("left page"));
+            return {};
+          },
+        }) as Response,
+    );
+    await expect(get("/me", { signal: controller.signal })).rejects.toThrow("left page");
+  });
+});
+
+describe("stream failure cleanup", () => {
+  it("rejects an ordinary JSON success instead of silently yielding nothing", async () => {
+    stubFetch(
+      () =>
+        new Response(JSON.stringify({ documents: [] }), {
+          headers: { "Content-Type": "application/json" },
+        }),
+    );
+    await expect(stream("/events").next()).rejects.toMatchObject({
+      code: "INVALID_STREAM",
+      status: 200,
+    });
+  });
+
+  it("cancels and unlocks a malformed event stream", async () => {
+    const cancel = vi.fn();
+    const response = sseResponse(
+      ["data: broken-json\n\n", 'data: {"n":2}\n\n', 'data: {"n":3}\n\n'],
+      cancel,
+    );
+    stubFetch(() => response);
+    await expect(stream("/events").next()).rejects.toThrow("invalid stream event");
+    expect(cancel).toHaveBeenCalledOnce();
+    expect(response.body?.locked).toBe(false);
+  });
+
+  it("preserves cancellation instead of yielding buffered events", async () => {
+    const controller = new AbortController();
+    const response = sseResponse(['data: {"n":1}\n\ndata: {"n":2}\n\n']);
+    stubFetch(() => response);
+    const events = stream("/events", { signal: controller.signal });
+    expect(await events.next()).toMatchObject({ value: { n: 1 } });
+    controller.abort(new Error("left page"));
+    await expect(events.next()).rejects.toThrow("left page");
+    expect(response.body?.locked).toBe(false);
+  });
+});
+
+describe("shared response codes", () => {
+  it.each([
+    [401, "unauthorized"],
+    [403, "forbidden"],
+    [404, "not_found"],
+    [422, "validate_error"],
+    [500, "fail"],
+  ])("assigns a fallback business code for HTTP %i", async (status, code) => {
+    stubFetch(() => json({ detail: "Request rejected" }, status));
+    await expect(get("/api/example")).rejects.toMatchObject({ status, code });
+  });
+});

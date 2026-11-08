@@ -85,18 +85,15 @@ describe("streamAgent", () => {
 /** Mocks `fetch` to return an SSE body streaming the given raw chunks. */
 function mockFetchStream(chunks: string[]) {
   const encoder = new TextEncoder();
-  let index = 0;
-  mockFetch.mockResolvedValueOnce({
-    ok: true,
-    body: {
-      getReader: () => ({
-        read: async () => {
-          if (index >= chunks.length) return { done: true, value: undefined };
-          const value = encoder.encode(chunks[index]);
-          index += 1;
-          return { done: false, value };
+  mockFetch.mockResolvedValueOnce(
+    new Response(
+      new ReadableStream({
+        start(controller) {
+          for (const chunk of chunks) controller.enqueue(encoder.encode(chunk));
+          controller.close();
         },
       }),
-    },
-  });
+      { headers: { "Content-Type": "text/event-stream" } },
+    ),
+  );
 }

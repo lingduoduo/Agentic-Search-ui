@@ -1,17 +1,13 @@
 import { clearCredential } from "./auth";
+import { apiPrefix, httpCode } from "../config";
 
 // For a plain request; streams have no timeout, since an agent run can take longer.
 const TIME_OUT = 100_000;
 
-// Unset (the default), paths stay same-origin: the dev server and nginx proxy the
-// backend. An absolute origin such as http://127.0.0.1:7860 calls the backend
-// directly, which must list this page's origin in AGENTIC_SEARCH_CORS_ORIGINS.
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").trim().replace(/\/+$/, "");
-
 // Defaults for every request; per-request options override them. The session is
 // an HttpOnly cookie, sent cross-origin only in direct mode.
 const BASE_FETCH_OPTIONS: RequestInit = {
-  credentials: API_BASE_URL ? "include" : "same-origin",
+  credentials: apiPrefix ? "include" : "same-origin",
 };
 
 type FetchOptionType = Omit<RequestInit, "body"> & {
@@ -23,8 +19,10 @@ export class RequestError extends Error {
   constructor(
     message: string,
     public readonly status?: number,
+    public readonly code?: string,
+    options?: ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
     this.name = "RequestError";
   }
 }
@@ -51,43 +49,121 @@ const encodeBody = (body: FetchOptionType["body"], headers: Headers) => {
   return JSON.stringify(body);
 };
 
-// FastAPI reports errors as `{ "detail": "..." }`.
-const errorMessage = async (response: Response) => {
-  try {
-    const error: unknown = await response.json();
-    if (error && typeof error === "object" && "detail" in error) {
-      if (typeof error.detail === "string" && error.detail) return error.detail;
-    }
-  } catch {
-    // Non-JSON error pages still produce a useful HTTP error.
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+
+const isEnvelope = (
+  value: unknown,
+): value is Record<string, unknown> & { code: string; message: string } =>
+  isRecord(value) &&
+  typeof value.code === "string" &&
+  typeof value.message === "string" &&
+  "data" in value;
+
+// Support FastAPI detail strings/validation arrays and shared response envelopes.
+const errorMessage = (payload: unknown, fallback: string): string => {
+  if (!isRecord(payload)) return fallback;
+  if (typeof payload.detail === "string" && payload.detail.trim()) return payload.detail;
+  if (Array.isArray(payload.detail)) {
+    const messages = payload.detail.filter(isRecord).flatMap((error) => {
+      if (typeof error.msg !== "string" || !error.msg.trim()) return [];
+      const path = Array.isArray(error.loc)
+        ? error.loc
+            .filter((part) => typeof part === "string" || typeof part === "number")
+            .filter(
+              (part, index) =>
+                index !== 0 ||
+                !["body", "query", "path", "header", "cookie"].includes(String(part)),
+            )
+            .join(".")
+        : "";
+      return [path ? `${path}: ${error.msg}` : error.msg];
+    });
+    if (messages.length) return messages.join("; ");
   }
-  return `Request failed with ${response.status}`;
+  if (typeof payload.message === "string" && payload.message.trim()) return payload.message;
+  return fallback;
+};
+
+const readHttpError = async (response: Response): Promise<RequestError> => {
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    /* Non-JSON error pages use the HTTP status. */
+  }
+  const codes: Record<number, string> = {
+    401: httpCode.unauthorized,
+    403: httpCode.forbidden,
+    404: httpCode.notFound,
+    422: httpCode.validateError,
+  };
+  return new RequestError(
+    errorMessage(payload, `Request failed with ${response.status}`),
+    response.status,
+    isRecord(payload) && typeof payload.code === "string" && payload.code
+      ? payload.code
+      : (codes[response.status] ?? httpCode.fail),
+  );
 };
 
 /** Sends the request; resolves with an ok response or throws a RequestError. */
 const send = async (url: string, { params, body, ...init }: FetchOptionType) => {
   const headers = new Headers(init.headers);
-  const response = await globalThis.fetch(API_BASE_URL + buildUrl(url, params), {
-    ...BASE_FETCH_OPTIONS,
-    ...init,
-    headers,
-    body: encodeBody(body, headers),
-  });
+  init.signal?.throwIfAborted();
+  const requestBody = encodeBody(body, headers);
+  let response: Response;
+  try {
+    response = await globalThis.fetch(apiPrefix + buildUrl(url, params), {
+      ...BASE_FETCH_OPTIONS,
+      ...init,
+      headers,
+      body: requestBody,
+    });
+  } catch (cause) {
+    init.signal?.throwIfAborted();
+    if (cause instanceof TypeError) {
+      throw new RequestError(
+        "Unable to connect to the server. Check your connection and try again.",
+        undefined,
+        "NETWORK_ERROR",
+        { cause },
+      );
+    }
+    throw cause;
+  }
+  init.signal?.throwIfAborted();
   if (!response.ok) {
+    const error = await readHttpError(response);
+    init.signal?.throwIfAborted();
     // Any 401 means the session cookie no longer works.
     if (response.status === 401) clearCredential();
-    throw new RequestError(await errorMessage(response), response.status);
+    throw error;
   }
   return response;
 };
 
 const readJson = async <T>(response: Response): Promise<T> => {
   if (response.status === 204) return undefined as T;
+  let payload: unknown;
   try {
-    return (await response.json()) as T;
-  } catch {
-    throw new RequestError("The server returned an invalid JSON response.", response.status);
+    payload = await response.json();
+  } catch (cause) {
+    throw new RequestError(
+      "The server returned an invalid JSON response.",
+      response.status,
+      "INVALID_JSON",
+      { cause },
+    );
   }
+  if (isEnvelope(payload) && payload.code !== httpCode.success) {
+    throw new RequestError(
+      errorMessage(payload, "The request failed."),
+      response.status,
+      payload.code,
+    );
+  }
+  return payload as T;
 };
 
 export const request = async <T>(url: string, options: FetchOptionType = {}): Promise<T> => {
@@ -97,14 +173,18 @@ export const request = async <T>(url: string, options: FetchOptionType = {}): Pr
   if (signal?.aborted) abort();
   else signal?.addEventListener("abort", abort, { once: true });
   const timer = setTimeout(() => {
-    controller.abort(new RequestError("Request timed out. Please try again."));
+    controller.abort(
+      new RequestError("Request timed out. Please try again.", undefined, "TIMEOUT"),
+    );
   }, TIME_OUT);
 
   try {
     const response = await send(url, { ...options, signal: controller.signal });
     // Also discard responses from transports that complete despite cancellation.
     controller.signal.throwIfAborted();
-    return await readJson<T>(response);
+    const data = await readJson<T>(response);
+    controller.signal.throwIfAborted();
+    return data;
   } catch (cause) {
     // Report the abort reason (the caller's or the timeout) over a generic AbortError.
     controller.signal.throwIfAborted();
@@ -145,6 +225,16 @@ const parseEvent = <T>(block: string): T | undefined => {
 /** POSTs and yields each server-sent event's JSON data as it arrives. */
 export async function* stream<T>(url: string, options: FetchOptionType = {}): AsyncGenerator<T> {
   const response = await send(url, { ...options, method: "POST" });
+  options.signal?.throwIfAborted();
+  if (!response.headers.get("Content-Type")?.toLowerCase().includes("text/event-stream")) {
+    await readJson(response);
+    options.signal?.throwIfAborted();
+    throw new RequestError(
+      "The server did not return an event stream.",
+      response.status,
+      "INVALID_STREAM",
+    );
+  }
   if (!response.body) {
     throw new RequestError("The server returned an empty event stream.", response.status);
   }
@@ -155,6 +245,7 @@ export async function* stream<T>(url: string, options: FetchOptionType = {}): As
   try {
     while (!finished) {
       const { value, done } = await reader.read();
+      options.signal?.throwIfAborted();
       finished = done;
       buffer += decoder.decode(value, { stream: !done });
       buffer = buffer.replace(/\r\n/g, "\n");
@@ -162,11 +253,24 @@ export async function* stream<T>(url: string, options: FetchOptionType = {}): As
       while ((boundary = buffer.indexOf("\n\n")) !== -1) {
         const event = parseEvent<T>(buffer.slice(0, boundary));
         buffer = buffer.slice(boundary + 2);
+        options.signal?.throwIfAborted();
         if (event !== undefined) yield event;
       }
     }
+  } catch (cause) {
+    options.signal?.throwIfAborted();
+    if (cause instanceof TypeError) {
+      throw new RequestError(
+        "The connection was interrupted. Please try again.",
+        response.status,
+        "NETWORK_ERROR",
+        { cause },
+      );
+    }
+    throw cause;
   } finally {
     // The caller stopped early: release the connection.
     if (!finished) await reader.cancel().catch(() => {});
+    reader.releaseLock();
   }
 }

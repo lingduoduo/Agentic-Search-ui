@@ -18,6 +18,7 @@ describe("sendToolMessage", () => {
       vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
+        headers: new Headers({ "Content-Type": "text/event-stream" }),
         body: sseStream([
           'data: {"type":"progress","turn":1,"text":"search · 3 docs"}\n\n',
           'data: {"type":"answer","text":"hi"}\n\n',

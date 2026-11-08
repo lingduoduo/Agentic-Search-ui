@@ -42,7 +42,7 @@ export type SourceCategory = {
 export const SOURCE_CATEGORIES: SourceCategory[] = [
   { category: "research", name: "Research", icon: FlaskConical, background: "#ede9fe" },
   { category: "news", name: "News & social", icon: Newspaper, background: "#fee2e2" },
-  { category: "code", name: "Code & docs", icon: Code2, background: "#e0f2fe" },
+  { category: "code", name: "Code & data", icon: Code2, background: "#e0f2fe" },
   { category: "government", name: "Government & law", icon: Landmark, background: "#e2e8f0" },
   { category: "business", name: "Business & money", icon: TrendingUp, background: "#dcfce7" },
   { category: "places", name: "Places & events", icon: MapPin, background: "#fef3c7" },

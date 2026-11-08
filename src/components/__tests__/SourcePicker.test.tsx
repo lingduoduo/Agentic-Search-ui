@@ -48,7 +48,7 @@ describe("SourcePicker", () => {
     render(<SourcePicker domains={["web"]} options={options} onChange={vi.fn()} />);
     await userEvent.click(screen.getByRole("button", { name: /sources:/i }));
     const tabs = screen.getByRole("group", { name: "Source families" });
-    await userEvent.click(within(tabs).getByRole("button", { name: "Code & docs" }));
+    await userEvent.click(within(tabs).getByRole("button", { name: "Code & data" }));
     expect(screen.getByRole("checkbox", { name: "code" })).toBeInTheDocument();
     expect(screen.queryByRole("checkbox", { name: "news" })).not.toBeInTheDocument();
     await userEvent.click(within(tabs).getByRole("button", { name: "All" }));

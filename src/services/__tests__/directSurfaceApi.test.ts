@@ -18,6 +18,7 @@ describe("sendChatMessage", () => {
       vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
+        headers: new Headers({ "Content-Type": "text/event-stream" }),
         body: sseStream([
           'data: {"type":"answer","text":"hi"}\n\n',
           'data: {"type":"done","session_id":"s1"}\n\n',

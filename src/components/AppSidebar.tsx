@@ -1,16 +1,12 @@
 import { useEffect, useId, useRef, useState } from "react";
 import {
-  Bot,
   ChevronsUpDown,
   History,
   LayoutGrid,
-  MessagesSquare,
   Plus,
-  Search,
   Settings2,
   ShieldCheck,
   UserRound,
-  Wrench,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router";
@@ -27,22 +23,12 @@ type NavItem = { label: string; icon: LucideIcon } & (
   { to: string } | { panel: PanelId; title: string }
 );
 
-const app = (app_id: string) => routePath("space-apps-detail", { app_id });
-
-// Every sidebar entry, in one table. The active one gets a filled icon (CSS).
+// Every sidebar entry, one per page, in one table. A link stays active on every
+// URL under it (Apps on /space/apps/*), and the active one's icon is filled (CSS).
 const navigationGroups: { label: string; adminOnly?: boolean; items: NavItem[] }[] = [
   {
     label: "Workspace",
-    items: [
-      { to: routePath("space-apps-list"), label: "Apps", icon: LayoutGrid },
-      { to: app("assist"), label: "Assistant", icon: Bot },
-      { to: app("search"), label: "Search", icon: Search },
-      { to: app("chat"), label: "Chat", icon: MessagesSquare },
-    ],
-  },
-  {
-    label: "Explore",
-    items: [{ to: app("tools"), label: "Tools", icon: Wrench }],
+    items: [{ to: routePath("space-apps-list"), label: "Apps", icon: LayoutGrid }],
   },
   {
     label: "Administration",

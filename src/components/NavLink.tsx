@@ -15,7 +15,6 @@ export function NavLink({
   return (
     <RouterNavLink
       to={to}
-      end
       onClick={onClick}
       className={({ isActive }) => `${className ?? ""}${isActive ? " active" : ""}`.trim()}
     >

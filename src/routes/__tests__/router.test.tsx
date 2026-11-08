@@ -37,6 +37,12 @@ describe("NavLink", () => {
     expect(screen.getByRole("link", { name: "Tools" })).not.toHaveAttribute("aria-current");
   });
 
+  it("stays active on URLs under its path", () => {
+    window.history.replaceState({}, "", "/space/apps/chat");
+    render(<NavLink to="/space/apps">Apps</NavLink>, { wrapper });
+    expect(screen.getByRole("link", { name: "Apps" })).toHaveAttribute("aria-current", "page");
+  });
+
   it("navigates on a plain left click", async () => {
     render(<NavLink to="/tools">Tools</NavLink>, { wrapper });
     await userEvent.click(screen.getByRole("link", { name: "Tools" }));

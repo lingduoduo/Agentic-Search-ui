@@ -118,9 +118,9 @@ describe("sign-in", () => {
       "href",
       "/space/apps/chat",
     );
-    expect(within(sidebar).getByRole("link", { name: /chat/i })).toHaveAttribute(
+    expect(within(sidebar).getByRole("link", { name: "Apps" })).toHaveAttribute(
       "href",
-      "/space/apps/chat",
+      "/space/apps",
     );
     expect(within(sidebar).queryByRole("link", { name: /admin/i })).not.toBeInTheDocument();
   });
@@ -417,8 +417,7 @@ describe("account", () => {
     expect(within(account).getByRole("img", { name: "Your avatar" })).toHaveTextContent("A");
     const sidebar = screen.getByRole("complementary", { name: "Common navigation" });
     expect(within(sidebar).getByText("Workspace")).toBeInTheDocument();
-    expect(within(sidebar).getByText("Explore")).toBeInTheDocument();
-    expect(within(sidebar).getByRole("link", { name: "Chat" })).toHaveAttribute(
+    expect(within(sidebar).getByRole("link", { name: "Apps" })).toHaveAttribute(
       "aria-current",
       "page",
     );

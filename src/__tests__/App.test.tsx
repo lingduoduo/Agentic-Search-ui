@@ -521,6 +521,14 @@ describe("App admin page", () => {
   });
 });
 
+/** Opens an app the way a user does: Apps in the sidebar, then its card. */
+async function openApp(name: RegExp) {
+  const nav = screen.getByRole("navigation", { name: /surfaces/i });
+  await userEvent.click(within(nav).getByRole("link", { name: "Apps" }));
+  const list = await screen.findByRole("region", { name: "Apps" });
+  await userEvent.click(within(list).getByRole("link", { name }));
+}
+
 describe("page navigation", () => {
   beforeEach(() => {
     window.history.replaceState({}, "", "/space/apps/assist");
@@ -599,26 +607,14 @@ describe("page navigation", () => {
     expect(screen.getByRole("complementary", { name: "Common navigation" })).toBeInTheDocument();
   });
 
-  it("exposes the four surfaces as links, not tabs", async () => {
+  it("links pages, not apps, and keeps Apps active inside an app", async () => {
     await renderApp();
-    // Scoped to the nav: the Home page's cards link to the same pages.
     const nav = screen.getByRole("navigation", { name: /surfaces/i });
-    expect(within(nav).getByRole("link", { name: /assistant/i })).toHaveAttribute(
-      "href",
-      "/space/apps/assist",
-    );
-    expect(within(nav).getByRole("link", { name: /^search$/i })).toHaveAttribute(
-      "href",
-      "/space/apps/search",
-    );
-    expect(within(nav).getByRole("link", { name: /^chat$/i })).toHaveAttribute(
-      "href",
-      "/space/apps/chat",
-    );
-    expect(within(nav).getByRole("link", { name: /^tools$/i })).toHaveAttribute(
-      "href",
-      "/space/apps/tools",
-    );
+    const apps = within(nav).getByRole("link", { name: "Apps" });
+    expect(apps).toHaveAttribute("href", "/space/apps");
+    expect(apps).toHaveAttribute("aria-current", "page");
+    expect(within(nav).getByRole("link", { name: "Admin" })).toHaveAttribute("href", "/admin");
+    expect(within(nav).queryByRole("link", { name: /^chat$/i })).not.toBeInTheDocument();
   });
 
   it("names the registry button 'Manage tools' so only the nav link is 'Tools'", async () => {
@@ -627,13 +623,11 @@ describe("page navigation", () => {
     await renderApp();
     expect(screen.getByRole("button", { name: /manage tools/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^tools$/i })).not.toBeInTheDocument();
-    // Exactly one control is named exactly "Tools", and it is the link.
-    expect(screen.getAllByRole("link", { name: /^tools$/i })).toHaveLength(1);
   });
 
   it("swaps the page and the URL when a link is clicked", async () => {
     await renderApp();
-    await userEvent.click(screen.getByRole("link", { name: /^chat$/i }));
+    await openApp(/^chat/i);
     expect(window.location.pathname).toBe("/space/apps/chat");
     expect(screen.queryByRole("textbox", { name: /question/i })).not.toBeInTheDocument();
   });
@@ -647,7 +641,7 @@ describe("page navigation", () => {
 
   it("goes back to the previous page on popstate", async () => {
     await renderApp();
-    await userEvent.click(screen.getByRole("link", { name: /^tools$/i }));
+    await openApp(/^tools/i);
     expect(window.location.pathname).toBe("/space/apps/tools");
     act(() => {
       window.history.replaceState({}, "", "/space/apps/assist");

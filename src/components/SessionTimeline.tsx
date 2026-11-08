@@ -1,5 +1,5 @@
 import { memo } from "react";
-import type { ChatMessageView } from "../interfaces";
+import type { ChatMessageView } from "../models";
 import { TurnAvatar } from "./Transcript";
 
 interface SessionTimelineProps {

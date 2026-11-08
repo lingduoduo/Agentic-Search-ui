@@ -1,4 +1,4 @@
-import type { ChatSessionView } from "../interfaces";
+import type { ChatSessionView } from "../models";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";

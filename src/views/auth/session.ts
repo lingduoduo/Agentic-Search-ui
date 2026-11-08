@@ -14,7 +14,7 @@ import { accountCleared, loadAccount, selectAccount } from "../../store/account"
 import { store } from "../../store";
 import { isLogin } from "../../utils/auth";
 import type { Account } from "../../store/account";
-import type { AdminSurfaceSummary, BreakdownAnalytics, Permission } from "../../interfaces";
+import type { AdminSurfaceSummary, BreakdownAnalytics, Permission } from "../../models";
 
 export const ADMIN_PERMISSION: Permission = "full_admin_panel_access";
 

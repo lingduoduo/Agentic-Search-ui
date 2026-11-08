@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getRetrievalStatus } from "../services/api";
-import type { RetrievalStatusView } from "../interfaces";
+import type { RetrievalStatusView } from "../models";
 
 /** Which retrieval server answers queries, and whether it is up. Hidden when unknown. */
 export function RetrievalStatus() {

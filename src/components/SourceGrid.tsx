@@ -1,6 +1,6 @@
 import { memo, useState, useCallback } from "react";
 import { ExternalLink } from "lucide-react";
-import type { SourceDocumentView } from "../interfaces";
+import type { SourceDocumentView } from "../models";
 
 function scoreColor(score: number): string {
   if (score >= 0.7) return "rgb(34, 197, 94)";

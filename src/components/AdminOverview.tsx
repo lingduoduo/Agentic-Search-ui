@@ -1,6 +1,6 @@
 import { Activity, Braces, KeyRound, LineChart, ShieldCheck, UsersRound } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { AdminSurfaceKey, AdminSurfaceSummary } from "../interfaces";
+import type { AdminSurfaceKey, AdminSurfaceSummary } from "../models";
 
 interface AdminOverviewProps {
   summary: AdminSurfaceSummary;

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getEvalResults } from "../../services/api";
-import { METRIC_GROUPS } from "../../interfaces";
-import type { EvalResultFile, MetricGroup } from "../../interfaces";
+import { METRIC_GROUPS } from "../../models";
+import type { EvalResultFile, MetricGroup } from "../../models";
 
 function fmt(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(4);

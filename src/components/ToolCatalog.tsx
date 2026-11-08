@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { CatalogServer, ToolDiscoverResult } from "../interfaces";
+import type { CatalogServer, ToolDiscoverResult } from "../models";
 
 interface Props {
   /** Tools grouped by server. `null` means still loading. */

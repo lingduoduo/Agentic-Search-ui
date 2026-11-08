@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { RequestTracePanel } from "../debug/RequestTracePanel";
-import type { ControlFlowEventView } from "../../interfaces";
+import type { ControlFlowEventView } from "../../models";
 
 function ev(
   sequence: number,

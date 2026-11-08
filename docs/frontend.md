@@ -277,8 +277,11 @@ payload's `categories`) and a name search over a card grid. Each card shows the
 category's icon, family, site and tool counts, description and typical sources.
 `web` and `auto` are search modes, not categories, so they are left out.
 Opening a card shows a drawer with the sites searched first (or a note that the
-category searches the open web), its typical sources and its built-in tools;
-Escape or the backdrop closes it and focus returns to the card. The drawer tracks
+category searches the open web), its typical sources and its built-in tools,
+plus **Search with this**, which opens `/space/apps/search?domain=<name>` with
+that category preselected (Search reads `?domain=` once, on mount; the backend
+rejects an unknown name). Tab stays inside the open drawer, Escape or the
+backdrop closes it, and focus returns to the card. The drawer tracks
 the category by name, so changing the filter while it is open cannot show a
 different one. The load uses an `AbortController`: Retry and leaving the page
 abort the request in flight.

@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchDomains } from "../../../hooks/useSearchDomains";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Gauge, MessageSquarePlus, Search } from "lucide-react";
 import {
   createSession,
-  fetchSearchDomains,
   streamAgent,
   submitToolApproval,
   submitToolEscalation,
@@ -27,7 +27,6 @@ import type {
   ControlFlowEventView,
   ProgressStep,
   AutoDomains,
-  SearchDomainOption,
   SearchSourceProvider,
   SourceDocumentView,
   ToolApprovalView,
@@ -59,9 +58,7 @@ export function AssistView() {
   const [topK, setTopK] = useState(5);
   const [autoDomains, setAutoDomains] = useState<AutoDomains | null>(null);
   const [domains, setDomains] = useState<string[]>(["web"]);
-  const [domainOptions, setDomainOptions] = useState<SearchDomainOption[]>([
-    { name: "web", description: "General information, websites, explanations, references" },
-  ]);
+  const domainOptions = useSearchDomains();
   const [intent, setIntent] = useState<"search" | "chat" | "tool" | undefined>(undefined);
   const [clarification, setClarification] = useState<{
     view: ClarificationView;
@@ -89,22 +86,6 @@ export function AssistView() {
   // Dev-only observability console; gated at build time, never on in prod.
   const debugPanels = import.meta.env.VITE_DEBUG_PANELS === "1";
   const requestRef = useRef<AbortController | null>(null);
-
-  // The taxonomy lives in DOMAIN_REGISTRY; fetching it keeps the 20
-  // source categories and their order from being copied into the bundle. On
-  // failure the composer keeps its "web" fallback rather than
-  // disappearing, since domain selection is optional.
-  useEffect(() => {
-    let active = true;
-    fetchSearchDomains()
-      .then((r) => {
-        if (active && r.domains.length > 0) setDomainOptions(r.domains);
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, []);
 
   const status = useMemo(() => {
     if (isLoading) return "Searching";

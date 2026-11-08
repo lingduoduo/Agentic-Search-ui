@@ -1,4 +1,5 @@
 import { SourcePicker } from "../../../components/SourcePicker";
+import { AutoDomainsNote } from "../../../components/DomainChips";
 import { useSearchDomains } from "../../../hooks/useSearchDomains";
 import { useState } from "react";
 import { runAgent } from "../../../services/api";
@@ -53,13 +54,7 @@ export function SearchView() {
         onChange={setDomains}
         disabled={busy}
       />
-      {autoDomains && (
-        <p role="status">
-          {autoDomains.status === "ok"
-            ? `Auto picked: ${autoDomains.selected.join(" · ")}`
-            : "Auto unavailable: searched web"}
-        </p>
-      )}
+      {autoDomains && <AutoDomainsNote autoDomains={autoDomains} />}
       {error && <div className="error-banner">{error}</div>}
       <SourceGrid documents={docs} />
     </section>

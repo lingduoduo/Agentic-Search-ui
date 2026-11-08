@@ -136,7 +136,8 @@ describe("AssistView search-source taxonomy", () => {
     await submitWith(["Auto"], {
       done: { auto_domains: { selected: ["financial", "news"], status: "ok" } },
     });
-    expect(await screen.findByText("Auto picked: financial · news")).toBeInTheDocument();
+    const status = await screen.findByRole("status");
+    expect(status).toHaveTextContent(/^Auto picked:\s*financial\s*news$/);
     expect(screen.getByRole("checkbox", { name: "Auto" })).toBeChecked();
   });
 
@@ -177,7 +178,7 @@ describe("AssistView search-source taxonomy", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: "Auto" }));
     fireEvent.change(screen.getByLabelText("Question"), { target: { value: "q" } });
     fireEvent.click(screen.getByText("Search"));
-    expect(await screen.findByRole("status")).toHaveTextContent("Auto picked: news");
+    expect(await screen.findByRole("status")).toHaveTextContent(/Auto picked:\s*news/);
     fireEvent.click(screen.getByRole("checkbox", { name: "Auto" }));
     fireEvent.click(screen.getByText("Search"));
     await screen.findByText("boom");

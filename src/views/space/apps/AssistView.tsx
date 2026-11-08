@@ -20,6 +20,7 @@ import { SourceGrid } from "../../../components/SourceGrid";
 import { ToolApprovalCard } from "../../../components/ToolApprovalCard";
 import { ToolCallTracePanel } from "../../../components/ToolCallTracePanel";
 import { ToolEscalationCard } from "../../../components/ToolEscalationCard";
+import { AutoDomainsNote } from "../../../components/DomainChips";
 import type {
   AgentExperienceRequest,
   ChatMessageView,
@@ -348,13 +349,7 @@ export function AssistView() {
         onExampleSelect={handleExampleSelect}
       />
 
-      {autoDomains && (
-        <p role="status" style={{ color: "var(--muted)" }}>
-          {autoDomains.status === "ok"
-            ? `Auto picked: ${autoDomains.selected.join(" · ")}`
-            : "Auto unavailable: searched web"}
-        </p>
-      )}
+      {autoDomains && <AutoDomainsNote autoDomains={autoDomains} />}
 
       {error && <div className="error-banner">{error}</div>}
 

@@ -574,6 +574,7 @@ describe("page navigation", () => {
     ["/space/apps/chat/", "Chat"],
     ["/space/apps/tools", "Tools"],
     ["/account", "Account"],
+    ["/space/sources", "Search sources"],
   ])("shows the route's heading at %s", async (url, title) => {
     window.history.replaceState({}, "", url);
     await renderApp();

@@ -53,6 +53,21 @@ export const appRoutes: RouteObject[] = [
             handle: { heading: (params) => findApp(params.app_id) } satisfies RouteHandle,
           },
           {
+            id: "space-sources",
+            path: "space/sources",
+            lazy: () =>
+              import("../views/space/sources/SourcesView").then((m) => ({
+                Component: m.SourcesView,
+              })),
+            handle: {
+              heading: {
+                title: "Search sources",
+                description:
+                  "The categories Search and Assist can focus on, the sites each one searches first, and its built-in tools.",
+              },
+            } satisfies RouteHandle,
+          },
+          {
             id: "pages-account",
             path: "account",
             lazy: () =>

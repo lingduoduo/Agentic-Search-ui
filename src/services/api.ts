@@ -37,6 +37,7 @@ import type {
   SendChatMessageBody,
   SendSearchMessageBody,
   SearchFullResponse,
+  SearchDomainFamily,
   SearchDomainOption,
 } from "../models";
 import { RequestError, del, get, post, stream } from "../utils/request";
@@ -350,10 +351,11 @@ export async function* sendChatMessage(
   yield* streamWithModel<ChatStreamEvent>("/chat/send-chat-message", body, init);
 }
 
-export function fetchSearchDomains(): Promise<{
+export function fetchSearchDomains(signal?: AbortSignal): Promise<{
   domains: SearchDomainOption[];
+  categories?: SearchDomainFamily[];
 }> {
-  return get<{ domains: SearchDomainOption[] }>("/api/search-domains");
+  return get("/api/search-domains", { signal });
 }
 
 export function sendSearchMessage(body: SendSearchMessageBody): Promise<SearchFullResponse> {

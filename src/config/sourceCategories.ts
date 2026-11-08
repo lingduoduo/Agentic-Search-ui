@@ -80,12 +80,16 @@ const DOMAIN_META: Record<string, { category: string; icon: LucideIcon }> = {
 
 export const domainLabel = (name: string) => name.replace(/_/g, " ");
 
+/** A family's icon and color by key; unknown keys get Other's. */
+export const familyOf = (key: string | undefined) =>
+  SOURCE_CATEGORIES.find((c) => c.category === key) ?? OTHER;
+
 /** How to draw one domain: its label, icon and its family's tile color. */
 export function domainStyle(name: string) {
   if (name === "web") return { label: "All sources", icon: Globe, background: OTHER.background };
   if (name === "auto") return { label: "Auto", icon: Sparkles, background: "#eef2ff" };
   const meta = DOMAIN_META[name];
-  const category = SOURCE_CATEGORIES.find((c) => c.category === meta?.category) ?? OTHER;
+  const category = familyOf(meta?.category);
   return {
     label: domainLabel(name),
     icon: meta?.icon ?? category.icon,

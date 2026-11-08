@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { RetrievalLab } from "../debug/RetrievalLab";
-import type { DebugRetrievalOutcome, RetrievalMode } from "../../interfaces";
+import type { DebugRetrievalOutcome, RetrievalMode } from "../../models";
 
 vi.mock("../../services/api", () => ({ runDebugRetrieval: vi.fn() }));
 import { runDebugRetrieval } from "../../services/api";

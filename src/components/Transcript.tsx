@@ -1,5 +1,5 @@
 import { Grid2X2, UserRound } from "lucide-react";
-import type { ConversationTurn } from "../interfaces";
+import type { ConversationTurn } from "../models";
 import { ToolCallTracePanel } from "./ToolCallTracePanel";
 
 /** A turn's avatar, also used by the history panel (SessionTimeline). Decoration:

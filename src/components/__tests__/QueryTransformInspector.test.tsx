@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { QueryTransformInspector } from "../debug/QueryTransformInspector";
-import type { QueryTransformResult } from "../../interfaces";
+import type { QueryTransformResult } from "../../models";
 
 vi.mock("../../services/api", () => ({ runQueryTransform: vi.fn() }));
 import { runQueryTransform } from "../../services/api";

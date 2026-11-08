@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { runQueryTransform } from "../../services/api";
-import type { QueryTransformResult } from "../../interfaces";
+import type { QueryTransformResult } from "../../models";
 
 const LEG_LABELS: Record<string, string> = {
   sub_queries: "decompose",

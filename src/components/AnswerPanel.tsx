@@ -1,6 +1,6 @@
 import { lazy, memo, Suspense, useState } from "react";
 import { submitSessionFeedback } from "../services/api";
-import type { FeedbackSignal, FeedbackTarget, ProgressStep } from "../interfaces";
+import type { FeedbackSignal, FeedbackTarget, ProgressStep } from "../models";
 
 interface AnswerPanelProps {
   answer: string;

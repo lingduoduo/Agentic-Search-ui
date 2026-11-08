@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { Dispatch, PayloadAction } from "@reduxjs/toolkit";
 import { getCurrentUser, getPermissions } from "../services/api";
-import type { CurrentUser, Permission } from "../interfaces";
+import type { CurrentUser, Permission } from "../models";
 
 export type Account = { user: CurrentUser; permissions: Permission[] };
 

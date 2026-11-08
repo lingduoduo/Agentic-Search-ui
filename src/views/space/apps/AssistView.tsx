@@ -33,7 +33,7 @@ import type {
   ToolApprovalView,
   ToolCallTraceView,
   ToolEscalationView,
-} from "../../../interfaces";
+} from "../../../models";
 
 const DEFAULT_SEARCH_URL = "http://localhost:8001/retrieve";
 const DEFAULT_BROWSER_SEARCH_URL = "http://localhost:8001/retrieve";

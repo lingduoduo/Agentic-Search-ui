@@ -38,7 +38,7 @@ import type {
   SendSearchMessageBody,
   SearchFullResponse,
   SearchDomainOption,
-} from "../interfaces";
+} from "../models";
 import { RequestError, del, get, post, stream } from "../utils/request";
 
 /**

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAuditSummary, getQueryHistory } from "../services/api";
-import type { AuditSummary, QueryHistoryItem, QueryHistoryPage } from "../interfaces";
+import type { AuditSummary, QueryHistoryItem, QueryHistoryPage } from "../models";
 
 const PAGE_SIZE = 20;
 

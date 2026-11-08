@@ -1,4 +1,4 @@
-import type { CatalogServer, ToolView } from "../interfaces";
+import type { CatalogServer, ToolView } from "../models";
 
 /**
  * Group a flat /admin/tools listing into servers, the way the dev-console

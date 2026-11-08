@@ -184,7 +184,7 @@ src/
 │   └── styles/       # Shared SCSS and Tailwind CSS entry points
 ├── components/       # Reusable UI, admin panels, and debug inspectors
 ├── config/           # Route definitions and search constants
-├── interfaces/       # Shared API and UI types (index.ts)
+├── models/           # Domain API/UI types, shared response envelopes, and index.ts
 ├── routes/           # React Router navigation and routing exports
 ├── services/         # Backend HTTP and SSE client (api.ts)
 ├── static/           # Reserved for static assets
@@ -244,7 +244,7 @@ them once files are added.
 
 When extending the app, put backend requests in `services/api.ts` (using the
 `get` / `post` / `stream` helpers from `utils/request.ts`), shared
-constants in `config/`, shared data contracts in `interfaces/`, pure helpers in `utils/`, and reusable UI in `components/`.
+constants in `config/`, shared data contracts in `models/`, pure helpers in `utils/`, and reusable UI in `components/`.
 Route screens in `views/pages/` and `views/space/apps/` compose these pieces inside a layout from `views/layouts/`.
 
 ## Check

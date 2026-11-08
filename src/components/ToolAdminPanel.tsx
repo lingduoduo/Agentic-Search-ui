@@ -5,7 +5,7 @@ import {
   listTools,
   registerOpenAPITools,
 } from "../services/api";
-import type { ToolInvokeResponse, ToolView } from "../interfaces";
+import type { ToolInvokeResponse, ToolView } from "../models";
 import { buildArguments, initialValues, toolFormFromSchema, validate } from "../utils/toolSchema";
 import type { ToolField } from "../utils/toolSchema";
 

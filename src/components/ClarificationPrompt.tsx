@@ -1,4 +1,4 @@
-import type { ClarificationView } from "../interfaces";
+import type { ClarificationView } from "../models";
 
 export function ClarificationPrompt({
   clarification,

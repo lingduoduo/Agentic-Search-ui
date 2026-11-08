@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { ToolCallTracePanel } from "../ToolCallTracePanel";
-import type { ToolCallTraceView } from "../../interfaces";
+import type { ToolCallTraceView } from "../../models";
 
 const completedCall: ToolCallTraceView = {
   tool_name: "search_tool",

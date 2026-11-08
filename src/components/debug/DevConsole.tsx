@@ -1,4 +1,4 @@
-import type { ControlFlowEventView } from "../../interfaces";
+import type { ControlFlowEventView } from "../../models";
 import { EvalResultsPanel } from "./EvalResultsPanel";
 import { LatencyPanel } from "./LatencyPanel";
 import { QueryTransformInspector } from "./QueryTransformInspector";

@@ -60,9 +60,9 @@ small {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 232px minmax(0, 1fr);
+  grid-template-columns: 240px minmax(0, 1fr);
   align-items: start;
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .workspace {
@@ -2192,50 +2192,137 @@ option:disabled,
   color: var(--muted);
 }
 
-/* This sidebar belongs to the root route and persists while its children change. */
+/* The layout persists while its route outlet changes. */
 .app-sidebar {
   position: sticky;
   top: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
   height: 100dvh;
-  padding: 28px 16px 20px;
-  overflow-y: auto;
+  min-width: 0;
+  padding: 8px;
   border-right: 1px solid var(--line);
   background: var(--panel-soft);
 }
 
+.app-sidebar__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  height: 100%;
+  padding: 20px 12px;
+  overflow-y: auto;
+  border-radius: 8px;
+  background: var(--panel);
+}
+
 .app-sidebar__brand {
-  padding: 0 12px;
+  display: block;
+  padding: 0 8px;
+  color: var(--ink);
+  text-decoration: none;
+  border-radius: 4px;
   h1 {
-    font-size: 17px;
+    font-size: 18px;
+    letter-spacing: -0.4px;
   }
 }
 
-.app-sidebar__surfaces,
-.app-sidebar__actions {
+.app-sidebar__surfaces {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 24px;
 }
 
-.app-sidebar__actions {
+.app-sidebar__links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.app-sidebar__group-label {
+  padding: 0 8px;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+.app-sidebar__account {
   margin-top: auto;
-  padding-top: 20px;
+  padding-top: 16px;
   border-top: 1px solid var(--line);
+}
+.app-sidebar__identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+  margin-bottom: 12px;
+}
+.app-sidebar__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-strong);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+.app-sidebar__profile {
+  min-width: 0;
+}
+.app-sidebar__name,
+.app-sidebar__email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-sidebar__name {
+  font-size: 14px;
+  font-weight: 500;
+}
+.app-sidebar__email {
+  font-size: 12px;
+  color: var(--muted);
+}
+.sign-out__error {
+  padding: 8px;
+  color: var(--rose);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.account-retry {
+  margin-left: 12px;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.app-sidebar__brand:focus-visible,
+.account-retry:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .app-sidebar .nav-link,
 .app-sidebar__button {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
-  min-height: 44px;
-  padding: 10px 12px;
+  min-height: 40px;
+  padding: 8px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 8px;
   background: transparent;
   color: var(--muted);
   text-align: left;
@@ -2262,7 +2349,7 @@ option:disabled,
   }
 }
 
-.app-sidebar__actions form {
+.app-sidebar__account form {
   display: contents;
 }
 
@@ -2406,35 +2493,43 @@ option:disabled,
   .app-sidebar {
     position: static;
     height: auto;
-    gap: 16px;
-    padding: 20px 16px 16px;
     border-right: 0;
     border-bottom: 1px solid var(--line);
   }
-  .app-sidebar__brand {
-    padding: 0;
+  .app-sidebar__inner {
+    height: auto;
+    padding: 16px 12px;
+    gap: 20px;
   }
   .app-sidebar__surfaces {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 4px;
-  }
-  .app-sidebar .nav-link {
-    flex-direction: column;
-    gap: 4px;
-    padding: 8px 4px;
-    font-size: 13px;
-  }
-  .app-sidebar__actions {
     flex-direction: row;
-    margin-top: 0;
-    padding-top: 12px;
-    gap: 8px;
+    flex-wrap: wrap;
+    gap: 16px 28px;
   }
+  .app-sidebar__links {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .app-sidebar .nav-link,
   .app-sidebar__button {
     width: auto;
+  }
+  .app-sidebar__account {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .app-sidebar__identity {
+    flex: 1 1 160px;
+    min-width: 0;
+    margin-bottom: 0;
+  }
+  .app-sidebar__profile {
     flex: 1;
-    justify-content: center;
+  }
+  .sign-out {
+    max-width: 100%;
   }
   .workspace {
     width: calc(100% - 32px);

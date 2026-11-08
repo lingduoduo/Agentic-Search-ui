@@ -20,7 +20,9 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 const unauthorized = () => json({ detail: "Authentication required." }, 401);
 
 /** Stub fetch with "METHOD /path" handlers; anything else is a 404. */
-function stubBackend(handlers: Record<string, (init?: RequestInit) => Response>) {
+function stubBackend(
+  handlers: Record<string, (init?: RequestInit) => Response | Promise<Response>>,
+) {
   const fetchMock = vi.fn(async (input: string, init?: RequestInit) => {
     const key = `${init?.method ?? "GET"} ${new URL(input, "http://localhost").pathname}`;
     return handlers[key]?.(init) ?? json({ detail: "Not Found" }, 404);
@@ -342,16 +344,77 @@ describe("account", () => {
     expect(calledPaths(fetchMock)).toContain("/auth/logout");
   });
 
-  it("shows the app's error screen when the backend cannot sign out", async () => {
+  it("disables sign-out while its request is pending", async () => {
+    let session = true;
+    let finishLogout!: () => void;
+    const pending = new Promise<Response>((resolve) => {
+      finishLogout = () => {
+        session = false;
+        resolve(new Response(null, { status: 204 }));
+      };
+    });
+    stubBackend({
+      "GET /me": () => (session ? json(alice) : unauthorized()),
+      "GET /me/permissions": () => (session ? json(["basic_access"]) : unauthorized()),
+      "POST /auth/logout": () => pending,
+    });
+    renderAt("/space/apps/chat");
+    const sidebar = await screen.findByRole("complementary", { name: "Common navigation" });
+    const button = within(sidebar).getByRole("button", { name: "Sign out" });
+    await userEvent.click(button);
+    expect(button).toBeDisabled();
+    expect(button).toHaveTextContent("Signing out…");
+    finishLogout();
+    expect(
+      await screen.findByRole("heading", { name: "Sign in to Agentic Search" }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the layout and a retryable error when sign-out fails", async () => {
     stubBackend({
       ...signedIn(["basic_access"]),
-      // What the dev proxy answers when the backend is down.
       "POST /auth/logout": () => json({ detail: "Gateway Timeout" }, 504),
     });
-    renderAt("/space/apps/assist");
+    const router = renderAt("/space/apps/assist");
     const sidebar = await screen.findByRole("complementary", { name: "Common navigation" });
     await userEvent.click(within(sidebar).getByRole("button", { name: "Sign out" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Something went wrong");
-    expect(screen.queryByText(/Unexpected Application Error/)).not.toBeInTheDocument();
+    expect(await within(sidebar).findByRole("alert")).toHaveTextContent("Gateway Timeout");
+    expect(router.state.location.pathname).toBe("/space/apps/assist");
+    expect(within(sidebar).getByRole("button", { name: "Sign out" })).toBeEnabled();
+  });
+
+  it("shows the account identity in the sidebar footer", async () => {
+    stubBackend(signedIn(["basic_access"]));
+    renderAt("/space/apps/chat");
+    const account = await screen.findByRole("region", { name: "Signed-in account" });
+    expect(account).toHaveTextContent("alice");
+    expect(account).toHaveTextContent(alice.email);
+    expect(within(account).getByRole("img", { name: "Your avatar" })).toHaveTextContent("A");
+    const sidebar = screen.getByRole("complementary", { name: "Common navigation" });
+    expect(within(sidebar).getByText("Workspace")).toBeInTheDocument();
+    expect(within(sidebar).getByText("Explore")).toBeInTheDocument();
+    expect(within(sidebar).getByRole("link", { name: "Chat" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
+  it("retries account verification without reloading the page", async () => {
+    let available = false;
+    const fetchMock = stubBackend({
+      "GET /me": () => (available ? json(alice) : json({ detail: "Bad gateway" }, 502)),
+      "GET /me/permissions": () =>
+        available ? json(["basic_access"]) : json({ detail: "Bad gateway" }, 502),
+    });
+    const router = renderAt("/space/apps/chat");
+    const retry = await screen.findByRole("button", { name: "Retry loading account" });
+    available = true;
+    await userEvent.click(retry);
+    await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
+    expect(screen.getByRole("region", { name: "Signed-in account" })).toHaveTextContent(
+      alice.email,
+    );
+    expect(router.state.location.pathname).toBe("/space/apps/chat");
+    expect(calledPaths(fetchMock).filter((path) => path === "/me")).toHaveLength(2);
   });
 });

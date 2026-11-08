@@ -22,7 +22,7 @@ on `/space/apps`, and `/` redirects there. Public pages, marked
 page and `NotFoundView` for unknown URLs. Route ids double as route names, and
 `routePath(name, params)` in `src/config/routes.ts` builds URLs from them. Each
 page's code is loaded lazily, the first time it opens.
-The sidebar becomes compact top navigation on small screens.
+The sidebar uses a white inner panel in a gray rail, grouped Workspace / Explore navigation, and permission-gated Administration controls. The footer displays the current profile name, email, avatar (or initial), Account link, and Sign out. On small screens it becomes wrapping top navigation. Account-verification errors include a Retry button that revalidates the existing route guard; no second account fetch is started by the layout.
 
 `src/main.tsx` mounts `src/App.tsx`, which creates one router with
 `createAppRouter()` and renders `RouterProvider`. `src/config/routes.ts` holds
@@ -67,7 +67,7 @@ so the cached account, not a token, is what says "signed in". After sign-in,
 `safeRedirectPath` returns the user to `redirect` only when it is one of the app's
 own signed-in pages (`isRoute` in `src/config/routes.ts`); anything else, including
 another origin, the sign-in page or an unknown app id, goes to `/space/apps`. **Sign out** (sidebar and `/account`) calls
-`POST /auth/logout`, which clears the cookie even for an expired session.
+`POST /auth/logout`, which clears the cookie even for an expired session. A shared fetcher disables sign-out controls during the request and displays failures inline for retry. The local account is cleared after server sign-out succeeds, since JavaScript cannot clear the HttpOnly cookie.
 
 Every backend call in `src/services/api.ts` goes through `src/utils/request.ts`
 (`get` / `post` / `del`, and `stream` for SSE), which fires

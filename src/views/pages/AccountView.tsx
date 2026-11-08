@@ -1,4 +1,5 @@
-import { Form, Link } from "react-router";
+import { SignOutButton } from "../../components/SignOutButton";
+import { Link } from "react-router";
 import { isAdmin } from "../auth/session";
 import { routePath } from "../../config/routes";
 import { profileReset, profileUpdated, selectAccount, selectProfile } from "../../store/account";
@@ -40,11 +41,7 @@ export function AccountView() {
         </button>
         <Link to={routePath("space-apps-list")}>Go to apps</Link>
       </form>
-      <Form method="post" action="/logout">
-        <button type="submit" className="icon-button">
-          Sign out
-        </button>
-      </Form>
+      <SignOutButton className="icon-button" />
     </section>
   );
 }

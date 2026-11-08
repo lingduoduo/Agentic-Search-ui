@@ -22,7 +22,7 @@ on `/space/apps`, and `/` redirects there. Public pages, marked
 page and `NotFoundView` for unknown URLs. Route ids double as route names, and
 `routePath(name, params)` in `src/config/routes.ts` builds URLs from them. Each
 page's code is loaded lazily, the first time it opens.
-The sidebar uses a white inner panel in a gray rail, grouped Workspace / Explore navigation, and permission-gated Administration controls. The footer displays the current profile name, email, avatar (or initial), Account link, and Sign out. On small screens it becomes wrapping top navigation. Account-verification errors include a Retry button that revalidates the existing route guard; no second account fetch is started by the layout.
+The sidebar uses a white inner panel in a gray rail, a primary **Start an app** button, and grouped Workspace / Explore / permission-gated Administration entries declared in one table in `AppSidebar`; the active entry's icon is drawn filled. The footer card shows the current profile name, email and avatar (or initial); clicking it opens a menu with Account and Sign out (closed by Escape or a click outside). On small screens it becomes wrapping top navigation. Account-verification errors include a Retry button that revalidates the existing route guard; no second account fetch is started by the layout.
 
 `src/main.tsx` mounts `src/App.tsx`, which creates one router with
 `createAppRouter()` and renders `RouterProvider`. `src/config/routes.ts` holds

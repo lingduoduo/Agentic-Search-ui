@@ -11,6 +11,7 @@ import { QueryHistoryPanel } from "../../components/QueryHistoryPanel";
 import { ToolAdminPanel } from "../../components/ToolAdminPanel";
 import type { RouteHandle } from "../../config/routes";
 import { AppSidebar } from "../../components/AppSidebar";
+import type { PanelId } from "../../components/AppSidebar";
 import { isAdmin, isVerifyingSession, loginPath } from "../auth/session";
 import type { GuardData } from "../auth/session";
 import { SESSION_CLEARED_EVENT } from "../../config/session";
@@ -19,8 +20,7 @@ import { useAppSelector } from "../../store";
 
 /** Left sidebar plus the page heading; the page renders in the Outlet. */
 export function DefaultLayout() {
-  const [showQueryHistory, setShowQueryHistory] = useState(false);
-  const [showTools, setShowTools] = useState(false);
+  const [panels, setPanels] = useState<Record<PanelId, boolean>>({ tools: false, history: false });
   const match = useMatches().at(-1);
   const heading = (match?.handle as RouteHandle | undefined)?.heading;
   const page = typeof heading === "function" ? heading(match!.params) : heading;
@@ -49,10 +49,8 @@ export function DefaultLayout() {
       <AppSidebar
         isAdmin={admin}
         isLoadingAccount={loadingAccount && !!guard?.error}
-        showTools={showTools}
-        showQueryHistory={showQueryHistory}
-        onToggleTools={() => setShowTools((value) => !value)}
-        onToggleQueryHistory={() => setShowQueryHistory((value) => !value)}
+        panels={panels}
+        onTogglePanel={(panel) => setPanels((open) => ({ ...open, [panel]: !open[panel] }))}
       />
       <main className="workspace" aria-label="Agentic Search workspace">
         {page && (
@@ -78,9 +76,9 @@ export function DefaultLayout() {
         )}
 
         {/* Both panels call admin-only endpoints. */}
-        {admin && showTools && <ToolAdminPanel />}
+        {admin && panels.tools && <ToolAdminPanel />}
 
-        {admin && showQueryHistory && <QueryHistoryPanel />}
+        {admin && panels.history && <QueryHistoryPanel />}
 
         <Outlet />
       </main>

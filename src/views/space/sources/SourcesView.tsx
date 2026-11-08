@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { Search, X } from "lucide-react";
+import { Link } from "react-router";
 import { fetchSearchDomains } from "../../../services/api";
 import type { SearchDomainFamily, SearchDomainOption } from "../../../models";
 import {
@@ -8,6 +9,7 @@ import {
   domainStyle,
   familyOf,
 } from "../../../config/sourceCategories";
+import { routePath } from "../../../config/routes";
 
 // "web" and "auto" are search modes, not categories, so the catalog leaves them out.
 const isCategory = (option: SearchDomainOption) => option.name !== "web" && option.name !== "auto";
@@ -186,6 +188,7 @@ function SourceDrawer({
   onClose: () => void;
 }) {
   const titleId = useId();
+  const panel = useRef<HTMLElement>(null);
   const close = useRef<HTMLButtonElement>(null);
 
   // Focus moves in once, on open; the page refocuses the card on close.
@@ -193,6 +196,19 @@ function SourceDrawer({
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
+      if (event.key !== "Tab" || !panel.current) return;
+      // Keep Tab inside the drawer while it is open: wrap at either end.
+      const focusable = panel.current.querySelectorAll<HTMLElement>("a[href], button");
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const inside = panel.current.contains(document.activeElement);
+      if (event.shiftKey && (!inside || document.activeElement === first)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (!inside || document.activeElement === last)) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
@@ -201,6 +217,7 @@ function SourceDrawer({
   return (
     <div className="source-drawer__backdrop" onClick={onClose}>
       <aside
+        ref={panel}
         className="source-drawer"
         role="dialog"
         aria-modal="true"
@@ -214,6 +231,13 @@ function SourceDrawer({
           </button>
         </div>
         <p>{domain.description}</p>
+        <Link
+          className="source-drawer__search"
+          to={`${routePath("space-apps-detail", { app_id: "search" })}?domain=${encodeURIComponent(domain.name)}`}
+        >
+          <Search aria-hidden="true" size={16} />
+          Search with this
+        </Link>
 
         <h3>Sites searched first</h3>
         {domain.source_sites?.length ? (

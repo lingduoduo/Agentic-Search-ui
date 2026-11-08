@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as api from "../../../../services/api";
 import { SourcesView } from "../SourcesView";
@@ -44,7 +45,7 @@ afterEach(() => vi.restoreAllMocks());
 describe("SourcesView", () => {
   it("lists every category but web as a card with its family and counts", async () => {
     vi.spyOn(api, "fetchSearchDomains").mockResolvedValue(payload);
-    render(<SourcesView />);
+    render(<SourcesView />, { wrapper: MemoryRouter });
     const academic = await screen.findByRole("button", { name: /academic/i });
     expect(academic).toHaveTextContent("Research · 2 sites · 1 tool");
     expect(screen.getByRole("button", { name: /official/i })).toHaveTextContent(
@@ -55,7 +56,7 @@ describe("SourcesView", () => {
 
   it("filters by family pill and by name", async () => {
     vi.spyOn(api, "fetchSearchDomains").mockResolvedValue(payload);
-    render(<SourcesView />);
+    render(<SourcesView />, { wrapper: MemoryRouter });
     await screen.findByRole("button", { name: /academic/i });
     const pills = screen.getByRole("group", { name: "Source families" });
 
@@ -74,7 +75,7 @@ describe("SourcesView", () => {
 
   it("opens a drawer with sites and tools, and closes it on Escape", async () => {
     vi.spyOn(api, "fetchSearchDomains").mockResolvedValue(payload);
-    render(<SourcesView />);
+    render(<SourcesView />, { wrapper: MemoryRouter });
     const card = await screen.findByRole("button", { name: /financial/i });
     await userEvent.click(card);
 
@@ -94,7 +95,7 @@ describe("SourcesView", () => {
 
   it("explains a category without a site list", async () => {
     vi.spyOn(api, "fetchSearchDomains").mockResolvedValue(payload);
-    render(<SourcesView />);
+    render(<SourcesView />, { wrapper: MemoryRouter });
     await userEvent.click(await screen.findByRole("button", { name: /official/i }));
     expect(screen.getByRole("dialog")).toHaveTextContent("No site list");
   });
@@ -104,7 +105,7 @@ describe("SourcesView", () => {
       .spyOn(api, "fetchSearchDomains")
       .mockRejectedValueOnce(new Error("Gateway Timeout"))
       .mockResolvedValue(payload);
-    render(<SourcesView />);
+    render(<SourcesView />, { wrapper: MemoryRouter });
     expect(await screen.findByRole("alert")).toHaveTextContent("Gateway Timeout");
     await userEvent.click(screen.getByRole("button", { name: "Retry loading search sources" }));
     expect(await screen.findByRole("button", { name: /academic/i })).toBeInTheDocument();
@@ -118,8 +119,33 @@ describe("SourcesView", () => {
       signal = s;
       return new Promise(() => {});
     });
-    const { unmount } = render(<SourcesView />);
+    const { unmount } = render(<SourcesView />, { wrapper: MemoryRouter });
     unmount();
     expect(signal?.aborted).toBe(true);
+  });
+
+  it("links to Search with the category preselected", async () => {
+    vi.spyOn(api, "fetchSearchDomains").mockResolvedValue(payload);
+    render(<SourcesView />, { wrapper: MemoryRouter });
+    await userEvent.click(await screen.findByRole("button", { name: /academic/i }));
+    expect(screen.getByRole("link", { name: "Search with this" })).toHaveAttribute(
+      "href",
+      "/space/apps/search?domain=academic",
+    );
+  });
+
+  it("keeps Tab inside the open drawer", async () => {
+    vi.spyOn(api, "fetchSearchDomains").mockResolvedValue(payload);
+    render(<SourcesView />, { wrapper: MemoryRouter });
+    await userEvent.click(await screen.findByRole("button", { name: /financial/i }));
+    const close = screen.getByRole("button", { name: "Close" });
+    expect(close).toHaveFocus();
+
+    await userEvent.tab({ shift: true });
+    expect(screen.getByRole("link", { name: "sec.gov" })).toHaveFocus();
+    await userEvent.tab();
+    expect(close).toHaveFocus();
+    await userEvent.tab();
+    expect(screen.getByRole("link", { name: "Search with this" })).toHaveFocus();
   });
 });

@@ -2,6 +2,7 @@ import { SourcePicker } from "../../../components/SourcePicker";
 import { AutoDomainsNote } from "../../../components/DomainChips";
 import { useSearchDomains } from "../../../hooks/useSearchDomains";
 import { useState } from "react";
+import { useSearchParams } from "react-router";
 import { runAgent } from "../../../services/api";
 import type { SourceDocumentView, AutoDomains } from "../../../models";
 import { SourceGrid } from "../../../components/SourceGrid";
@@ -9,7 +10,12 @@ import { SourceGrid } from "../../../components/SourceGrid";
 export function SearchView() {
   const [query, setQuery] = useState("");
   const [docs, setDocs] = useState<SourceDocumentView[]>([]);
-  const [domains, setDomains] = useState<string[]>(["web"]);
+  // `?domain=academic` (the Sources page's "Search with this") preselects a category.
+  const [params] = useSearchParams();
+  const [domains, setDomains] = useState<string[]>(() => {
+    const domain = params.get("domain");
+    return domain ? [domain] : ["web"];
+  });
   const domainOptions = useSearchDomains();
   const [autoDomains, setAutoDomains] = useState<AutoDomains | null>(null);
   const [busy, setBusy] = useState(false);

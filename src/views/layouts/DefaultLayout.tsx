@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { Outlet, useLocation, useMatches, useNavigate, useRouteLoaderData } from "react-router";
+import {
+  Outlet,
+  useLocation,
+  useMatches,
+  useNavigate,
+  useRouteLoaderData,
+  useRevalidator,
+} from "react-router";
 import { QueryHistoryPanel } from "../../components/QueryHistoryPanel";
 import { ToolAdminPanel } from "../../components/ToolAdminPanel";
 import type { RouteHandle } from "../../config/routes";
@@ -19,6 +26,8 @@ export function DefaultLayout() {
   const page = typeof heading === "function" ? heading(match!.params) : heading;
   const admin = isAdmin(useAppSelector(selectAccount));
   const guard = useRouteLoaderData("root") as GuardData | undefined;
+  const revalidator = useRevalidator();
+  const loadingAccount = revalidator.state === "loading";
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -39,6 +48,7 @@ export function DefaultLayout() {
     <div className="app-shell">
       <AppSidebar
         isAdmin={admin}
+        isLoadingAccount={loadingAccount && !!guard?.error}
         showTools={showTools}
         showQueryHistory={showQueryHistory}
         onToggleTools={() => setShowTools((value) => !value)}
@@ -54,7 +64,16 @@ export function DefaultLayout() {
 
         {guard?.error && (
           <div className="error-banner" role="alert">
-            {guard.error}
+            <span>{guard.error}</span>
+            <button
+              type="button"
+              className="account-retry"
+              aria-label="Retry loading account"
+              disabled={loadingAccount}
+              onClick={() => void revalidator.revalidate()}
+            >
+              {loadingAccount ? "Retrying…" : "Retry"}
+            </button>
           </div>
         )}
 

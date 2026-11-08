@@ -91,7 +91,7 @@ export async function guard(
   if (session === "signed-out") throw loginRedirect(request);
   // The backend could not answer: keep going and let the layout show the error.
   if (session === "error") {
-    return { error: "Could not confirm your session with the server. Reload to try again." };
+    return { error: "Could not confirm your session with the server. Retry to load your account." };
   }
   return { error: null };
 }
@@ -134,7 +134,11 @@ export async function loginAction({ request }: ActionFunctionArgs) {
 }
 
 export async function logoutAction() {
-  await logout();
+  try {
+    await logout();
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Unable to sign out." };
+  }
   store.dispatch(accountCleared());
   return redirect(LOGIN_PATH);
 }

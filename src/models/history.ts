@@ -1,3 +1,18 @@
+/** Filters accepted by the admin history endpoint; page_num is zero-based. */
+export type QueryHistoryParams = {
+  page_num?: number;
+  page_size?: number;
+  start_time?: string;
+  end_time?: string;
+  user_id?: string;
+  feedback_type?: "like" | "dislike";
+};
+
+export type AuditSummaryParams = {
+  start_time?: string;
+  end_time?: string;
+};
+
 export interface QueryHistoryItem {
   id: string;
   user_id: string | null;

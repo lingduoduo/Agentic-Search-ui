@@ -44,3 +44,7 @@ export type FeedbackSignal = "thumbs_up" | "thumbs_down";
 
 /** What a thumbs is about: the sources, the answer, or the turn as a whole. */
 export type FeedbackTarget = "retrieval" | "generation" | "overall";
+
+export interface SessionFeedbackResponse {
+  ok: boolean;
+}

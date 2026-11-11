@@ -277,3 +277,10 @@ export async function* stream<T>(url: string, options: FetchOptionType = {}): As
     reader.releaseLock();
   }
 }
+
+/** HTTP status attached to a request rejection, when there was one. */
+export function errorStatus(err: unknown): number | undefined {
+  return typeof err === "object" && err !== null && "status" in err
+    ? (err as { status?: number }).status
+    : undefined;
+}

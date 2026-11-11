@@ -1,5 +1,8 @@
 import { del, get, post, type RequestOptions } from "../utils/request";
+import { streamWithModel } from "../utils/modelStream";
 import type {
+  SendToolMessageBody,
+  ToolStreamEvent,
   BaseResponse,
   CreateApiToolProviderRequest,
   GetApiToolProviderResponse,
@@ -134,4 +137,11 @@ export function invokeTool(
     body: req,
     signal: init?.signal,
   });
+}
+
+export async function* sendToolMessage(
+  body: SendToolMessageBody,
+  init?: RequestOptions,
+): AsyncGenerator<ToolStreamEvent> {
+  yield* streamWithModel<ToolStreamEvent>("/tool/send-tool-message", body, init);
 }

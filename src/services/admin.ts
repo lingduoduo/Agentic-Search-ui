@@ -1,11 +1,4 @@
-import type {
-  AdminSurfaceSummary,
-  BreakdownAnalytics,
-  QueryHistoryPage,
-  QueryHistoryParams,
-  AuditSummary,
-  AuditSummaryParams,
-} from "../models";
+import type { AdminSurfaceSummary, BreakdownAnalytics } from "../models";
 import { get, type RequestOptions } from "../utils/request";
 
 export function getAdminSummary(init?: RequestOptions): Promise<AdminSurfaceSummary> {
@@ -24,16 +17,5 @@ export function getAnalyticsByFlow(init?: RequestOptions): Promise<BreakdownAnal
   return get<BreakdownAnalytics>("/analytics/by-flow", { signal: init?.signal });
 }
 
-export function getQueryHistory(
-  params: QueryHistoryParams = {},
-  init?: RequestOptions,
-): Promise<QueryHistoryPage> {
-  return get<QueryHistoryPage>("/admin/chat-session-history", { params, signal: init?.signal });
-}
-
-export function getAuditSummary(
-  params: AuditSummaryParams = {},
-  init?: RequestOptions,
-): Promise<AuditSummary> {
-  return get<AuditSummary>("/admin/query-history/audit", { params, signal: init?.signal });
-}
+// Compatibility for callers that imported history via the admin service.
+export { getQueryHistory, getAuditSummary } from "./history";

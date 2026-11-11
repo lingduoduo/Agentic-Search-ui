@@ -54,3 +54,8 @@ export interface SearchDomainFamily {
 }
 
 export type SearchSourceProvider = "auto" | "retrieval" | "google" | "serpapi" | "browser" | "all";
+
+export interface SearchDomainsResponse {
+  domains: SearchDomainOption[];
+  categories?: SearchDomainFamily[];
+}

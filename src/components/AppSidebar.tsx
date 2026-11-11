@@ -18,7 +18,7 @@ import { useAppSelector } from "../store";
 import { selectProfile } from "../store/account";
 
 /** Admin panels DefaultLayout shows above the page, toggled from the sidebar. */
-export type PanelId = "tools" | "history";
+export type PanelId = "history";
 
 type NavItem = { label: string; icon: LucideIcon } & (
   { to: string } | { panel: PanelId; title: string }
@@ -40,7 +40,7 @@ const navigationGroups: { label: string; adminOnly?: boolean; items: NavItem[] }
     adminOnly: true,
     items: [
       { to: routePath("pages-admin"), label: "Admin", icon: ShieldCheck },
-      { panel: "tools", label: "Manage tools", title: "Manage tools", icon: Settings2 },
+      { to: routePath("space-tools"), label: "Manage tools", icon: Settings2 },
       { panel: "history", label: "History", title: "Query history audit", icon: History },
     ],
   },

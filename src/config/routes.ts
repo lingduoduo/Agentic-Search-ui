@@ -7,6 +7,7 @@ export const ROUTE_PATHS = {
   "space-apps-list": "/space/apps",
   "space-apps-detail": "/space/apps/:app_id",
   "space-sources": "/space/sources",
+  "space-tools": "/space/tools",
   "pages-account": "/account",
   "pages-admin": "/admin",
 } as const;

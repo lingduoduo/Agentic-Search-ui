@@ -8,7 +8,6 @@ import {
   useRevalidator,
 } from "react-router";
 import { QueryHistoryPanel } from "../../components/QueryHistoryPanel";
-import { ToolAdminPanel } from "../../components/ToolAdminPanel";
 import type { RouteHandle } from "../../config/routes";
 import { AppSidebar } from "../../components/AppSidebar";
 import type { PanelId } from "../../components/AppSidebar";
@@ -20,7 +19,7 @@ import { useAppSelector } from "../../store";
 
 /** Left sidebar plus the page heading; the page renders in the Outlet. */
 export function DefaultLayout() {
-  const [panels, setPanels] = useState<Record<PanelId, boolean>>({ tools: false, history: false });
+  const [panels, setPanels] = useState<Record<PanelId, boolean>>({ history: false });
   const match = useMatches().at(-1);
   const heading = (match?.handle as RouteHandle | undefined)?.heading;
   const page = typeof heading === "function" ? heading(match!.params) : heading;
@@ -75,9 +74,7 @@ export function DefaultLayout() {
           </div>
         )}
 
-        {/* Both panels call admin-only endpoints. */}
-        {admin && panels.tools && <ToolAdminPanel />}
-
+        {/* The panel calls admin-only endpoints. */}
         {admin && panels.history && <QueryHistoryPanel />}
 
         <Outlet />

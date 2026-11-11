@@ -10,6 +10,7 @@ import {
   familyOf,
 } from "../../../config/sourceCategories";
 import { routePath } from "../../../config/routes";
+import { useFocusTrap } from "../../../hooks/useFocusTrap";
 
 // "web" and "auto" are search modes, not categories, so the catalog leaves them out.
 const isCategory = (option: SearchDomainOption) => option.name !== "web" && option.name !== "auto";
@@ -193,26 +194,7 @@ function SourceDrawer({
 
   // Focus moves in once, on open; the page refocuses the card on close.
   useEffect(() => close.current?.focus(), []);
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-      if (event.key !== "Tab" || !panel.current) return;
-      // Keep Tab inside the drawer while it is open: wrap at either end.
-      const focusable = panel.current.querySelectorAll<HTMLElement>("a[href], button");
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      const inside = panel.current.contains(document.activeElement);
-      if (event.shiftKey && (!inside || document.activeElement === first)) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && (!inside || document.activeElement === last)) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+  useFocusTrap(panel, onClose);
 
   return (
     <div className="source-drawer__backdrop" onClick={onClose}>

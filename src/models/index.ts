@@ -1,5 +1,4 @@
 // Public API for domain-specific request, response, and view types.
-export type * from "./base";
 export type * from "./chat";
 export type * from "./search";
 export type * from "./agent";

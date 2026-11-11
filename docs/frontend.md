@@ -13,11 +13,12 @@ This repository contains the React 19.1 + Vite + TypeScript + SCSS single-page a
 `src/routes/router.tsx` has two pathless layout groups. Signed-in pages sit
 under `DefaultLayout` from `src/views/layouts/`, which renders
 `AppSidebar` on the left and the page heading above an `Outlet`; navigation and
-the global Manage tools and History controls persist across pages. The signed-in
+the global History control persists across pages. The signed-in
 pages are the apps list, `/space/apps` (`ListView`), one app at
 `/space/apps/:app_id` (`DetailView`: `assist`, `search`, `chat` or `tools`; an
 unknown id shows the not-found page), the search-source catalog at
-`/space/sources` (`SourcesView`), `/account` and `/admin`. Signing in lands
+`/space/sources` (`SourcesView`), the admin tool registry at `/space/tools`
+(`ToolsView`), `/account` and `/admin`. Signing in lands
 on Assistant at `/space/apps/assist`, and `/` redirects there while preserving query parameters. Explicit page links still return to the requested page after sign-in. Public pages, marked
 `handle: { public: true }`, sit under `BlankLayout`, with no sidebar: the sign-in
 page and `NotFoundView` for unknown URLs. Route ids double as route names, and
@@ -88,8 +89,8 @@ its own then.
 Permissions come from `/me/permissions`, not the role text: every user has
 `basic_access` (the four workspaces and `/account`); admins and configured super
 users also have `full_admin_panel_access`, which shows the **Admin** link,
-**Manage tools** and **History**, and allows `/admin`. The `/admin` loader checks
-the permission before it fetches any admin data and sends other users to
+**Manage tools** and **History**, and allows `/admin` and `/space/tools`. Their
+loaders check the permission before the page fetches any admin data and sends other users to
 `/space/apps/assist`. The backend's `make_require_admin` guards remain the real boundary.
 
 The app has no registration form. For local dev, create a user by opening (the
@@ -122,11 +123,10 @@ Debug panels also require an authenticated admin when enabled. Their request
 traces and retrieval diagnostics use the same admin guard as the dashboard;
 the debug enablement flag alone does not grant access.
 
-Admins get the `/admin` page — **Admin overview** and **Analytics** — and two
-sidebar buttons, **Manage tools** and **History**, which toggle their panels above
-the current page. The tools
-button is labelled _Manage tools_, not _Tools_: the **Tools** nav link goes to the
-tool-agent page instead, and the two used to share a label. They call the
+Admins get the `/admin` page — **Admin overview** and **Analytics** — the
+**Manage tools** link to `/space/tools`, and a **History** sidebar button that
+toggles its panel above the current page. The link is labelled _Manage tools_,
+not _Tools_, because the **Tools** app is the tool-agent page. They call the
 `/admin/*` and `/analytics/*` routers, which are **admin-authenticated**. The
 exact path `/admin` is the SPA page; `/admin/*` stays backend-only in the Vite
 proxy and nginx. Two things make them work locally:
@@ -148,7 +148,7 @@ you'd need an admin JWT in the `fastapiusersauth` cookie instead. The bypass doe
 not change `/me/permissions`, so the app still needs a signed-in admin account to
 show the admin controls.
 
-Empty panels — e.g. **Manage tools** with no registered
+Empty admin views — e.g. **Manage tools** with no registered
 tools — are expected when nothing is configured locally, not an error.
 
 ## Dev console
@@ -251,7 +251,6 @@ The intent itself comes from the backend's routing decision — see the `respons
 | `AdminOverview`      | Single-call health snapshot — connectors, indexing, users, auth, models, tools, analytics with a composite health score                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `AnalyticsDashboard` | Usage breakdowns by LLM, persona, and flow (`getAnalyticsBy*`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `QueryHistoryPanel`  | Per-user query history with CSV export (`getQueryHistory`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| `ToolAdminPanel`     | Admin view of MCP/OpenAPI tools registered via `tool_registry`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
 API client functions live in domain services: `agent.ts` owns agent runs and SSE; `chat.ts` owns direct chat and message feedback; `history.ts` owns session lifecycle, history, audit and session feedback; `search.ts` owns direct search and source discovery; `debug.ts` owns diagnostics. Admin, auth and tools requests live in their matching service modules. `src/services/api.ts` re-exports all public functions for existing callers. Request/response data types remain in `src/models/`; shared transport and chat/tool streaming logic live in `src/utils/request.ts` and `src/utils/modelStream.ts`.
 
@@ -293,5 +292,20 @@ backdrop closes it, and focus returns to the card. The drawer tracks
 the category by name, so changing the filter while it is open cannot show a
 different one. The load uses an `AbortController`: Retry and leaving the page
 abort the request in flight.
+
+**Tools** (`/space/tools`, admins only) lists the `/admin/tools` registry as
+provider cards, grouped by `groupToolsByServer`: the built-ins, each OpenAPI
+provider and each MCP server. A tool's `provider_id` is the OpenAPI provider's
+id (a UUID) or the MCP server's configured name; cards are titled by
+`provider_name`, the name the provider was registered under or the server name,
+falling back to a short id when an older backend omits it. MCP servers come from
+config, so only OpenAPI providers can be deleted. A card's drawer
+(same keyboard behavior as the Sources drawer, via `useFocusTrap`) lists each
+tool's description and top-level parameters, with **Test**, which opens
+`ToolInvokeModal`, and **Delete tool** for OpenAPI providers. **Create tool**
+registers an OpenAPI schema (`POST /admin/tools/openapi`) with optional header
+rows, and previews the operations it will register using the backend's naming
+rule. The registry has no edit endpoint, so there is no edit: delete and create
+again.
 
 Search and Assist share the Sources picker. Search uses `POST /api/agent` with `mode: "search_tool"`, which supports category selection and returns source documents without answer generation. `POST /search/send-search-message` remains available for direct corpus searches. The default All sources selection maps to `web` (unrestricted category), not a request to fan out across every category or provider. Auto selects up to three categories; manual selection has the same limit.

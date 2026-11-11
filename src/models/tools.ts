@@ -1,15 +1,27 @@
-import type { BasePaginatorResponse } from "./base";
-
+/** One registry entry, as `ToolView` in the backend's src/internal/servers/tools/api.py. */
 export interface ToolView {
   name: string;
   description: string;
   parameters: Record<string, unknown>;
   source: "function" | "openapi" | "mcp" | string;
+  /**
+   * Where the tool came from: the OpenAPI provider's id (what
+   * DELETE /admin/tools/openapi/{provider_id} takes), the MCP server's
+   * configured name, or null for built-in function tools.
+   */
   provider_id: string | null;
+  /** The provider's display name: the name an OpenAPI provider was registered under, or the MCP server name. */
+  provider_name?: string | null;
   /** False when no agent loop may be offered this tool (still directly invocable). */
   agent_callable: boolean;
   /** True when the tool is backed by per-user storage and needs a signed-in caller. */
   user_scoped: boolean;
+  // The backend always sends these four; nothing here reads them yet.
+  /** MCP tools may be "unspecified". */
+  effect?: "read_only" | "side_effecting" | "unspecified";
+  result_kind?: "documents" | "json" | "text" | null;
+  citeable?: boolean;
+  retries_internally?: boolean;
 }
 
 export interface CatalogTool {
@@ -120,58 +132,6 @@ export interface ToolCallTraceView {
   result_summary: string;
   latency_ms: number;
   error: string | null;
-}
-
-/** A header row as entered in API-provider forms. */
-export interface ApiToolProviderHeader {
-  key: string;
-  value: string;
-}
-
-/** An input exposed by an API tool in the provider catalog. */
-export interface ApiToolInput {
-  name: string;
-  type: string;
-  description: string;
-  required: boolean;
-}
-
-export interface ApiToolSummary {
-  id: string;
-  name: string;
-  description: string;
-  inputs: ApiToolInput[];
-}
-
-/** Catalog entry; the full OpenAPI schema is returned by the detail response. */
-export interface ApiToolProviderSummary {
-  id: string;
-  name: string;
-  icon: string;
-  description: string;
-  headers: ApiToolProviderHeader[];
-  tools: ApiToolSummary[];
-  created_at: number;
-}
-
-export type GetApiToolProvidersWithPageResponse = BasePaginatorResponse<ApiToolProviderSummary>;
-
-/** Provider configuration shared by create, full update, and detail payloads. */
-export interface ApiToolProviderConfiguration {
-  name: string;
-  icon: string;
-  openapi_schema: string;
-  headers: ApiToolProviderHeader[];
-}
-
-export type CreateApiToolProviderRequest = ApiToolProviderConfiguration;
-
-/** A full configuration update; all fields are required. */
-export type UpdateApiToolProviderRequest = ApiToolProviderConfiguration;
-
-export interface GetApiToolProviderResponse extends ApiToolProviderConfiguration {
-  id: string;
-  created_at: number;
 }
 
 export interface ToolHistoryResponse {

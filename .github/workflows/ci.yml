@@ -64,7 +64,7 @@ jobs:
           curl -fsS -H 'Accept: text/html' http://127.0.0.1:8080/chat | grep -Eq '<div id="?root"?>'
           # No backend is running, so a proxied path must fail upstream (502), not serve HTML.
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/search-domains)" = 502
-          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api-tools)" = 502
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/admin/tools)" = 502
 
       - name: Logs on failure
         if: failure()

@@ -33,7 +33,7 @@ server {
     }
 
     # Backend-only prefixes. /tool(/|$) does not match /tools.
-    location ~ ^/(api|api-tools|health|ready|auth|me|admin|analytics|tool)(/|$) {
+    location ~ ^/(api|health|ready|auth|me|admin|analytics|tool)(/|$) {
         include /etc/nginx/conf.d/snippets/backend-proxy.conf;
     }
 

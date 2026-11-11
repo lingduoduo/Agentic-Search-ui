@@ -2961,11 +2961,20 @@ p.source-drawer__note {
 .tools-catalog__icon {
   background: var(--assistant-soft);
 }
-.source-drawer .btn-danger {
+.tools-catalog__edit {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   margin-top: 16px;
+}
+.tools-catalog__delete {
+  margin-left: auto;
+}
+.tools-catalog__more {
+  display: flex;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 13px;
 }
 .tools-catalog__tools {
   display: grid;

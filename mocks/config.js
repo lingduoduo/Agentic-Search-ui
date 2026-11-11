@@ -119,6 +119,14 @@ export default [
     },
   },
   { method: "GET", path: "/admin/tools", response: [] },
+  {
+    method: "GET",
+    path: "/admin/tools/providers",
+    response: {
+      list: [],
+      paginator: { current_page: 1, page_size: 20, total_page: 0, total_record: 0 },
+    },
+  },
   { method: "POST", path: "/api/sessions", response: session },
   {
     method: "POST",

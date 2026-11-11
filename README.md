@@ -187,7 +187,7 @@ src/
 ├── config/           # Route definitions and search constants
 ├── models/           # Domain API/UI types, shared response envelopes, and index.ts
 ├── routes/           # React Router navigation and routing exports
-├── services/         # Backend HTTP and SSE client (api.ts)
+├── services/         # Backend HTTP/SSE client (api.ts), tool registry/providers (tools.ts)
 ├── static/           # Reserved for static assets
 ├── store/            # Redux Toolkit store: the signed-in account
 ├── storybook/        # Reserved for component stories
@@ -250,6 +250,14 @@ them once files are added.
 When extending the app, put backend requests in `services/api.ts` (using the
 `get` / `post` / `stream` helpers from `utils/request.ts`), shared
 constants in `config/`, shared data contracts in `models/`, pure helpers in `utils/`, and reusable UI in `components/`.
+
+Tool registry and provider requests live in `services/tools.ts`; `services/api.ts`
+re-exports them for existing callers. The provider-management helpers preserve
+the sample `/api-tools` contract (paginated envelopes, header rows, POST updates
+and deletion). They require a backend implementing those endpoints. Current
+screens continue using `/admin/tools` and `/api/debug/tools`, which have different
+payloads. All use the shared request client for authentication, cancellation,
+timeouts, and errors. Both dev and production proxies forward `/api-tools`.
 Route screens in `views/pages/` and `views/space/apps/` compose these pieces inside a layout from `views/layouts/`.
 
 ## Check

@@ -18,21 +18,14 @@ import type {
   RouteLatencyResponse,
   RetrievalStatusView,
   ServerHealth,
-  DebugToolsResult,
-  ToolDiscoverResult,
-  OpenAPIRegisterRequest,
-  OpenAPIRegisterResponse,
   QueryHistoryPage,
   RequestSnapshot,
   RequestSummary,
   SendToolMessageBody,
   SessionCreateRequest,
   SSEEvent,
-  ToolInvokeRequest,
-  ToolInvokeResponse,
   ToolSessionSummary,
   ToolStreamEvent,
-  ToolView,
   ChatStreamEvent,
   SendChatMessageBody,
   SendSearchMessageBody,
@@ -40,7 +33,24 @@ import type {
   SearchDomainFamily,
   SearchDomainOption,
 } from "../models";
-import { RequestError, del, get, post, stream } from "../utils/request";
+import { RequestError, get, post, stream } from "../utils/request";
+
+// Tool registry/provider requests are implemented once in the domain service.
+export {
+  getDebugTools,
+  discoverTools,
+  listTools,
+  discoverAdminTools,
+  registerOpenAPITools,
+  deleteOpenAPIProvider,
+  invokeTool,
+  getApiToolProvidersWithPage,
+  validateOpenAPISchema,
+  createApiToolProvider,
+  updateApiToolProvider,
+  deleteApiToolProvider,
+  getApiToolProvider,
+} from "./tools";
 
 /**
  * Run one per-mode retrieval against the dev-console proxy.
@@ -97,18 +107,6 @@ export function submitSessionFeedback(
   return post<{ ok: boolean }>("/api/feedback", {
     body: { session_id: sessionId, signal, target, source: "answer_panel" },
     signal: init?.signal,
-  });
-}
-
-/** Registered tools + the discovery catalog grouped by server (dev console). */
-export function getDebugTools(): Promise<DebugToolsResult> {
-  return get<DebugToolsResult>("/api/debug/tools");
-}
-
-/** Rank tools for a query via the semantic router (dev console). */
-export function discoverTools(query: string): Promise<ToolDiscoverResult> {
-  return post<ToolDiscoverResult>("/api/debug/tools/discover", {
-    body: { query },
   });
 }
 
@@ -252,55 +250,6 @@ export function getAuditSummary(
   init?: Pick<RequestInit, "signal">,
 ): Promise<AuditSummary> {
   return get<AuditSummary>("/admin/query-history/audit", { params, signal: init?.signal });
-}
-
-export function listTools(init?: Pick<RequestInit, "signal">): Promise<ToolView[]> {
-  return get<ToolView[]>("/admin/tools", { signal: init?.signal });
-}
-
-/**
- * Rank the registered tools against a query (TF-IDF, no LLM).
- *
- * The admin-gated twin of `discoverTools`, which hits the debug router — that
- * router is only mounted when AGENTIC_SEARCH_DEBUG_PANELS is set, so it does not
- * exist in a normal deployment. Use this one outside the dev console.
- */
-export function discoverAdminTools(
-  query: string,
-  init?: Pick<RequestInit, "signal">,
-): Promise<ToolDiscoverResult> {
-  return post<ToolDiscoverResult>("/admin/tools/discover", {
-    body: { query },
-    signal: init?.signal,
-  });
-}
-
-export function registerOpenAPITools(
-  req: OpenAPIRegisterRequest,
-  init?: Pick<RequestInit, "signal">,
-): Promise<OpenAPIRegisterResponse> {
-  return post<OpenAPIRegisterResponse>("/admin/tools/openapi", {
-    body: req,
-    signal: init?.signal,
-  });
-}
-
-export function deleteOpenAPIProvider(
-  providerId: string,
-  init?: Pick<RequestInit, "signal">,
-): Promise<void> {
-  return del<void>(`/admin/tools/openapi/${providerId}`, { signal: init?.signal });
-}
-
-export function invokeTool(
-  name: string,
-  req: ToolInvokeRequest,
-  init?: Pick<RequestInit, "signal">,
-): Promise<ToolInvokeResponse> {
-  return post<ToolInvokeResponse>(`/admin/tools/${name}/invoke`, {
-    body: req,
-    signal: init?.signal,
-  });
 }
 
 export function submitFeedback(

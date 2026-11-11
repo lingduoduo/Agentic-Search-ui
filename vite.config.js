@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 
 const prefixes = [
   "api",
+  "api-tools",
   "health",
   "ready",
   "auth",

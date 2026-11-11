@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useKeywordSearch } from "../../../hooks/useKeywordSearch";
 import {
   discoverAdminTools,
   errorStatus,
@@ -21,6 +22,7 @@ import { ToolEscalationCard } from "../../../components/ToolEscalationCard";
 import { Transcript } from "../../../components/Transcript";
 
 export function ToolAgentView() {
+  const { query, setQuery, commitKeyword } = useKeywordSearch();
   const [message, setMessage] = useState("");
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [turns, setTurns] = useState<ConversationTurn[]>([]);
@@ -183,6 +185,7 @@ export function ToolAgentView() {
         servers={servers}
         registeredCount={registeredCount}
         discovery={discovery}
+        searchBinding={{ query, onQueryChange: setQuery, onSubmit: commitKeyword }}
         onDiscover={(q) => discoverAdminTools(q).then(setDiscovery, () => setDiscovery(null))}
         note={catalogNote}
       />

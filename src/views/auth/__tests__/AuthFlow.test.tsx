@@ -53,16 +53,17 @@ describe("safeRedirectPath", () => {
     ["/space/apps/chat?from=link#top", "/space/apps/chat?from=link#top"],
     ["/admin", "/admin"],
     ["/account", "/account"],
-    [null, "/space/apps"],
-    ["", "/space/apps"],
-    ["/login", "/space/apps"],
-    ["/auth/login", "/space/apps"],
-    ["/unknown", "/space/apps"],
-    ["//evil.example/chat", "/space/apps"],
-    ["/\\evil.example/chat", "/space/apps"],
-    ["https://evil.example/chat", "/space/apps"],
-    ["javascript:alert(1)", "/space/apps"],
-    ["chat", "/space/apps"],
+    ["/space/apps", "/space/apps"],
+    [null, "/space/apps/assist"],
+    ["", "/space/apps/assist"],
+    ["/login", "/space/apps/assist"],
+    ["/auth/login", "/space/apps/assist"],
+    ["/unknown", "/space/apps/assist"],
+    ["//evil.example/chat", "/space/apps/assist"],
+    ["/\\evil.example/chat", "/space/apps/assist"],
+    ["https://evil.example/chat", "/space/apps/assist"],
+    ["javascript:alert(1)", "/space/apps/assist"],
+    ["chat", "/space/apps/assist"],
   ])("maps %s to %s", (next, expected) => {
     expect(safeRedirectPath(next)).toBe(expected);
   });
@@ -92,7 +93,7 @@ describe("sign-in", () => {
     expect(router.state.location.pathname).toBe("/auth/login");
   });
 
-  it("opens the site at sign-in, then lands on Home", async () => {
+  it("opens the site at sign-in, then opens Assistant directly", async () => {
     let session = false;
     stubBackend({
       "GET /me": () => (session ? json(alice) : unauthorized()),
@@ -105,19 +106,16 @@ describe("sign-in", () => {
     const router = renderAt("/");
     await screen.findByRole("heading", { name: "Sign in to Agentic Search" });
     expect(router.state.location.pathname + router.state.location.search).toBe(
-      "/auth/login?redirect=/space/apps",
+      "/auth/login?redirect=/space/apps/assist",
     );
     await userEvent.type(screen.getByLabelText("Email"), alice.email);
     await userEvent.type(screen.getByLabelText("Password"), "pw");
     await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
 
-    const apps = await screen.findByRole("region", { name: "Apps" });
+    await screen.findByRole("textbox", { name: "Question" });
     const sidebar = screen.getByRole("complementary", { name: "Common navigation" });
-    expect(router.state.location.pathname).toBe("/space/apps");
-    expect(within(apps).getByRole("link", { name: /chat/i })).toHaveAttribute(
-      "href",
-      "/space/apps/chat",
-    );
+    expect(router.state.location.pathname).toBe("/space/apps/assist");
+    expect(screen.queryByRole("region", { name: "Apps" })).not.toBeInTheDocument();
     expect(within(sidebar).getByRole("link", { name: "Apps" })).toHaveAttribute(
       "href",
       "/space/apps",
@@ -192,7 +190,7 @@ describe("sign-in", () => {
     await userEvent.type(await screen.findByLabelText("Email"), alice.email);
     await userEvent.type(screen.getByLabelText("Password"), "pw");
     await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
-    await waitFor(() => expect(router.state.location.pathname).toBe("/space/apps"));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/space/apps/assist"));
   });
 
   it("shows the backend's reason when sign-in fails", async () => {
@@ -217,6 +215,27 @@ describe("sign-in", () => {
 });
 
 describe("session guard", () => {
+  it("opens Assistant from the root with linked keywords and preserves URL history", async () => {
+    const fetchMock = stubBackend(signedIn(["basic_access"]));
+    const router = renderAt("/?search_word=vector+%26+search&dev=1");
+    const input = await screen.findByRole("textbox", { name: "Question" });
+    expect(router.state.location.pathname).toBe("/space/apps/assist");
+    expect(input).toHaveValue("vector & search");
+    expect(calledPaths(fetchMock)).not.toContain("/api/agent/stream");
+
+    await userEvent.clear(input);
+    await userEvent.type(input, "  next & query  ");
+    await userEvent.click(screen.getByRole("button", { name: "Search" }));
+    await waitFor(() =>
+      expect(router.state.location.search).toBe("?search_word=next+%26+query&dev=1"),
+    );
+    expect(input).toHaveValue("next & query");
+    await router.navigate(-1);
+    await waitFor(() => expect(input).toHaveValue("vector & search"));
+    await router.navigate(1);
+    await waitFor(() => expect(input).toHaveValue("next & query"));
+  });
+
   it("confirms the session once, not on every navigation", async () => {
     const fetchMock = stubBackend(signedIn(["basic_access"]));
     const router = renderAt("/space/apps/assist");
@@ -281,8 +300,8 @@ describe("permissions", () => {
   it("redirects a basic user away from the admin page before it loads", async () => {
     const fetchMock = stubBackend(signedIn(["basic_access"]));
     const router = renderAt("/admin");
-    expect(await screen.findByRole("region", { name: "Apps" })).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe("/space/apps");
+    expect(await screen.findByRole("textbox", { name: "Question" })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/space/apps/assist");
     expect(calledPaths(fetchMock)).not.toContain("/admin/observability/summary");
   });
 
@@ -417,9 +436,9 @@ describe("account", () => {
     expect(within(account).getByRole("img", { name: "Your avatar" })).toHaveTextContent("A");
     const sidebar = screen.getByRole("complementary", { name: "Common navigation" });
     expect(within(sidebar).getByText("Workspace")).toBeInTheDocument();
-    expect(within(sidebar).getByRole("link", { name: "Apps" })).toHaveAttribute(
+    expect(within(sidebar).getByRole("link", { name: "Apps" })).not.toHaveAttribute("aria-current");
+    expect(within(sidebar).getByRole("link", { name: "Assistant" })).not.toHaveAttribute(
       "aria-current",
-      "page",
     );
   });
 

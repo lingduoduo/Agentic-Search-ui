@@ -3,7 +3,7 @@ import type { RouteObject } from "react-router";
 import { DefaultLayout } from "../views/layouts/DefaultLayout";
 import { BlankLayout } from "../views/layouts/BlankLayout";
 import { ErrorView } from "../views/errors/ErrorView";
-import { findApp, routePath } from "../config/routes";
+import { DEFAULT_ROUTE, findApp, routePath } from "../config/routes";
 import type { RouteHandle } from "../config/routes";
 import { adminLoader, guard, loginAction, logoutAction } from "../views/auth/session";
 
@@ -27,7 +27,13 @@ export const appRoutes: RouteObject[] = [
     HydrateFallback,
     ErrorBoundary: ErrorView,
     children: [
-      { index: true, loader: () => redirect(routePath("space-apps-list")) },
+      {
+        index: true,
+        loader: ({ request }) => {
+          const { search, hash } = new URL(request.url);
+          return redirect(DEFAULT_ROUTE + search + hash);
+        },
+      },
       {
         // Signed-in pages: sidebar plus the page heading from `handle.heading`.
         Component: DefaultLayout,

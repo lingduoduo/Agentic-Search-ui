@@ -8,6 +8,12 @@ interface Props {
   /** Last discovery result, or null if none has been run. */
   discovery: ToolDiscoverResult | null;
   onDiscover: (query: string) => void;
+  /** Optional external input state, e.g. the Tools page's URL keyword binding. */
+  searchBinding?: {
+    query: string;
+    onQueryChange: (query: string) => void;
+    onSubmit: (keyword: string) => void;
+  };
   /** Shown in place of the catalog — e.g. "requires admin". Not an error state. */
   note?: string;
 }
@@ -22,11 +28,21 @@ interface Props {
  * pre-grouped, no flags). One renderer keeps them from drifting apart the way
  * ToolPanel and debug/ToolsPanel did.
  */
-export function ToolCatalog({ servers, registeredCount, discovery, onDiscover, note }: Props) {
-  const [query, setQuery] = useState("");
+export function ToolCatalog({
+  servers,
+  registeredCount,
+  discovery,
+  onDiscover,
+  searchBinding,
+  note,
+}: Props) {
+  const [localQuery, setLocalQuery] = useState("");
+  const query = searchBinding?.query ?? localQuery;
+  const setQuery = searchBinding?.onQueryChange ?? setLocalQuery;
 
   function submit() {
     const trimmed = query.trim();
+    searchBinding?.onSubmit(trimmed);
     if (trimmed) onDiscover(trimmed);
   }
 

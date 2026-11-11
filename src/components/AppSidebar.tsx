@@ -4,6 +4,7 @@ import {
   History,
   LayoutGrid,
   Library,
+  MessageSquare,
   Settings2,
   ShieldCheck,
   UserRound,
@@ -12,7 +13,7 @@ import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router";
 import { NavLink } from "./NavLink";
 import { SignOutButton } from "./SignOutButton";
-import { routePath } from "../config/routes";
+import { DEFAULT_ROUTE, routePath } from "../config/routes";
 import { useAppSelector } from "../store";
 import { selectProfile } from "../store/account";
 
@@ -23,12 +24,13 @@ type NavItem = { label: string; icon: LucideIcon } & (
   { to: string } | { panel: PanelId; title: string }
 );
 
-// Every sidebar entry, one per page, in one table. A link stays active on every
-// URL under it (Apps on /space/apps/*), and the active one's icon is filled (CSS).
+// Sidebar destinations and admin panels. Page links match exactly so the
+// optional Apps directory does not also appear active inside Assistant.
 const navigationGroups: { label: string; adminOnly?: boolean; items: NavItem[] }[] = [
   {
     label: "Workspace",
     items: [
+      { to: DEFAULT_ROUTE, label: "Assistant", icon: MessageSquare },
       { to: routePath("space-apps-list"), label: "Apps", icon: LayoutGrid },
       { to: routePath("space-sources"), label: "Sources", icon: Library },
     ],
@@ -61,7 +63,7 @@ export function AppSidebar({
   return (
     <aside className="app-sidebar" aria-label="Common navigation">
       <div className="app-sidebar__inner">
-        <Link to={routePath("space-apps-list")} className="app-sidebar__brand">
+        <Link to={DEFAULT_ROUTE} className="app-sidebar__brand">
           <h1>Agentic Search</h1>
         </Link>
         <nav className="app-sidebar__surfaces" aria-label="Surfaces">
@@ -80,7 +82,7 @@ export function AppSidebar({
                     );
                     if ("to" in item)
                       return (
-                        <NavLink key={label} to={item.to} className="nav-link">
+                        <NavLink key={label} to={item.to} end className="nav-link">
                           {content}
                         </NavLink>
                       );

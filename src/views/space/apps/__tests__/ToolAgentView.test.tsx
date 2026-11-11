@@ -1,7 +1,23 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolAgentView } from "../ToolAgentView";
+import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import * as api from "../../../../services/api";
+
+function ToolsPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  return (
+    <>
+      <ToolAgentView />
+      <output aria-label="Current URL">
+        {location.pathname + location.search + location.hash}
+      </output>
+      <button onClick={() => navigate(-1)}>Back</button>
+      <button onClick={() => navigate(1)}>Forward</button>
+    </>
+  );
+}
 
 describe("ToolAgentView", () => {
   beforeEach(() => vi.restoreAllMocks());
@@ -23,7 +39,7 @@ describe("ToolAgentView", () => {
     }
     vi.spyOn(api, "sendToolMessage").mockImplementation(fake as never);
 
-    render(<ToolAgentView />);
+    render(<ToolAgentView />, { wrapper: MemoryRouter });
     fireEvent.change(screen.getByLabelText("Tool agent message"), {
       target: { value: "go" },
     });
@@ -63,7 +79,7 @@ describe("ToolAgentView", () => {
     }
     vi.spyOn(api, "sendToolMessage").mockImplementation(fake as never);
 
-    render(<ToolAgentView />);
+    render(<ToolAgentView />, { wrapper: MemoryRouter });
     fireEvent.change(screen.getByLabelText("Tool agent message"), {
       target: { value: "go" },
     });
@@ -94,7 +110,7 @@ describe("ToolAgentView", () => {
     }
     vi.spyOn(api, "sendToolMessage").mockImplementation(fake as never);
 
-    render(<ToolAgentView />);
+    render(<ToolAgentView />, { wrapper: MemoryRouter });
     fireEvent.change(screen.getByLabelText("Tool agent message"), {
       target: { value: "find X" },
     });
@@ -118,7 +134,7 @@ describe("ToolAgentView", () => {
       return g();
     }) as never);
 
-    render(<ToolAgentView />);
+    render(<ToolAgentView />, { wrapper: MemoryRouter });
     const input = screen.getByLabelText("Tool agent message");
     fireEvent.change(input, { target: { value: "q1" } });
     fireEvent.click(screen.getByText("Send"));
@@ -139,7 +155,7 @@ describe("ToolAgentView", () => {
       return g();
     }) as never);
 
-    render(<ToolAgentView />);
+    render(<ToolAgentView />, { wrapper: MemoryRouter });
     fireEvent.change(screen.getByLabelText("Tool agent message"), {
       target: { value: "hi" },
     });
@@ -165,7 +181,7 @@ describe("ToolAgentView truncation notice", () => {
     }
     vi.spyOn(api, "sendToolMessage").mockImplementation(fake as never);
 
-    render(<ToolAgentView />);
+    render(<ToolAgentView />, { wrapper: MemoryRouter });
     fireEvent.change(screen.getByLabelText("Tool agent message"), {
       target: { value: "explain retrieval" },
     });
@@ -187,7 +203,7 @@ describe("ToolAgentView truncation notice", () => {
     }
     vi.spyOn(api, "sendToolMessage").mockImplementation(fake as never);
 
-    render(<ToolAgentView />);
+    render(<ToolAgentView />, { wrapper: MemoryRouter });
     fireEvent.change(screen.getByLabelText("Tool agent message"), {
       target: { value: "hi" },
     });
@@ -200,6 +216,51 @@ describe("ToolAgentView truncation notice", () => {
 
 describe("ToolAgentView tool catalog", () => {
   beforeEach(() => vi.restoreAllMocks());
+
+  it("binds discovery keywords to the URL without sending them to the agent", async () => {
+    vi.spyOn(api, "listTools").mockResolvedValue([]);
+    const discover = vi.spyOn(api, "discoverAdminTools").mockResolvedValue({
+      request: "weather & maps",
+      stage1_servers: [],
+      stage2_tools: {},
+      final_tools: [{ name: "web_search", server: "local", score: 0.91 }],
+    });
+    const send = vi.spyOn(api, "sendToolMessage");
+    render(
+      <MemoryRouter initialEntries={["/space/apps/tools?search_word=weather&dev=1#registry"]}>
+        <ToolsPage />
+      </MemoryRouter>,
+    );
+    await screen.findByText(/0 registered across 0 servers/);
+    const input = screen.getByLabelText("Discovery query");
+    expect(input).toHaveValue("weather");
+    expect(screen.getByLabelText("Tool agent message")).toHaveValue("");
+    expect(discover).not.toHaveBeenCalled();
+    fireEvent.change(input, { target: { value: "  weather & maps  " } });
+    expect(screen.getByLabelText("Current URL").textContent).toBe(
+      "/space/apps/tools?search_word=weather&dev=1#registry",
+    );
+    fireEvent.keyDown(input, { key: "Enter" });
+    await screen.findByText(/\(local, 0\.910\)/);
+    expect(discover).toHaveBeenCalledWith("weather & maps");
+    expect(input).toHaveValue("weather & maps");
+    expect(screen.getByLabelText("Current URL").textContent).toBe(
+      "/space/apps/tools?search_word=weather+%26+maps&dev=1#registry",
+    );
+    fireEvent.change(input, { target: { value: "unsent draft" } });
+    fireEvent.click(screen.getByText("Back"));
+    await waitFor(() => expect(input).toHaveValue("weather"));
+    fireEvent.click(screen.getByText("Forward"));
+    await waitFor(() => expect(input).toHaveValue("weather & maps"));
+    fireEvent.change(input, { target: { value: "   " } });
+    fireEvent.click(screen.getByRole("button", { name: "Discover" }));
+    expect(input).toHaveValue("");
+    expect(screen.getByLabelText("Current URL").textContent).toBe(
+      "/space/apps/tools?dev=1#registry",
+    );
+    expect(discover).toHaveBeenCalledTimes(1);
+    expect(send).not.toHaveBeenCalled();
+  });
 
   it("lists the tool inventory the agent is choosing from", async () => {
     vi.spyOn(api, "listTools").mockResolvedValue([
@@ -223,7 +284,7 @@ describe("ToolAgentView tool catalog", () => {
       },
     ]);
 
-    render(<ToolAgentView />);
+    render(<ToolAgentView />, { wrapper: MemoryRouter });
 
     expect(await screen.findByText(/2 registered across 1 server/)).toBeInTheDocument();
     expect(screen.getByText("Search the web")).toBeInTheDocument();
@@ -236,7 +297,7 @@ describe("ToolAgentView tool catalog", () => {
       Object.assign(new Error("Forbidden"), { status: 403 }),
     );
 
-    render(<ToolAgentView />);
+    render(<ToolAgentView />, { wrapper: MemoryRouter });
 
     expect(await screen.findByText("Tool inventory needs an admin session.")).toBeInTheDocument();
     // Not an error banner: using the agent without admin is a normal state.
@@ -248,7 +309,7 @@ describe("ToolAgentView tool catalog", () => {
   it("reports an unavailable inventory distinctly from a permission problem", async () => {
     vi.spyOn(api, "listTools").mockRejectedValue(Object.assign(new Error("boom"), { status: 500 }));
 
-    render(<ToolAgentView />);
+    render(<ToolAgentView />, { wrapper: MemoryRouter });
 
     expect(await screen.findByText("Tool inventory is unavailable right now.")).toBeInTheDocument();
   });
@@ -263,7 +324,7 @@ describe("ToolAgentView tool catalog", () => {
     });
     const send = vi.spyOn(api, "sendToolMessage");
 
-    render(<ToolAgentView />);
+    render(<ToolAgentView />, { wrapper: MemoryRouter });
     await screen.findByText(/0 registered across 0 servers/);
 
     fireEvent.change(screen.getByLabelText("Discovery query"), {
@@ -305,7 +366,7 @@ describe("ToolAgentView degraded notice", () => {
   it("marks a degraded answer with a notice carrying the reason", async () => {
     vi.spyOn(api, "sendToolMessage").mockImplementation((() =>
       streamOnce({ degraded: "model_unavailable" })) as never);
-    render(<ToolAgentView />);
+    render(<ToolAgentView />, { wrapper: MemoryRouter });
     await send();
     const notice = await screen.findByRole("status");
     expect(notice).toHaveTextContent("⚠ Model unavailable — degraded answer");
@@ -314,7 +375,7 @@ describe("ToolAgentView degraded notice", () => {
 
   it("shows no notice when done omits degraded", async () => {
     vi.spyOn(api, "sendToolMessage").mockImplementation((() => streamOnce({})) as never);
-    render(<ToolAgentView />);
+    render(<ToolAgentView />, { wrapper: MemoryRouter });
     await send();
     await screen.findByText("search-only list");
     expect(screen.queryByRole("status")).toBeNull();
@@ -323,7 +384,7 @@ describe("ToolAgentView degraded notice", () => {
   it("shows no notice when done carries degraded: null", async () => {
     vi.spyOn(api, "sendToolMessage").mockImplementation((() =>
       streamOnce({ degraded: null })) as never);
-    render(<ToolAgentView />);
+    render(<ToolAgentView />, { wrapper: MemoryRouter });
     await send();
     await screen.findByText("search-only list");
     expect(screen.queryByRole("status")).toBeNull();

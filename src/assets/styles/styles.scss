@@ -1914,6 +1914,16 @@ option:disabled,
   gap: 16px;
 }
 
+.tool-agent-view__manage {
+  align-self: flex-end;
+  color: var(--accent-strong);
+  font-size: 14px;
+  text-decoration: none;
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 .chat-view__composer,
 .search-view__composer,
 .tool-agent-view__composer {

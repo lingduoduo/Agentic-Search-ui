@@ -290,6 +290,11 @@ describe("ToolAgentView tool catalog", () => {
     expect(screen.getByText("Search the web")).toBeInTheDocument();
     // The flag that explains why the agent cannot call this one.
     expect(screen.getByText("not offered to agents")).toBeInTheDocument();
+    // Whoever can list the inventory can manage it.
+    expect(screen.getByRole("link", { name: "Manage tools" })).toHaveAttribute(
+      "href",
+      "/space/tools",
+    );
   });
 
   it("asks for an admin session rather than erroring when listing is forbidden", async () => {
@@ -304,6 +309,7 @@ describe("ToolAgentView tool catalog", () => {
     expect(document.querySelector(".error-banner")).toBeNull();
     // And the agent itself still works.
     expect(screen.getByLabelText("Tool agent message")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Manage tools" })).toBeNull();
   });
 
   it("reports an unavailable inventory distinctly from a permission problem", async () => {

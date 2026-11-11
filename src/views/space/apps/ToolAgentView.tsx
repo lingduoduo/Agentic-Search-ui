@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { useKeywordSearch } from "../../../hooks/useKeywordSearch";
 import {
   discoverAdminTools,
@@ -9,6 +10,7 @@ import {
   submitToolEscalation,
 } from "../../../services/api";
 import { groupToolsByServer } from "../../../utils/toolCatalog";
+import { routePath } from "../../../config/routes";
 import type {
   CatalogServer,
   ConversationTurn,
@@ -181,6 +183,12 @@ export function ToolAgentView() {
           {busy ? "Running…" : "Send"}
         </button>
       </div>
+      {/* The inventory loaded, so this is an admin: /admin/tools and the page share the gate. */}
+      {servers !== null && !catalogNote && (
+        <Link className="tool-agent-view__manage" to={routePath("space-tools")}>
+          Manage tools
+        </Link>
+      )}
       <ToolCatalog
         servers={servers}
         registeredCount={registeredCount}

@@ -1,5 +1,3 @@
-import type { BasePaginatorResponse } from "./base";
-
 export interface ToolView {
   name: string;
   description: string;
@@ -120,56 +118,4 @@ export interface ToolCallTraceView {
   result_summary: string;
   latency_ms: number;
   error: string | null;
-}
-
-/** A header row as entered in API-provider forms. */
-export interface ApiToolProviderHeader {
-  key: string;
-  value: string;
-}
-
-/** An input exposed by an API tool in the provider catalog. */
-export interface ApiToolInput {
-  name: string;
-  type: string;
-  description: string;
-  required: boolean;
-}
-
-export interface ApiToolSummary {
-  id: string;
-  name: string;
-  description: string;
-  inputs: ApiToolInput[];
-}
-
-/** Catalog entry; the full OpenAPI schema is returned by the detail response. */
-export interface ApiToolProviderSummary {
-  id: string;
-  name: string;
-  icon: string;
-  description: string;
-  headers: ApiToolProviderHeader[];
-  tools: ApiToolSummary[];
-  created_at: number;
-}
-
-export type GetApiToolProvidersWithPageResponse = BasePaginatorResponse<ApiToolProviderSummary>;
-
-/** Provider configuration shared by create, full update, and detail payloads. */
-export interface ApiToolProviderConfiguration {
-  name: string;
-  icon: string;
-  openapi_schema: string;
-  headers: ApiToolProviderHeader[];
-}
-
-export type CreateApiToolProviderRequest = ApiToolProviderConfiguration;
-
-/** A full configuration update; all fields are required. */
-export type UpdateApiToolProviderRequest = ApiToolProviderConfiguration;
-
-export interface GetApiToolProviderResponse extends ApiToolProviderConfiguration {
-  id: string;
-  created_at: number;
 }

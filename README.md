@@ -187,7 +187,7 @@ src/
 ├── config/           # Route definitions and search constants
 ├── models/           # Domain API/UI types, shared response envelopes, and index.ts
 ├── routes/           # React Router navigation and routing exports
-├── services/         # Backend HTTP/SSE client (api.ts), tool registry/providers (tools.ts)
+├── services/         # Domain API requests (admin.ts, auth.ts, tools.ts), shared API exports
 ├── static/           # Reserved for static assets
 ├── store/            # Redux Toolkit store: the signed-in account
 ├── storybook/        # Reserved for component stories
@@ -247,12 +247,17 @@ account is shared, in the Redux store under `store/`. `static/`
 and `storybook/` are empty placeholders in the local layout; Git will track
 them once files are added.
 
-When extending the app, put backend requests in `services/api.ts` (using the
+When extending the app, put backend requests in the matching `services/` module (using the
 `get` / `post` / `stream` helpers from `utils/request.ts`), shared
 constants in `config/`, shared data contracts in `models/`, pure helpers in `utils/`, and reusable UI in `components/`.
 
-Tool registry and provider requests live in `services/tools.ts`; `services/api.ts`
-re-exports them for existing callers. The provider-management helpers preserve
+Admin summary, analytics, history and audit requests live in `services/admin.ts`;
+sign-in, sign-out, identity and permissions requests live in `services/auth.ts`;
+tool registry and provider requests live in `services/tools.ts`. `services/api.ts`
+re-exports these functions for existing callers. Data shapes remain in `models/`,
+including auth account/profile types and history query filters. Domain services
+share `RequestOptions` from the request utility for optional cancellation.
+The provider-management helpers preserve
 the sample `/api-tools` contract (paginated envelopes, header rows, POST updates
 and deletion). They require a backend implementing those endpoints. Current
 screens continue using `/admin/tools` and `/api/debug/tools`, which have different

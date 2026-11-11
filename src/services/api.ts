@@ -1,11 +1,7 @@
 import type {
-  AdminSurfaceSummary,
   AgentExperienceRequest,
   AgentExperienceResponse,
-  AuditSummary,
-  BreakdownAnalytics,
   ChatSessionView,
-  CurrentUser,
   DebugRetrievalOutcome,
   DebugRetrievalParams,
   DebugRetrievalResponse,
@@ -14,11 +10,9 @@ import type {
   RetrievalMode,
   FeedbackSignal,
   FeedbackTarget,
-  Permission,
   RouteLatencyResponse,
   RetrievalStatusView,
   ServerHealth,
-  QueryHistoryPage,
   RequestSnapshot,
   RequestSummary,
   SendToolMessageBody,
@@ -34,6 +28,17 @@ import type {
   SearchDomainOption,
 } from "../models";
 import { RequestError, get, post, stream } from "../utils/request";
+
+// Compatibility exports; request implementations live in their domain services.
+export { login, logout, getCurrentUser, getPermissions } from "./auth";
+export {
+  getAdminSummary,
+  getAnalyticsByLLM,
+  getAnalyticsByPersona,
+  getAnalyticsByFlow,
+  getQueryHistory,
+  getAuditSummary,
+} from "./admin";
 
 // Tool registry/provider requests are implemented once in the domain service.
 export {
@@ -134,27 +139,6 @@ export function errorStatus(err: unknown): number | undefined {
     : undefined;
 }
 
-/** The backend's login form sets the HttpOnly session cookie on success. */
-export function login(email: string, password: string): Promise<CurrentUser> {
-  return post<CurrentUser>("/auth/login", {
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ username: email, password }),
-  });
-}
-
-/** Clears the session cookie; succeeds even when the session has expired. */
-export function logout(): Promise<void> {
-  return post<void>("/auth/logout");
-}
-
-export function getCurrentUser(): Promise<CurrentUser> {
-  return get<CurrentUser>("/me");
-}
-
-export function getPermissions(): Promise<Permission[]> {
-  return get<Permission[]>("/me/permissions");
-}
-
 export function createSession(
   request: SessionCreateRequest = {},
   init?: Pick<RequestInit, "signal">,
@@ -170,26 +154,6 @@ export function getSession(
   init?: Pick<RequestInit, "signal">,
 ): Promise<ChatSessionView> {
   return get<ChatSessionView>(`/api/sessions/${sessionId}`, { signal: init?.signal });
-}
-
-export function getAdminSummary(init?: Pick<RequestInit, "signal">): Promise<AdminSurfaceSummary> {
-  return get<AdminSurfaceSummary>("/admin/observability/summary", { signal: init?.signal });
-}
-
-export function getAnalyticsByLLM(init?: Pick<RequestInit, "signal">): Promise<BreakdownAnalytics> {
-  return get<BreakdownAnalytics>("/analytics/by-llm", { signal: init?.signal });
-}
-
-export function getAnalyticsByPersona(
-  init?: Pick<RequestInit, "signal">,
-): Promise<BreakdownAnalytics> {
-  return get<BreakdownAnalytics>("/analytics/by-persona", { signal: init?.signal });
-}
-
-export function getAnalyticsByFlow(
-  init?: Pick<RequestInit, "signal">,
-): Promise<BreakdownAnalytics> {
-  return get<BreakdownAnalytics>("/analytics/by-flow", { signal: init?.signal });
 }
 
 export function runAgent(
@@ -229,27 +193,6 @@ export async function* streamAgent(
   init?: Pick<RequestInit, "signal">,
 ): AsyncGenerator<SSEEvent> {
   yield* stream<SSEEvent>("/api/agent/stream", { body: request, signal: init?.signal });
-}
-
-export function getQueryHistory(
-  params: {
-    page_num?: number;
-    page_size?: number;
-    start_time?: string;
-    end_time?: string;
-    user_id?: string;
-    feedback_type?: "like" | "dislike";
-  } = {},
-  init?: Pick<RequestInit, "signal">,
-): Promise<QueryHistoryPage> {
-  return get<QueryHistoryPage>("/admin/chat-session-history", { params, signal: init?.signal });
-}
-
-export function getAuditSummary(
-  params: { start_time?: string; end_time?: string } = {},
-  init?: Pick<RequestInit, "signal">,
-): Promise<AuditSummary> {
-  return get<AuditSummary>("/admin/query-history/audit", { params, signal: init?.signal });
 }
 
 export function submitFeedback(

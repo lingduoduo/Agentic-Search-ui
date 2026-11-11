@@ -10,6 +10,9 @@ const BASE_FETCH_OPTIONS: RequestInit = {
   credentials: apiPrefix ? "include" : "same-origin",
 };
 
+/** Cancellation options shared by domain service functions. */
+export type RequestOptions = Pick<RequestInit, "signal">;
+
 type FetchOptionType = Omit<RequestInit, "body"> & {
   params?: Record<string, string | number | boolean | null | undefined>;
   body?: BodyInit | object | null;

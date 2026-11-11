@@ -1,4 +1,4 @@
-import { del, get, post } from "../utils/request";
+import { del, get, post, type RequestOptions } from "../utils/request";
 import type {
   BaseResponse,
   CreateApiToolProviderRequest,
@@ -14,8 +14,6 @@ import type {
   ToolView,
 } from "../models";
 
-type ToolRequestOptions = Pick<RequestInit, "signal">;
-
 // Provider-management API from the sample. These response envelopes and header
 // rows differ from the existing admin registry endpoints below.
 const providerPath = (providerId: string) => `/api-tools/${encodeURIComponent(providerId)}`;
@@ -25,7 +23,7 @@ export function getApiToolProvidersWithPage(
   current_page = 1,
   page_size = 20,
   search_word = "",
-  init?: ToolRequestOptions,
+  init?: RequestOptions,
 ): Promise<GetApiToolProvidersWithPageResponse> {
   return get<GetApiToolProvidersWithPageResponse>("/api-tools", {
     params: { current_page, page_size, search_word },
@@ -35,7 +33,7 @@ export function getApiToolProvidersWithPage(
 
 export function validateOpenAPISchema(
   openapi_schema: string,
-  init?: ToolRequestOptions,
+  init?: RequestOptions,
 ): Promise<BaseResponse<unknown>> {
   return post<BaseResponse<unknown>>("/api-tools/validate-openapi-schema", {
     body: { openapi_schema },
@@ -45,7 +43,7 @@ export function validateOpenAPISchema(
 
 export function createApiToolProvider(
   req: CreateApiToolProviderRequest,
-  init?: ToolRequestOptions,
+  init?: RequestOptions,
 ): Promise<BaseResponse<unknown>> {
   return post<BaseResponse<unknown>>("/api-tools", { body: req, signal: init?.signal });
 }
@@ -54,14 +52,14 @@ export function createApiToolProvider(
 export function updateApiToolProvider(
   providerId: string,
   req: UpdateApiToolProviderRequest,
-  init?: ToolRequestOptions,
+  init?: RequestOptions,
 ): Promise<BaseResponse<unknown>> {
   return post<BaseResponse<unknown>>(providerPath(providerId), { body: req, signal: init?.signal });
 }
 
 export function deleteApiToolProvider(
   providerId: string,
-  init?: ToolRequestOptions,
+  init?: RequestOptions,
 ): Promise<BaseResponse<unknown>> {
   return post<BaseResponse<unknown>>(`${providerPath(providerId)}/delete`, {
     signal: init?.signal,
@@ -70,7 +68,7 @@ export function deleteApiToolProvider(
 
 export function getApiToolProvider(
   providerId: string,
-  init?: ToolRequestOptions,
+  init?: RequestOptions,
 ): Promise<BaseResponse<GetApiToolProviderResponse>> {
   return get<BaseResponse<GetApiToolProviderResponse>>(providerPath(providerId), {
     signal: init?.signal,
@@ -78,22 +76,19 @@ export function getApiToolProvider(
 }
 
 /** Registered tools + the discovery catalog grouped by server (dev console). */
-export function getDebugTools(init?: ToolRequestOptions): Promise<DebugToolsResult> {
+export function getDebugTools(init?: RequestOptions): Promise<DebugToolsResult> {
   return get<DebugToolsResult>("/api/debug/tools", { signal: init?.signal });
 }
 
 /** Rank tools for a query via the semantic router (dev console). */
-export function discoverTools(
-  query: string,
-  init?: ToolRequestOptions,
-): Promise<ToolDiscoverResult> {
+export function discoverTools(query: string, init?: RequestOptions): Promise<ToolDiscoverResult> {
   return post<ToolDiscoverResult>("/api/debug/tools/discover", {
     body: { query },
     signal: init?.signal,
   });
 }
 
-export function listTools(init?: ToolRequestOptions): Promise<ToolView[]> {
+export function listTools(init?: RequestOptions): Promise<ToolView[]> {
   return get<ToolView[]>("/admin/tools", { signal: init?.signal });
 }
 
@@ -106,7 +101,7 @@ export function listTools(init?: ToolRequestOptions): Promise<ToolView[]> {
  */
 export function discoverAdminTools(
   query: string,
-  init?: ToolRequestOptions,
+  init?: RequestOptions,
 ): Promise<ToolDiscoverResult> {
   return post<ToolDiscoverResult>("/admin/tools/discover", {
     body: { query },
@@ -116,7 +111,7 @@ export function discoverAdminTools(
 
 export function registerOpenAPITools(
   req: OpenAPIRegisterRequest,
-  init?: ToolRequestOptions,
+  init?: RequestOptions,
 ): Promise<OpenAPIRegisterResponse> {
   return post<OpenAPIRegisterResponse>("/admin/tools/openapi", {
     body: req,
@@ -124,10 +119,7 @@ export function registerOpenAPITools(
   });
 }
 
-export function deleteOpenAPIProvider(
-  providerId: string,
-  init?: ToolRequestOptions,
-): Promise<void> {
+export function deleteOpenAPIProvider(providerId: string, init?: RequestOptions): Promise<void> {
   return del<void>(`/admin/tools/openapi/${encodeURIComponent(providerId)}`, {
     signal: init?.signal,
   });
@@ -136,7 +128,7 @@ export function deleteOpenAPIProvider(
 export function invokeTool(
   name: string,
   req: ToolInvokeRequest,
-  init?: ToolRequestOptions,
+  init?: RequestOptions,
 ): Promise<ToolInvokeResponse> {
   return post<ToolInvokeResponse>(`/admin/tools/${encodeURIComponent(name)}/invoke`, {
     body: req,

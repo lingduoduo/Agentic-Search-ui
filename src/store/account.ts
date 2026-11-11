@@ -1,12 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { Dispatch, PayloadAction } from "@reduxjs/toolkit";
 import { getCurrentUser, getPermissions } from "../services/api";
-import type { CurrentUser, Permission } from "../models";
+import type { Account, Profile } from "../models";
 
-export type Account = { user: CurrentUser; permissions: Permission[] };
-
-/** Shown for the signed-in user; kept in the frontend only, not saved to the backend. */
-export type Profile = { name: string; email: string; avatar: string };
+// Preserve existing store type imports while models own the data shapes.
+export type { Account, Profile } from "../models";
 
 // Signed out until /me loads.
 const initialState: { account: Account | null; profile: Profile } = {

@@ -52,6 +52,35 @@ describe("tool registry API", () => {
       body: { name: "Maps", openapi_json: "{}", headers: { "X-Example": "sample" } },
     },
     {
+      name: "provider page",
+      call: () => api.getToolProviders({ current_page: 2, page_size: 10, search_word: "maps & x" }),
+      url: "/admin/tools/providers?current_page=2&page_size=10&search_word=maps+%26+x",
+      method: "GET",
+      body: undefined,
+    },
+    {
+      name: "schema validation",
+      call: () => api.validateOpenAPISchema("{}"),
+      url: "/admin/tools/openapi/validate",
+      method: "POST",
+      body: { openapi_json: "{}" },
+    },
+    {
+      name: "provider detail",
+      call: () => api.getOpenAPIProvider("maps/a?b"),
+      url: "/admin/tools/openapi/maps%2Fa%3Fb",
+      method: "GET",
+      body: undefined,
+    },
+    {
+      name: "provider update",
+      call: () =>
+        api.updateOpenAPIProvider("maps/a?b", { name: "Maps", openapi_json: "{}", headers: {} }),
+      url: "/admin/tools/openapi/maps%2Fa%3Fb",
+      method: "PUT",
+      body: { name: "Maps", openapi_json: "{}", headers: {} },
+    },
+    {
       name: "provider deletion",
       call: () => api.deleteOpenAPIProvider("maps/a?b"),
       url: "/admin/tools/openapi/maps%2Fa%3Fb",

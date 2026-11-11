@@ -28,8 +28,13 @@ vi.mock("../services/api", () => ({
   getAnalyticsByLLM: vi.fn().mockRejectedValue(new Error()),
   getAnalyticsByPersona: vi.fn().mockRejectedValue(new Error()),
   getAnalyticsByFlow: vi.fn().mockRejectedValue(new Error()),
-  // The /space/tools page lists the tool inventory on mount.
+  // The Tools app lists the tool inventory on mount.
   listTools: vi.fn().mockResolvedValue([]),
+  // The /space/tools page loads providers a page at a time.
+  getToolProviders: vi.fn().mockResolvedValue({
+    list: [],
+    paginator: { current_page: 1, page_size: 20, total_page: 0, total_record: 0 },
+  }),
   discoverAdminTools: vi.fn(),
   // The History panel's requests; their results do not matter here.
   getQueryHistory: vi.fn().mockRejectedValue(new Error("no history")),

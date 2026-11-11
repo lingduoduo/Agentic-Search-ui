@@ -1,12 +1,15 @@
-import { del, get, post, type RequestOptions } from "../utils/request";
+import { del, get, post, put, type RequestOptions } from "../utils/request";
 import { streamWithModel } from "../utils/modelStream";
 import type {
   SendToolMessageBody,
   ToolStreamEvent,
   DebugToolsResult,
   ToolDiscoverResult,
+  OpenAPIProviderDetail,
   OpenAPIRegisterRequest,
   OpenAPIRegisterResponse,
+  OpenAPIValidateResponse,
+  ToolProviderPage,
   ToolInvokeRequest,
   ToolInvokeResponse,
   ToolView,
@@ -51,6 +54,46 @@ export function registerOpenAPITools(
   init?: RequestOptions,
 ): Promise<OpenAPIRegisterResponse> {
   return post<OpenAPIRegisterResponse>("/admin/tools/openapi", {
+    body: req,
+    signal: init?.signal,
+  });
+}
+
+/** One page of the registry grouped by provider, optionally filtered by `search_word`. */
+export function getToolProviders(
+  params: { current_page?: number; page_size?: number; search_word?: string } = {},
+  init?: RequestOptions,
+): Promise<ToolProviderPage> {
+  return get<ToolProviderPage>("/admin/tools/providers", { params, signal: init?.signal });
+}
+
+/** The tools a schema would register; rejects with the backend's reason if it is invalid. */
+export function validateOpenAPISchema(
+  openapi_json: string,
+  init?: RequestOptions,
+): Promise<OpenAPIValidateResponse> {
+  return post<OpenAPIValidateResponse>("/admin/tools/openapi/validate", {
+    body: { openapi_json },
+    signal: init?.signal,
+  });
+}
+
+export function getOpenAPIProvider(
+  providerId: string,
+  init?: RequestOptions,
+): Promise<OpenAPIProviderDetail> {
+  return get<OpenAPIProviderDetail>(`/admin/tools/openapi/${encodeURIComponent(providerId)}`, {
+    signal: init?.signal,
+  });
+}
+
+/** Replace a provider's name, schema and headers; its tools are rebuilt from the schema. */
+export function updateOpenAPIProvider(
+  providerId: string,
+  req: OpenAPIRegisterRequest,
+  init?: RequestOptions,
+): Promise<OpenAPIRegisterResponse> {
+  return put<OpenAPIRegisterResponse>(`/admin/tools/openapi/${encodeURIComponent(providerId)}`, {
     body: req,
     signal: init?.signal,
   });

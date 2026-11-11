@@ -12,6 +12,8 @@ export interface ToolView {
   provider_id: string | null;
   /** The provider's display name: the name an OpenAPI provider was registered under, or the MCP server name. */
   provider_name?: string | null;
+  /** An OpenAPI provider's description, from its schema's `info`. */
+  provider_description?: string | null;
   /** False when no agent loop may be offered this tool (still directly invocable). */
   agent_callable: boolean;
   /** True when the tool is backed by per-user storage and needs a signed-in caller. */
@@ -65,6 +67,49 @@ export interface OpenAPIRegisterRequest {
 export interface OpenAPIRegisterResponse {
   provider_id: string;
   tool_names: string[];
+}
+
+/** One operation a schema registers as a tool. */
+export interface OpenAPIOperation {
+  name: string;
+  description: string;
+  method: string;
+  path: string;
+}
+
+export interface OpenAPIValidateResponse {
+  tools: OpenAPIOperation[];
+}
+
+/** An OpenAPI provider's stored configuration, for editing. */
+export interface OpenAPIProviderDetail {
+  provider_id: string;
+  name: string;
+  description: string;
+  openapi_json: string;
+  headers: Record<string, string>;
+}
+
+/** The tools from one place: an OpenAPI provider, an MCP server, or `local` (built-ins). */
+export interface ToolProviderView {
+  id: string;
+  name: string;
+  description: string;
+  source: "function" | "openapi" | "mcp" | string;
+  tools: ToolView[];
+}
+
+export interface Paginator {
+  current_page: number;
+  page_size: number;
+  total_page: number;
+  total_record: number;
+}
+
+/** GET /admin/tools/providers */
+export interface ToolProviderPage {
+  list: ToolProviderView[];
+  paginator: Paginator;
 }
 
 export interface ToolInvokeRequest {

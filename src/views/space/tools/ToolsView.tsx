@@ -1,24 +1,19 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { Plug, Plus, Trash2, Wrench, X } from "lucide-react";
-import { deleteOpenAPIProvider, listTools, registerOpenAPITools } from "../../../services/api";
-import type { ToolView } from "../../../models";
-import { groupToolsByServer } from "../../../utils/toolCatalog";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { Plug, Plus, Settings, Wrench, X } from "lucide-react";
+import {
+  deleteOpenAPIProvider,
+  getOpenAPIProvider,
+  getToolProviders,
+  registerOpenAPITools,
+  updateOpenAPIProvider,
+  validateOpenAPISchema,
+} from "../../../services/api";
+import type { OpenAPIOperation, Paginator, ToolProviderView, ToolView } from "../../../models";
 import { useFocusTrap } from "../../../hooks/useFocusTrap";
 import { ToolInvokeModal } from "../../../components/ToolInvokeModal";
 
-/** Tools that came from one place: the built-ins, one OpenAPI provider, or one MCP server. */
-type Provider = {
-  /** The tools' shared `provider_id` (OpenAPI provider id or MCP server name), or "local". */
-  id: string;
-  title: string;
-  source: string;
-  /**
-   * Only OpenAPI providers: DELETE /admin/tools/openapi/{id} takes an OpenAPI
-   * provider id. MCP tools come from server config and have no such id.
-   */
-  deletable: boolean;
-  tools: ToolView[];
-};
+export const PAGE_SIZE = 20;
+const SEARCH_DELAY_MS = 300;
 
 const SOURCE_LABELS: Record<string, string> = {
   function: "Built-in",
@@ -26,30 +21,8 @@ const SOURCE_LABELS: Record<string, string> = {
   mcp: "MCP server",
 };
 
-/** Group the registry by provider: `catalog_from_registry` in the backend's semantic_router.py. */
-function groupProviders(tools: ToolView[]): Provider[] {
-  const byName = new Map(tools.map((tool) => [tool.name, tool]));
-  return groupToolsByServer(tools).map((server) => {
-    const members = server.tools.map((tool) => byName.get(tool.name)!);
-    const source = members[0].source;
-    const local = server.name === "local";
-    // An OpenAPI provider_id is a UUID, so prefer provider_name; a short id
-    // only covers a backend that predates provider_name.
-    const title = local
-      ? "Built-in tools"
-      : (members[0].provider_name ??
-        (source === "openapi" ? `OpenAPI provider ${server.name.slice(0, 8)}` : server.name));
-    return {
-      id: server.name,
-      title,
-      source,
-      deletable: !local && source === "openapi",
-      tools: members,
-    };
-  });
-}
-
 const countLabel = (n: number) => `${n} tool${n === 1 ? "" : "s"}`;
+const titleOf = (p: ToolProviderView) => (p.source === "function" ? "Built-in tools" : p.name);
 
 type Parameter = { name: string; type: string; description: string; required: boolean };
 
@@ -69,26 +42,55 @@ function parametersOf(tool: ToolView): Parameter[] {
   }));
 }
 
-/** `/space/tools`: the registered tools grouped by provider, with test-invoke and OpenAPI registration. */
+/** Create a provider, or edit the OpenAPI provider with this id. */
+type DialogMode = { kind: "create" } | { kind: "edit"; providerId: string };
+
+/**
+ * `/space/tools`: the registry grouped by provider, a page at a time, with
+ * test-invoke and OpenAPI provider create, edit and delete.
+ */
 export function ToolsView() {
-  const [tools, setTools] = useState<ToolView[]>([]);
+  const [providers, setProviders] = useState<ToolProviderView[]>([]);
+  const [paginator, setPaginator] = useState<Paginator | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [attempt, setAttempt] = useState(0);
   const [term, setTerm] = useState("");
-  // By id, so a reload or filter never points the drawer at another card.
+  // The search the server filters by: the box's text once typing pauses.
+  const [search, setSearch] = useState("");
+  const [reload, setReload] = useState(0);
+  // By id, so loading more pages never points the drawer at another card.
   const [openId, setOpenId] = useState<string | null>(null);
   const [invoking, setInvoking] = useState<ToolView | null>(null);
-  const [creating, setCreating] = useState(false);
+  const [dialog, setDialog] = useState<DialogMode | null>(null);
   const opener = useRef<HTMLButtonElement | null>(null);
+  const request = useRef<{ controller: AbortController; page: number } | null>(null);
+  const sentinel = useRef<HTMLDivElement>(null);
 
-  // A reload, or leaving the page, aborts the request in flight.
   useEffect(() => {
+    const timer = setTimeout(() => setSearch(term.trim()), SEARCH_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [term]);
+
+  /** Page 1 replaces the list; later pages append. A newer request aborts an older one. */
+  const fetchPage = useCallback((page: number, searchWord: string) => {
+    request.current?.controller.abort();
     const controller = new AbortController();
+    request.current = { controller, page };
     setLoading(true);
     setError("");
-    listTools({ signal: controller.signal })
-      .then(setTools)
+    getToolProviders(
+      { current_page: page, page_size: PAGE_SIZE, search_word: searchWord },
+      { signal: controller.signal },
+    )
+      .then((res) => {
+        setProviders((prev) => {
+          if (page === 1) return res.list;
+          // The registry can change between pages; never show a provider twice.
+          const seen = new Set(prev.map((p) => p.id));
+          return [...prev, ...res.list.filter((p) => !seen.has(p.id))];
+        });
+        setPaginator(res.paginator);
+      })
       .catch((cause: unknown) => {
         if (controller.signal.aborted) return;
         setError(cause instanceof Error ? cause.message : "Unable to load tools.");
@@ -96,36 +98,39 @@ export function ToolsView() {
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
       });
-    return () => controller.abort();
-  }, [attempt]);
+  }, []);
 
-  const providers = useMemo(() => groupProviders(tools), [tools]);
-  const query = term.trim().toLowerCase();
-  const shown = providers.filter(
-    (p) =>
-      query === "" ||
-      [p.title, ...p.tools.flatMap((t) => [t.name, t.description])]
-        .join(" ")
-        .toLowerCase()
-        .includes(query),
-  );
+  // A new search, or a change to the registry, starts again from page 1.
+  useEffect(() => {
+    fetchPage(1, search);
+    return () => request.current?.controller.abort();
+  }, [search, reload, fetchPage]);
+
+  const hasMore = paginator !== null && paginator.current_page < paginator.total_page;
+  const loadMore = () => {
+    if (!loading && hasMore) fetchPage(paginator.current_page + 1, search);
+  };
+  const loadMoreRef = useRef(loadMore);
+  loadMoreRef.current = loadMore;
+
+  // Infinite scroll: load the next page when the end of the list comes into view.
+  // The Load more button covers browsers (and tests) without IntersectionObserver.
+  useEffect(() => {
+    const node = sentinel.current;
+    if (!node || !hasMore || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) loadMoreRef.current();
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore]);
+
   const open = providers.find((p) => p.id === openId);
   const refocus = () => opener.current?.focus();
-
-  const handleDelete = async (provider: Provider) => {
-    if (
-      !window.confirm(
-        "Delete this tool? This cannot be undone, and agents will no longer be able to call it.",
-      )
-    )
-      return;
-    try {
-      await deleteOpenAPIProvider(provider.id);
-      setOpenId(null);
-      setTools((prev) => prev.filter((t) => t.provider_id !== provider.id));
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Delete failed.");
-    }
+  const registryChanged = () => {
+    setDialog(null);
+    setOpenId(null);
+    setReload((n) => n + 1);
   };
 
   return (
@@ -144,7 +149,7 @@ export function ToolsView() {
           aria-haspopup="dialog"
           onClick={(event) => {
             opener.current = event.currentTarget;
-            setCreating(true);
+            setDialog({ kind: "create" });
           }}
         >
           <Plus aria-hidden="true" size={16} />
@@ -159,16 +164,15 @@ export function ToolsView() {
             type="button"
             className="account-retry"
             aria-label="Retry loading tools"
-            onClick={() => setAttempt((n) => n + 1)}
+            onClick={() => fetchPage(request.current?.page ?? 1, search)}
           >
             Retry
           </button>
         </div>
       )}
-      {loading && <p role="status">Loading tools…</p>}
 
       <ul className="sources-catalog__grid">
-        {shown.map((provider) => (
+        {providers.map((provider) => (
           <li key={provider.id}>
             <button
               type="button"
@@ -181,17 +185,31 @@ export function ToolsView() {
             >
               <ProviderHeading provider={provider} />
               <span className="source-card__description">
-                {provider.tools.map((t) => t.name).join(" · ")}
+                {provider.description || provider.tools.map((t) => t.name).join(" · ")}
               </span>
             </button>
           </li>
         ))}
       </ul>
-      {!loading && !error && shown.length === 0 && (
-        <p className="sources-catalog__empty">
-          {providers.length === 0 ? "No tools registered." : "No tools match."}
-        </p>
-      )}
+
+      <div ref={sentinel} className="tools-catalog__more">
+        {loading ? (
+          <p role="status">Loading tools…</p>
+        ) : hasMore ? (
+          <button type="button" className="btn-ghost btn-sm" onClick={loadMore}>
+            Load more
+          </button>
+        ) : (
+          !error &&
+          (providers.length === 0 ? (
+            <p className="sources-catalog__empty">
+              {search ? "No tools match." : "No tools registered."}
+            </p>
+          ) : (
+            <p>All tools loaded</p>
+          ))
+        )}
+      </div>
 
       {open && (
         <ProviderDrawer
@@ -204,7 +222,7 @@ export function ToolsView() {
             setOpenId(null);
             setInvoking(tool);
           }}
-          onDelete={() => void handleDelete(open)}
+          onEdit={() => setDialog({ kind: "edit", providerId: open.id })}
         />
       )}
 
@@ -218,16 +236,14 @@ export function ToolsView() {
         />
       )}
 
-      {creating && (
-        <CreateToolDialog
+      {dialog && (
+        <ToolDialog
+          mode={dialog}
           onClose={() => {
-            setCreating(false);
+            setDialog(null);
             refocus();
           }}
-          onCreated={() => {
-            setCreating(false);
-            setAttempt((n) => n + 1);
-          }}
+          onSaved={registryChanged}
         />
       )}
     </section>
@@ -235,7 +251,7 @@ export function ToolsView() {
 }
 
 /** Icon tile, title and the "source · N tools" line, shared by card and drawer. */
-function ProviderHeading({ provider, titleId }: { provider: Provider; titleId?: string }) {
+function ProviderHeading({ provider, titleId }: { provider: ToolProviderView; titleId?: string }) {
   const Icon = provider.source === "function" ? Wrench : Plug;
   return (
     <span className="source-card__heading">
@@ -244,7 +260,7 @@ function ProviderHeading({ provider, titleId }: { provider: Provider; titleId?: 
       </span>
       <span>
         <strong id={titleId} className="source-option__name">
-          {provider.title}
+          {titleOf(provider)}
         </strong>
         <small>
           {SOURCE_LABELS[provider.source] ?? provider.source} · {countLabel(provider.tools.length)}
@@ -258,12 +274,12 @@ function ProviderDrawer({
   provider,
   onClose,
   onInvoke,
-  onDelete,
+  onEdit,
 }: {
-  provider: Provider;
+  provider: ToolProviderView;
   onClose: () => void;
   onInvoke: (tool: ToolView) => void;
-  onDelete: () => void;
+  onEdit: () => void;
 }) {
   const titleId = useId();
   const panel = useRef<HTMLElement>(null);
@@ -289,10 +305,12 @@ function ProviderDrawer({
             <X aria-hidden="true" size={18} />
           </button>
         </div>
-        {provider.deletable && (
-          <button type="button" className="btn-ghost btn-sm btn-danger" onClick={onDelete}>
-            <Trash2 aria-hidden="true" size={14} />
-            Delete tool
+        {provider.description && <p>{provider.description}</p>}
+        {/* MCP servers come from config, so only OpenAPI providers can be edited or deleted. */}
+        {provider.source === "openapi" && (
+          <button type="button" className="btn-ghost btn-sm tools-catalog__edit" onClick={onEdit}>
+            <Settings aria-hidden="true" size={14} />
+            Edit tool
           </button>
         )}
 
@@ -337,57 +355,74 @@ function ProviderDrawer({
   );
 }
 
-const HTTP_METHODS = new Set(["get", "head", "options", "post", "put", "patch", "delete"]);
-const sanitizeName = (value: string) =>
-  value.replace(/[^A-Za-z0-9_]+/g, "_").replace(/^_+|_+$/g, "") || "api_tool";
-
-type Operation = { name: string; description: string; method: string; path: string };
-
-/**
- * The tools an OpenAPI schema will register, mirroring `_build_tool_specs` in the
- * backend's src/internal/tools/api.py, so the preview matches what Save creates.
- */
-export function previewOperations(schema: string): Operation[] | null {
-  let data: unknown;
-  try {
-    data = JSON.parse(schema);
-  } catch {
-    return null;
-  }
-  const paths = (data as { paths?: unknown } | null)?.paths;
-  if (!paths || typeof paths !== "object") return [];
-  const operations: Operation[] = [];
-  for (const [path, item] of Object.entries(paths as Record<string, unknown>)) {
-    if (!item || typeof item !== "object") continue;
-    for (const [method, op] of Object.entries(item as Record<string, unknown>)) {
-      const m = method.toLowerCase();
-      if (!HTTP_METHODS.has(m) || !op || typeof op !== "object") continue;
-      const { operationId, description, summary } = op as Record<string, unknown>;
-      operations.push({
-        name: sanitizeName(
-          operationId ? String(operationId) : `${m}_${path.replace(/^\/+|\/+$/g, "") || "root"}`,
-        ),
-        description: String(description || summary || `${m.toUpperCase()} ${path}`),
-        method: m.toUpperCase(),
-        path,
-      });
-    }
-  }
-  return operations;
-}
-
 type HeaderRow = { key: string; value: string };
 
-function CreateToolDialog({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+const errorText = (cause: unknown, fallback: string) =>
+  cause instanceof Error ? cause.message : fallback;
+
+/** Create an OpenAPI provider, or edit (and delete) an existing one. */
+function ToolDialog({
+  mode,
+  onClose,
+  onSaved,
+}: {
+  mode: DialogMode;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const editing = mode.kind === "edit" ? mode.providerId : null;
   const titleId = useId();
   const panel = useRef<HTMLDivElement>(null);
   const [name, setName] = useState("");
   const [schema, setSchema] = useState("");
   const [headers, setHeaders] = useState<HeaderRow[]>([]);
+  const [operations, setOperations] = useState<OpenAPIOperation[]>([]);
+  const [schemaError, setSchemaError] = useState("");
+  const [loadingDetail, setLoadingDetail] = useState(editing !== null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const operations = useMemo(() => (schema.trim() ? previewOperations(schema) : []), [schema]);
+  // Only the latest validation may update the table; an older answer is dropped.
+  const validation = useRef(0);
   useFocusTrap(panel, onClose);
+
+  const validateSchema = useCallback(async (text: string) => {
+    const run = ++validation.current;
+    if (!text.trim()) {
+      setOperations([]);
+      setSchemaError("");
+      return;
+    }
+    try {
+      const res = await validateOpenAPISchema(text);
+      if (run !== validation.current) return;
+      setOperations(res.tools);
+      setSchemaError("");
+    } catch (cause) {
+      if (run !== validation.current) return;
+      setOperations([]);
+      setSchemaError(errorText(cause, "The schema is not valid."));
+    }
+  }, []);
+
+  // Editing starts from the provider's stored configuration.
+  useEffect(() => {
+    if (editing === null) return;
+    const controller = new AbortController();
+    getOpenAPIProvider(editing, { signal: controller.signal })
+      .then((detail) => {
+        setName(detail.name);
+        setSchema(detail.openapi_json);
+        setHeaders(Object.entries(detail.headers).map(([key, value]) => ({ key, value })));
+        void validateSchema(detail.openapi_json);
+      })
+      .catch((cause: unknown) => {
+        if (!controller.signal.aborted) setError(errorText(cause, "Unable to load this tool."));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingDetail(false);
+      });
+    return () => controller.abort();
+  }, [editing, validateSchema]);
 
   const setHeader = (index: number, patch: Partial<HeaderRow>) =>
     setHeaders((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
@@ -397,27 +432,48 @@ function CreateToolDialog({ onClose, onCreated }: { onClose: () => void; onCreat
     setError("");
     if (!name.trim()) return setError("The tool name is required.");
     if (!schema.trim()) return setError("The OpenAPI schema is required.");
+    const req = {
+      name: name.trim(),
+      openapi_json: schema.trim(),
+      headers: Object.fromEntries(
+        headers.filter((h) => h.key.trim()).map((h) => [h.key.trim(), h.value]),
+      ),
+    };
     setSaving(true);
     try {
-      const res = await registerOpenAPITools({
-        name: name.trim(),
-        openapi_json: schema.trim(),
-        headers: Object.fromEntries(
-          headers.filter((h) => h.key.trim()).map((h) => [h.key.trim(), h.value]),
-        ),
-      });
+      const res =
+        editing === null
+          ? await registerOpenAPITools(req)
+          : await updateOpenAPIProvider(editing, req);
       if (res.tool_names.length === 0) {
         setError("No tools were registered from this schema.");
         return;
       }
-      onCreated();
+      onSaved();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Registration failed.");
+      setError(errorText(cause, "Saving failed."));
     } finally {
       setSaving(false);
     }
   }
 
+  async function handleDelete() {
+    if (editing === null) return;
+    if (
+      !window.confirm(
+        "Delete this tool? This cannot be undone, and agents will no longer be able to call it.",
+      )
+    )
+      return;
+    try {
+      await deleteOpenAPIProvider(editing);
+      onSaved();
+    } catch (cause) {
+      setError(errorText(cause, "Delete failed."));
+    }
+  }
+
+  const title = editing === null ? "Create tool" : "Edit tool";
   return (
     <div className="tool-modal-overlay" onClick={onClose}>
       <div
@@ -429,125 +485,139 @@ function CreateToolDialog({ onClose, onCreated }: { onClose: () => void; onCreat
         onClick={(event) => event.stopPropagation()}
       >
         <div className="tool-modal-header">
-          <h3 id={titleId}>Create tool</h3>
+          <h3 id={titleId}>{title}</h3>
           <button type="button" className="btn-ghost btn-sm" aria-label="Close" onClick={onClose}>
             ✕
           </button>
         </div>
-        <form onSubmit={handleSubmit}>
-          <div className="tool-field">
-            <label htmlFor="create-tool-name">Tool name</label>
-            <input
-              id="create-tool-name"
-              type="text"
-              maxLength={60}
-              autoFocus
-              placeholder="A name that makes its purpose clear"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-          </div>
-          <div className="tool-field">
-            <label htmlFor="create-tool-schema">OpenAPI schema</label>
-            <textarea
-              id="create-tool-schema"
-              rows={6}
-              spellCheck={false}
-              placeholder={'{"openapi":"3.0.0","info":{"title":"..."},"paths":{...}}'}
-              value={schema}
-              onChange={(event) => setSchema(event.target.value)}
-            />
-            {operations === null && <p className="form-error">The schema is not valid JSON.</p>}
-          </div>
+        {loadingDetail ? (
+          <p role="status">Loading…</p>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <div className="tool-field">
+              <label htmlFor="tool-dialog-name">Tool name</label>
+              <input
+                id="tool-dialog-name"
+                type="text"
+                maxLength={60}
+                autoFocus
+                placeholder="A name that makes its purpose clear"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+              />
+            </div>
+            <div className="tool-field">
+              <label htmlFor="tool-dialog-schema">OpenAPI schema</label>
+              <textarea
+                id="tool-dialog-schema"
+                rows={6}
+                spellCheck={false}
+                placeholder={'{"openapi":"3.0.0","info":{"title":"..."},"paths":{...}}'}
+                value={schema}
+                onChange={(event) => setSchema(event.target.value)}
+                onBlur={() => void validateSchema(schema)}
+              />
+              {schemaError && <p className="form-error">{schemaError}</p>}
+            </div>
 
-          <div className="tool-field">
-            <span className="tool-field-label">Available tools</span>
-            <table className="tool-table" aria-label="Available tools">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Method</th>
-                  <th>Path</th>
-                </tr>
-              </thead>
-              <tbody>
-                {operations?.map((op) => (
-                  <tr key={`${op.method} ${op.path}`} className="tool-row">
-                    <td>{op.name}</td>
-                    <td>{op.description}</td>
-                    <td>{op.method}</td>
-                    <td>{op.path}</td>
+            <div className="tool-field">
+              <span className="tool-field-label">Available tools</span>
+              <table className="tool-table" aria-label="Available tools">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Method</th>
+                    <th>Path</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {operations.map((op) => (
+                    <tr key={op.name} className="tool-row">
+                      <td>{op.name}</td>
+                      <td>{op.description}</td>
+                      <td>{op.method}</td>
+                      <td>{op.path}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-          <div className="tool-field">
-            <span className="tool-field-label">Headers</span>
-            <table className="tool-table" aria-label="Headers">
-              <thead>
-                <tr>
-                  <th>Key</th>
-                  <th>Value</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {headers.map((header, index) => (
-                  <tr key={index} className="tool-row">
-                    <td>
-                      <input
-                        type="text"
-                        aria-label={`Header ${index + 1} key`}
-                        placeholder="Authorization"
-                        value={header.key}
-                        onChange={(event) => setHeader(index, { key: event.target.value })}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        aria-label={`Header ${index + 1} value`}
-                        placeholder="Bearer sk-…"
-                        value={header.value}
-                        onChange={(event) => setHeader(index, { value: event.target.value })}
-                      />
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="btn-ghost btn-sm"
-                        aria-label={`Remove header ${index + 1}`}
-                        onClick={() => setHeaders((rows) => rows.filter((_, i) => i !== index))}
-                      >
-                        ✕
-                      </button>
-                    </td>
+            <div className="tool-field">
+              <span className="tool-field-label">Headers</span>
+              <table className="tool-table" aria-label="Headers">
+                <thead>
+                  <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                    <th />
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            <button
-              type="button"
-              className="btn-ghost btn-sm"
-              onClick={() => setHeaders((rows) => [...rows, { key: "", value: "" }])}
-            >
-              + Add header
-            </button>
-          </div>
+                </thead>
+                <tbody>
+                  {headers.map((header, index) => (
+                    <tr key={index} className="tool-row">
+                      <td>
+                        <input
+                          type="text"
+                          aria-label={`Header ${index + 1} key`}
+                          placeholder="Authorization"
+                          value={header.key}
+                          onChange={(event) => setHeader(index, { key: event.target.value })}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          aria-label={`Header ${index + 1} value`}
+                          placeholder="Bearer sk-…"
+                          value={header.value}
+                          onChange={(event) => setHeader(index, { value: event.target.value })}
+                        />
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="btn-ghost btn-sm"
+                          aria-label={`Remove header ${index + 1}`}
+                          onClick={() => setHeaders((rows) => rows.filter((_, i) => i !== index))}
+                        >
+                          ✕
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <button
+                type="button"
+                className="btn-ghost btn-sm"
+                onClick={() => setHeaders((rows) => [...rows, { key: "", value: "" }])}
+              >
+                + Add header
+              </button>
+            </div>
 
-          {error && <p className="form-error">{error}</p>}
-          <div className="form-actions">
-            <button type="submit" className="btn-primary" disabled={saving}>
-              {saving ? "Saving…" : "Save"}
-            </button>
-            <button type="button" className="btn-ghost" onClick={onClose}>
-              Cancel
-            </button>
-          </div>
-        </form>
+            {error && <p className="form-error">{error}</p>}
+            <div className="form-actions">
+              <button type="submit" className="btn-primary" disabled={saving}>
+                {saving ? "Saving…" : "Save"}
+              </button>
+              <button type="button" className="btn-ghost" onClick={onClose}>
+                Cancel
+              </button>
+              {editing !== null && (
+                <button
+                  type="button"
+                  className="btn-ghost btn-danger tools-catalog__delete"
+                  onClick={() => void handleDelete()}
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

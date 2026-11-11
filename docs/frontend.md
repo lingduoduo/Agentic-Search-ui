@@ -293,19 +293,24 @@ the category by name, so changing the filter while it is open cannot show a
 different one. The load uses an `AbortController`: Retry and leaving the page
 abort the request in flight.
 
-**Tools** (`/space/tools`, admins only) lists the `/admin/tools` registry as
-provider cards, grouped by `groupToolsByServer`: the built-ins, each OpenAPI
-provider and each MCP server. A tool's `provider_id` is the OpenAPI provider's
-id (a UUID) or the MCP server's configured name; cards are titled by
-`provider_name`, the name the provider was registered under or the server name,
-falling back to a short id when an older backend omits it. MCP servers come from
-config, so only OpenAPI providers can be deleted. A card's drawer
-(same keyboard behavior as the Sources drawer, via `useFocusTrap`) lists each
-tool's description and top-level parameters, with **Test**, which opens
-`ToolInvokeModal`, and **Delete tool** for OpenAPI providers. **Create tool**
-registers an OpenAPI schema (`POST /admin/tools/openapi`) with optional header
-rows, and previews the operations it will register using the backend's naming
-rule. The registry has no edit endpoint, so there is no edit: delete and create
-again.
+**Tools** (`/space/tools`, admins only) pages through
+`GET /admin/tools/providers`, which groups the registry by provider on the
+server: the built-ins (`local`), each OpenAPI provider and each MCP server. It
+loads 20 providers at a time; the next page loads when the end of the list
+scrolls into view (`IntersectionObserver`), or from **Load more**, and appended
+pages skip providers already shown. The search box filters on the server
+(`search_word`, matching provider names and tool names and descriptions) once
+typing pauses, starting again from page 1. A provider's `id` is the OpenAPI
+provider's UUID or the MCP server's configured name; cards show its `name` and
+`description`. A card's drawer (same keyboard behavior as the Sources drawer,
+via `useFocusTrap`) lists each tool's description and top-level parameters, with
+**Test**, which opens `ToolInvokeModal`. OpenAPI providers also get **Edit
+tool**: MCP servers come from config, so only OpenAPI providers can be edited
+or deleted. **Create tool** and **Edit tool** share one dialog: name, schema and
+header rows, with the schema checked on blur by
+`POST /admin/tools/openapi/validate`, which also lists the tools it will
+register. Edit loads the stored configuration (`GET /admin/tools/openapi/{id}`)
+and saves with `PUT`, which rebuilds the provider's tools; **Delete** is in the
+edit dialog, after a confirmation. Saving or deleting reloads from page 1.
 
 Search and Assist share the Sources picker. Search uses `POST /api/agent` with `mode: "search_tool"`, which supports category selection and returns source documents without answer generation. `POST /search/send-search-message` remains available for direct corpus searches. The default All sources selection maps to `web` (unrestricted category), not a request to fan out across every category or provider. Auto selects up to three categories; manual selection has the same limit.

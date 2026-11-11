@@ -1,4 +1,5 @@
 import { useSearchDomains } from "../../../hooks/useSearchDomains";
+import { useKeywordSearch } from "../../../hooks/useKeywordSearch";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Gauge, MessageSquarePlus, Search } from "lucide-react";
@@ -54,7 +55,7 @@ const DEV_MODE =
   typeof window !== "undefined" && new URLSearchParams(window.location.search).has("dev");
 
 export function AssistView() {
-  const [query, setQuery] = useState("");
+  const { query, setQuery, commitKeyword } = useKeywordSearch();
   const [searchUrl, setSearchUrl] = useState(DEFAULT_SEARCH_URL);
   const [topK, setTopK] = useState(5);
   const [autoDomains, setAutoDomains] = useState<AutoDomains | null>(null);
@@ -111,7 +112,7 @@ export function AssistView() {
     async (eventOrQuery?: FormEvent | string, options?: { route?: "chat" | "search" | "tool" }) => {
       if (eventOrQuery && typeof eventOrQuery !== "string") eventOrQuery.preventDefault();
       const raw = typeof eventOrQuery === "string" ? eventOrQuery : query;
-      const normalizedQuery = raw.trim();
+      const normalizedQuery = commitKeyword(raw);
       if (!normalizedQuery) return;
 
       requestRef.current?.abort();
@@ -228,7 +229,7 @@ export function AssistView() {
         }
       }
     },
-    [domains, ensureSession, query, searchUrl, sourceProvider, topK],
+    [commitKeyword, domains, ensureSession, query, searchUrl, sourceProvider, topK],
   );
 
   const handleApprovalDecision = useCallback(
@@ -276,7 +277,7 @@ export function AssistView() {
       setQuery(q);
       handleSubmit(q);
     },
-    [handleSubmit],
+    [handleSubmit, setQuery],
   );
 
   const handleTopKChange = useCallback((value: number) => {

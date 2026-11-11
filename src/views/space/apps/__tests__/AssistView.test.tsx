@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router";
 import { AssistView } from "../AssistView";
 import * as api from "../../../../services/api";
 
@@ -15,7 +16,7 @@ describe("AssistView claim streaming", () => {
     }
     vi.spyOn(api, "streamAgent").mockImplementation(fake as never);
 
-    render(<AssistView />);
+    render(<AssistView />, { wrapper: MemoryRouter });
     fireEvent.change(screen.getByLabelText("Question"), { target: { value: "what is faiss" } });
     fireEvent.click(screen.getByText("Search"));
 
@@ -41,7 +42,7 @@ describe("AssistView claim streaming", () => {
     }
     vi.spyOn(api, "streamAgent").mockImplementation(fake as never);
 
-    render(<AssistView />);
+    render(<AssistView />, { wrapper: MemoryRouter });
     fireEvent.change(screen.getByLabelText("Question"), { target: { value: "what is faiss" } });
     fireEvent.click(screen.getByText("Search"));
 
@@ -57,7 +58,7 @@ describe("AssistView claim streaming", () => {
 describe("AssistView search-source taxonomy", () => {
   it("keeps web available when discovery fails", async () => {
     vi.spyOn(api, "fetchSearchDomains").mockRejectedValue(new Error("unavailable"));
-    render(<AssistView />);
+    render(<AssistView />, { wrapper: MemoryRouter });
     await waitFor(() => expect(api.fetchSearchDomains).toHaveBeenCalled());
     fireEvent.click(screen.getByRole("button", { name: /sources:/i }));
     expect(screen.getByRole("checkbox", { name: "All sources" })).toBeChecked();
@@ -95,7 +96,7 @@ describe("AssistView search-source taxonomy", () => {
       }
     }
     const stream = vi.spyOn(api, "streamAgent").mockImplementation(fake as never);
-    render(<AssistView />);
+    render(<AssistView />, { wrapper: MemoryRouter });
     fireEvent.click(screen.getByRole("button", { name: /sources:/i }));
     await screen.findByRole("checkbox", { name: "financial" });
     const typeQuestion = () =>
@@ -172,7 +173,7 @@ describe("AssistView search-source taxonomy", () => {
       }
     }
     vi.spyOn(api, "streamAgent").mockImplementation(fake as never);
-    render(<AssistView />);
+    render(<AssistView />, { wrapper: MemoryRouter });
     fireEvent.click(screen.getByRole("button", { name: /sources:/i }));
     await screen.findByRole("checkbox", { name: "news" });
     fireEvent.click(screen.getByRole("checkbox", { name: "Auto" }));

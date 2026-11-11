@@ -2,7 +2,8 @@
 
 The React 19.1 + Vite + TypeScript + SCSS frontend for
 [Agentic Search](https://github.com/lingduoduo/Agentic-Search-GRPO). It's a
-single-page app whose apps list (`/space/apps`) opens four apps at
+single-page app that opens **Assistant** directly at `/space/apps/assist`.
+The optional apps list (`/space/apps`) opens four apps at
 `/space/apps/:app_id`: **Assistant** (`assist`), **Search** (`search`), **Chat**
 (`chat`), and **Tools** (`tools`). It talks to the
 FastAPI backend over same-origin HTTP and SSE.
@@ -220,13 +221,16 @@ route tree, following the same logic as a Vue Router setup:
   `NotFoundView` for any other URL.
 - **Lazy pages.** Each page's code loads the first time it opens.
 
-`/` redirects to `/space/apps`. `components/NavLink.tsx` wraps React Router’s
+`/` redirects to `/space/apps/assist`, preserving query parameters.
+Assistant and Search read `?search_word=` into their query inputs and update it on
+submission. Back/Forward restores the input; loading a URL does not run a query.
+Other query parameters and the hash are preserved when submitting. `components/NavLink.tsx` wraps React Router’s
 active navigation links.
 
 The interface uses a shared left sidebar, a page workspace, white surfaces,
 and blue primary actions. On small screens the sidebar becomes compact top
 navigation. Every page requires signing in at `/auth/login`, after which the user lands on
-the apps list, `/space/apps`, with the sidebar; admins also get the
+Assistant, `/space/apps/assist`, with the sidebar (or returns to the requested page); admins also get the
 `/admin` page with the admin overview and analytics.
 
 Put imported images, icons, fonts, and SCSS in `src/assets/`. Vite bundles

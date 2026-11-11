@@ -534,15 +534,12 @@ describe("page navigation", () => {
     window.history.replaceState({}, "", "/space/apps/assist");
   });
 
-  it("lands on the apps list, with the sidebar, at /", async () => {
+  it("opens Assistant directly, with the sidebar, at /", async () => {
     window.history.replaceState({}, "", "/");
     await renderApp();
-    const apps = await screen.findByRole("region", { name: "Apps" });
-    expect(window.location.pathname).toBe("/space/apps");
-    expect(within(apps).getByRole("link", { name: /assistant/i })).toHaveAttribute(
-      "href",
-      "/space/apps/assist",
-    );
+    expect(await screen.findByRole("textbox", { name: "Question" })).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/space/apps/assist");
+    expect(screen.queryByRole("region", { name: "Apps" })).not.toBeInTheDocument();
     expect(screen.getByRole("complementary", { name: "Common navigation" })).toBeInTheDocument();
   });
 
@@ -608,12 +605,23 @@ describe("page navigation", () => {
     expect(screen.getByRole("complementary", { name: "Common navigation" })).toBeInTheDocument();
   });
 
-  it("links pages, not apps, and keeps Apps active inside an app", async () => {
+  it("links directly to Assistant and keeps the Apps directory optional", async () => {
     await renderApp();
     const nav = screen.getByRole("navigation", { name: /surfaces/i });
     const apps = within(nav).getByRole("link", { name: "Apps" });
     expect(apps).toHaveAttribute("href", "/space/apps");
+    expect(apps).not.toHaveAttribute("aria-current");
+    const assistant = within(nav).getByRole("link", { name: "Assistant" });
+    expect(assistant).toHaveAttribute("href", "/space/apps/assist");
+    expect(assistant).toHaveAttribute("aria-current", "page");
+    await userEvent.click(apps);
+    const list = await screen.findByRole("region", { name: "Apps" });
+    expect(within(list).getByRole("link", { name: /chat/i })).toHaveAttribute(
+      "href",
+      "/space/apps/chat",
+    );
     expect(apps).toHaveAttribute("aria-current", "page");
+    expect(assistant).not.toHaveAttribute("aria-current");
     expect(within(nav).getByRole("link", { name: "Admin" })).toHaveAttribute("href", "/admin");
     expect(within(nav).queryByRole("link", { name: /^chat$/i })).not.toBeInTheDocument();
   });

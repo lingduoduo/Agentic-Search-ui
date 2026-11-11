@@ -18,17 +18,21 @@ pages are the apps list, `/space/apps` (`ListView`), one app at
 `/space/apps/:app_id` (`DetailView`: `assist`, `search`, `chat` or `tools`; an
 unknown id shows the not-found page), the search-source catalog at
 `/space/sources` (`SourcesView`), `/account` and `/admin`. Signing in lands
-on `/space/apps`, and `/` redirects there. Public pages, marked
+on Assistant at `/space/apps/assist`, and `/` redirects there while preserving query parameters. Explicit page links still return to the requested page after sign-in. Public pages, marked
 `handle: { public: true }`, sit under `BlankLayout`, with no sidebar: the sign-in
 page and `NotFoundView` for unknown URLs. Route ids double as route names, and
 `routePath(name, params)` in `src/config/routes.ts` builds URLs from them. Each
 page's code is loaded lazily, the first time it opens.
-The sidebar uses a white inner panel in a gray rail and one entry per page (Workspace: Apps, Sources; permission-gated Administration: Admin plus the panel toggles) declared in one table in `AppSidebar`. Individual apps open from the Apps page. A link stays active on every URL under its path, so Apps is highlighted inside `/space/apps/:app_id`, and the active entry's icon is drawn filled. The footer card shows the current profile name, email and avatar (or initial); clicking it opens a menu with Account and Sign out (closed by Escape or a click outside). On small screens it becomes wrapping top navigation. Account-verification errors include a Retry button that revalidates the existing route guard; no second account fetch is started by the layout.
+The sidebar uses a white inner panel in a gray rail and one entry per page (Workspace: Assistant, Apps, Sources; permission-gated Administration: Admin plus the panel toggles) declared in one table in `AppSidebar`. Assistant is available directly; the optional Apps page opens the other apps. Sidebar page links match exactly, so the directory is not also highlighted inside Assistant. The active entry's icon is drawn filled. The footer card shows the current profile name, email and avatar (or initial); clicking it opens a menu with Account and Sign out (closed by Escape or a click outside). On small screens it becomes wrapping top navigation. Account-verification errors include a Retry button that revalidates the existing route guard; no second account fetch is started by the layout.
 
 `src/main.tsx` mounts `src/App.tsx`, which creates one router with
 `createAppRouter()` and renders `RouterProvider`. `src/config/routes.ts` holds
 allowed paths.
-Each page owns its state, so navigating away discards unsaved work.
+Assistant and Search bind the submitted keyword to `?search_word=`. Loading a
+link prefills the input without making a search request. Submission trims the
+keyword and preserves other query parameters and the hash. Back/Forward restores
+the keyword; editing a draft does not add history entries. Each page owns the
+rest of its state, so navigating away discards unsaved work.
 
 `ROUTE_PATHS` in `src/config/routes.ts` is mirrored in three other places, and all four
 must be changed together to add a page: the proxy bypass in
@@ -58,7 +62,7 @@ sends a signed-in visitor past the sign-in page; otherwise it returns at once wh
 (Redux Toolkit: the `account` slice in `src/store/account.ts`), and otherwise loads `GET /me` and `GET /me/permissions`
 once per page load. A `401` (or a `404` for a cookie whose user no longer exists)
 redirects to `/auth/login?redirect=<original path>`; `/` first redirects to
-`/space/apps`, so it becomes `?redirect=/space/apps`. Any other failure, such as the backend being down, still opens
+`/space/apps/assist`, so it becomes `?redirect=/space/apps/assist`. Any other failure, such as the backend being down, still opens
 the page and the layout shows the error.
 
 The sign-in page posts its form to `POST /auth/login`, the same path: the dev proxy
@@ -67,7 +71,7 @@ backend sets the HttpOnly `fastapiusersauth` cookie; the app never stores a toke
 so the cached account, not a token, is what says "signed in". After sign-in,
 `safeRedirectPath` returns the user to `redirect` only when it is one of the app's
 own signed-in pages (`isRoute` in `src/config/routes.ts`); anything else, including
-another origin, the sign-in page or an unknown app id, goes to `/space/apps`. **Sign out** (sidebar and `/account`) calls
+another origin, the sign-in page or an unknown app id, goes to `/space/apps/assist`. **Sign out** (sidebar and `/account`) calls
 `POST /auth/logout`, which clears the cookie even for an expired session. A shared fetcher disables sign-out controls during the request and displays failures inline for retry. The local account is cleared after server sign-out succeeds, since JavaScript cannot clear the HttpOnly cookie.
 
 Every backend call in `src/services/api.ts` goes through `src/utils/request.ts`
@@ -82,7 +86,7 @@ Permissions come from `/me/permissions`, not the role text: every user has
 users also have `full_admin_panel_access`, which shows the **Admin** link,
 **Manage tools** and **History**, and allows `/admin`. The `/admin` loader checks
 the permission before it fetches any admin data and sends other users to
-`/space/apps`. The backend's `make_require_admin` guards remain the real boundary.
+`/space/apps/assist`. The backend's `make_require_admin` guards remain the real boundary.
 
 The app has no registration form. For local dev, create a user by opening (the
 sign-in page links to it in development builds only):

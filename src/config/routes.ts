@@ -42,7 +42,7 @@ export type AppId = (typeof APPS)[number]["id"];
 
 export const findApp = (id: string | undefined) => APPS.find((app) => app.id === id);
 
-export const DEFAULT_ROUTE = ROUTE_PATHS["space-apps-list"];
+export const DEFAULT_ROUTE = routePath("space-apps-detail", { app_id: "assist" });
 
 /** The public sign-in page; POST to the same path is the backend's login. */
 export const LOGIN_PATH = ROUTE_PATHS["auth-login"];

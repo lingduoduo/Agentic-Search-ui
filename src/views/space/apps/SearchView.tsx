@@ -1,8 +1,9 @@
 import { SourcePicker } from "../../../components/SourcePicker";
 import { AutoDomainsNote } from "../../../components/DomainChips";
 import { useSearchDomains } from "../../../hooks/useSearchDomains";
+import { useKeywordSearch } from "../../../hooks/useKeywordSearch";
 import { useState } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import { runAgent } from "../../../services/api";
 import type { SourceDocumentView, AutoDomains } from "../../../models";
 import { SourceGrid } from "../../../components/SourceGrid";
@@ -11,17 +12,7 @@ export function SearchView() {
   const [docs, setDocs] = useState<SourceDocumentView[]>([]);
   // `?domain=academic` (the Sources page's "Search with this") preselects a category.
   const [params] = useSearchParams();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const keyword = params.get("search_word") ?? "";
-  const [query, setQuery] = useState(keyword);
-  const [previousKeyword, setPreviousKeyword] = useState(keyword);
-  // Reset the draft when navigation changes the committed keyword, including
-  // Back/Forward and links to this page. Typing alone does not navigate.
-  if (keyword !== previousKeyword) {
-    setPreviousKeyword(keyword);
-    setQuery(keyword);
-  }
+  const { query, setQuery, commitKeyword } = useKeywordSearch();
   const [domains, setDomains] = useState<string[]>(() => {
     const domain = params.get("domain");
     return domain ? [domain] : ["web"];
@@ -32,15 +23,8 @@ export function SearchView() {
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
-    const q = query.trim();
     if (busy) return;
-    setQuery(q);
-    const nextParams = new URLSearchParams(params);
-    if (q) nextParams.set("search_word", q);
-    else nextParams.delete("search_word");
-    if (nextParams.toString() !== params.toString()) {
-      void navigate({ search: nextParams.toString(), hash: location.hash });
-    }
+    const q = commitKeyword(query);
     if (!q) return;
     setBusy(true);
     setError(null);

@@ -28,7 +28,11 @@ The sidebar uses a white inner panel in a gray rail and one entry per page (Work
 `src/main.tsx` mounts `src/App.tsx`, which creates one router with
 `createAppRouter()` and renders `RouterProvider`. `src/config/routes.ts` holds
 allowed paths.
-Assistant and Search bind the submitted keyword to `?search_word=`. Loading a
+Assistant and Search bind the submitted keyword to `?search_word=`. On the Tools
+page, this parameter binds the Tool registry discovery input, independently of
+the agent message. Discover or Enter commits it; an empty submission clears it
+without requesting discovery. The debug-console registry keeps its own local
+input so it does not overwrite the page keyword. Loading a
 link prefills the input without making a search request. Submission trims the
 keyword and preserves other query parameters and the hash. Back/Forward restores
 the keyword; editing a draft does not add history entries. Each page owns the

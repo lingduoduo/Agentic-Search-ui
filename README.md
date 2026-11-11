@@ -223,7 +223,8 @@ route tree, following the same logic as a Vue Router setup:
 
 `/` redirects to `/space/apps/assist`, preserving query parameters.
 Assistant and Search read `?search_word=` into their query inputs and update it on
-submission. Back/Forward restores the input; loading a URL does not run a query.
+submission. The Tools page uses the same binding for its Tool registry discovery
+input; Discover or Enter commits the keyword without changing the agent message. Back/Forward restores the input; loading a URL does not run a query.
 Other query parameters and the hash are preserved when submitting. `components/NavLink.tsx` wraps React Router’s
 active navigation links.
 

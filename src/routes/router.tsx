@@ -5,7 +5,13 @@ import { BlankLayout } from "../views/layouts/BlankLayout";
 import { ErrorView } from "../views/errors/ErrorView";
 import { DEFAULT_ROUTE, findApp, routePath } from "../config/routes";
 import type { RouteHandle } from "../config/routes";
-import { adminLoader, guard, loginAction, logoutAction } from "../views/auth/session";
+import {
+  adminLoader,
+  guard,
+  loginAction,
+  logoutAction,
+  requireAdminLoader,
+} from "../views/auth/session";
 
 // Loaders resolve /me before the first render; there is nothing to show until then.
 const HydrateFallback = () => null;
@@ -70,6 +76,21 @@ export const appRoutes: RouteObject[] = [
                 title: "Search sources",
                 description:
                   "The categories Search and Assist can focus on, the sites each one searches first, and its built-in tools.",
+              },
+            } satisfies RouteHandle,
+          },
+          {
+            id: "space-tools",
+            path: "space/tools",
+            // /admin/tools is admin-only, so the page is too.
+            loader: requireAdminLoader,
+            lazy: () =>
+              import("../views/space/tools/ToolsView").then((m) => ({ Component: m.ToolsView })),
+            handle: {
+              heading: {
+                title: "Tools",
+                description:
+                  "Every tool agents can call, by provider. Test one, or register an OpenAPI provider.",
               },
             } satisfies RouteHandle,
           },

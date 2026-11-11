@@ -3,11 +3,6 @@ import { streamWithModel } from "../utils/modelStream";
 import type {
   SendToolMessageBody,
   ToolStreamEvent,
-  BaseResponse,
-  CreateApiToolProviderRequest,
-  GetApiToolProviderResponse,
-  GetApiToolProvidersWithPageResponse,
-  UpdateApiToolProviderRequest,
   DebugToolsResult,
   ToolDiscoverResult,
   OpenAPIRegisterRequest,
@@ -16,67 +11,6 @@ import type {
   ToolInvokeResponse,
   ToolView,
 } from "../models";
-
-// Provider-management API from the sample. These response envelopes and header
-// rows differ from the existing admin registry endpoints below.
-const providerPath = (providerId: string) => `/api-tools/${encodeURIComponent(providerId)}`;
-
-/** Fetch a page of custom API tool providers, optionally filtered by keyword. */
-export function getApiToolProvidersWithPage(
-  current_page = 1,
-  page_size = 20,
-  search_word = "",
-  init?: RequestOptions,
-): Promise<GetApiToolProvidersWithPageResponse> {
-  return get<GetApiToolProvidersWithPageResponse>("/api-tools", {
-    params: { current_page, page_size, search_word },
-    signal: init?.signal,
-  });
-}
-
-export function validateOpenAPISchema(
-  openapi_schema: string,
-  init?: RequestOptions,
-): Promise<BaseResponse<unknown>> {
-  return post<BaseResponse<unknown>>("/api-tools/validate-openapi-schema", {
-    body: { openapi_schema },
-    signal: init?.signal,
-  });
-}
-
-export function createApiToolProvider(
-  req: CreateApiToolProviderRequest,
-  init?: RequestOptions,
-): Promise<BaseResponse<unknown>> {
-  return post<BaseResponse<unknown>>("/api-tools", { body: req, signal: init?.signal });
-}
-
-/** The provider API uses POST for full updates and deletion. */
-export function updateApiToolProvider(
-  providerId: string,
-  req: UpdateApiToolProviderRequest,
-  init?: RequestOptions,
-): Promise<BaseResponse<unknown>> {
-  return post<BaseResponse<unknown>>(providerPath(providerId), { body: req, signal: init?.signal });
-}
-
-export function deleteApiToolProvider(
-  providerId: string,
-  init?: RequestOptions,
-): Promise<BaseResponse<unknown>> {
-  return post<BaseResponse<unknown>>(`${providerPath(providerId)}/delete`, {
-    signal: init?.signal,
-  });
-}
-
-export function getApiToolProvider(
-  providerId: string,
-  init?: RequestOptions,
-): Promise<BaseResponse<GetApiToolProviderResponse>> {
-  return get<BaseResponse<GetApiToolProviderResponse>>(providerPath(providerId), {
-    signal: init?.signal,
-  });
-}
 
 /** Registered tools + the discovery catalog grouped by server (dev console). */
 export function getDebugTools(init?: RequestOptions): Promise<DebugToolsResult> {

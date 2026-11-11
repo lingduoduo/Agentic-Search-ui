@@ -35,8 +35,6 @@ test("Vite keeps SPA navigations local, proxies APIs, and serves mock JSON and S
     }
     for (const route of [
       "/api/example",
-      "/api-tools?current_page=2&search_word=maps",
-      "/api-tools/maps",
       "/admin/tools",
       "/auth/register",
       "/health",

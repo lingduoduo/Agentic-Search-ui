@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ToolAdminPanel } from "../ToolAdminPanel";
+import { ToolInvokeModal } from "../ToolInvokeModal";
 import * as api from "../../services/api";
 import type { ToolView } from "../../models";
 
@@ -34,12 +34,10 @@ const NESTED: ToolView = {
 };
 
 async function openInvoke(tool: ToolView) {
-  vi.spyOn(api, "listTools").mockResolvedValue([tool]);
-  render(<ToolAdminPanel />);
-  fireEvent.click(await screen.findByRole("button", { name: /test/i }));
+  render(<ToolInvokeModal tool={tool} onClose={() => {}} />);
 }
 
-describe("ToolAdminPanel invoke dialog", () => {
+describe("ToolInvokeModal", () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it("renders a labelled input from the schema instead of a JSON box", async () => {

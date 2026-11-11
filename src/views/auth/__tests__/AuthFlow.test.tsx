@@ -315,7 +315,10 @@ describe("permissions", () => {
     expect(await screen.findByLabelText("Admin and observability")).toHaveTextContent("97%");
     const sidebar = screen.getByRole("complementary", { name: "Common navigation" });
     expect(within(sidebar).getByRole("link", { name: "Admin" })).toHaveAttribute("href", "/admin");
-    expect(within(sidebar).getByRole("button", { name: /manage tools/i })).toBeInTheDocument();
+    expect(within(sidebar).getByRole("link", { name: "Manage tools" })).toHaveAttribute(
+      "href",
+      "/space/tools",
+    );
   });
 });
 

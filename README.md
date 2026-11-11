@@ -272,12 +272,10 @@ stream defaults and missing-model error handling. Cancellation retains the
 caller's reason instead of being reclassified as an HTTP failure. Existing API
 imports and direct admin history imports remain compatible.
 
-The provider-management helpers preserve
-the sample `/api-tools` contract (paginated envelopes, header rows, POST updates
-and deletion). They require a backend implementing those endpoints. Current
-screens continue using `/admin/tools` and `/api/debug/tools`, which have different
-payloads. All use the shared request client for authentication, cancellation,
-timeouts, and errors. Both dev and production proxies forward `/api-tools`.
+Tool management uses the backend's `/admin/tools` router (list, register an
+OpenAPI provider, delete it, invoke), and the dev console uses `/api/debug/tools`.
+A tool's `provider_id` is the OpenAPI provider's id, the MCP server's configured
+name, or null for built-ins; only OpenAPI providers can be deleted.
 Route screens in `views/pages/` and `views/space/apps/` compose these pieces inside a layout from `views/layouts/`.
 
 ## Check

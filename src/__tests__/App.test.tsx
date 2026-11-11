@@ -28,9 +28,12 @@ vi.mock("../services/api", () => ({
   getAnalyticsByLLM: vi.fn().mockRejectedValue(new Error()),
   getAnalyticsByPersona: vi.fn().mockRejectedValue(new Error()),
   getAnalyticsByFlow: vi.fn().mockRejectedValue(new Error()),
-  // The /tools page lists the tool inventory on mount.
+  // The /space/tools page lists the tool inventory on mount.
   listTools: vi.fn().mockResolvedValue([]),
   discoverAdminTools: vi.fn(),
+  // The History panel's requests; their results do not matter here.
+  getQueryHistory: vi.fn().mockRejectedValue(new Error("no history")),
+  getAuditSummary: vi.fn().mockRejectedValue(new Error("no audit")),
   errorStatus: vi.fn().mockReturnValue(undefined),
 }));
 
@@ -572,6 +575,7 @@ describe("page navigation", () => {
     ["/space/apps/tools", "Tools"],
     ["/account", "Account"],
     ["/space/sources", "Search sources"],
+    ["/space/tools", "Tools"],
   ])("shows the route's heading at %s", async (url, title) => {
     window.history.replaceState({}, "", url);
     await renderApp();
@@ -581,15 +585,15 @@ describe("page navigation", () => {
   it("shares the same sidebar and panel state across DefaultLayout pages", async () => {
     await renderApp();
     const sidebar = screen.getByRole("complementary", { name: "Common navigation" });
-    const manageTools = within(sidebar).getByRole("button", { name: /manage tools/i });
-    await userEvent.click(manageTools);
+    const history = within(sidebar).getByRole("button", { name: /history/i });
+    await userEvent.click(history);
     await userEvent.click(within(sidebar).getByRole("button", { name: "Account menu" }));
     await userEvent.click(within(sidebar).getByRole("link", { name: "Account" }));
     expect(await screen.findByLabelText("Account details")).toBeInTheDocument();
     expect(screen.getByRole("complementary", { name: "Common navigation" })).toBe(sidebar);
-    expect(within(sidebar).getByRole("button", { name: /manage tools/i })).toBe(manageTools);
-    expect(manageTools).toHaveClass("active");
-    expect(manageTools).toHaveAttribute("aria-pressed", "true");
+    expect(within(sidebar).getByRole("button", { name: /history/i })).toBe(history);
+    expect(history).toHaveClass("active");
+    expect(history).toHaveAttribute("aria-pressed", "true");
   });
 
   it.each([
@@ -626,12 +630,15 @@ describe("page navigation", () => {
     expect(within(nav).queryByRole("link", { name: /^chat$/i })).not.toBeInTheDocument();
   });
 
-  it("names the registry button 'Manage tools' so only the nav link is 'Tools'", async () => {
-    // The header used to carry two controls both labelled "Tools": this nav link
-    // (the agent surface) and the wrench button (the admin registry panel).
+  it("links admins to the tool registry page as 'Manage tools'", async () => {
+    // Named apart from the Tools app, which is the tool-agent surface.
     await renderApp();
-    expect(screen.getByRole("button", { name: /manage tools/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^tools$/i })).not.toBeInTheDocument();
+    const nav = screen.getByRole("navigation", { name: /surfaces/i });
+    expect(within(nav).getByRole("link", { name: "Manage tools" })).toHaveAttribute(
+      "href",
+      "/space/tools",
+    );
+    expect(within(nav).queryByRole("link", { name: /^tools$/i })).not.toBeInTheDocument();
   });
 
   it("swaps the page and the URL when a link is clicked", async () => {

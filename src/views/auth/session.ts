@@ -103,12 +103,18 @@ export type AdminData = {
   byFlow: BreakdownAnalytics | null;
 };
 
-/** Checks the permission before any admin request is made. */
-export async function adminLoader({ request }: LoaderFunctionArgs): Promise<AdminData> {
+/** Admin-only pages: checks the permission before the page makes any admin request. */
+export async function requireAdminLoader({ request }: LoaderFunctionArgs): Promise<null> {
   // Runs alongside the guard; both share the one account request.
   const session = await verifySession();
   if (session === "signed-out") throw loginRedirect(request);
   if (session === "error" || !isAdmin(session)) throw redirect(DEFAULT_ROUTE);
+  return null;
+}
+
+/** Checks the permission before any admin request is made. */
+export async function adminLoader(args: LoaderFunctionArgs): Promise<AdminData> {
+  await requireAdminLoader(args);
   // Each panel renders on its own, so one failing endpoint hides only its panel.
   const optional = <T>(promise: Promise<T>) => promise.catch(() => null);
   const [summary, byLLM, byPersona, byFlow] = await Promise.all([

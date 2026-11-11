@@ -187,7 +187,7 @@ src/
 ├── config/           # Route definitions and search constants
 ├── models/           # Domain API/UI types, shared response envelopes, and index.ts
 ├── routes/           # React Router navigation and routing exports
-├── services/         # Domain API requests (admin.ts, auth.ts, tools.ts), shared API exports
+├── services/         # Domain HTTP/SSE requests; api.ts re-exports the public API
 ├── static/           # Reserved for static assets
 ├── store/            # Redux Toolkit store: the signed-in account
 ├── storybook/        # Reserved for component stories
@@ -251,12 +251,27 @@ When extending the app, put backend requests in the matching `services/` module 
 `get` / `post` / `stream` helpers from `utils/request.ts`), shared
 constants in `config/`, shared data contracts in `models/`, pure helpers in `utils/`, and reusable UI in `components/`.
 
-Admin summary, analytics, history and audit requests live in `services/admin.ts`;
-sign-in, sign-out, identity and permissions requests live in `services/auth.ts`;
-tool registry and provider requests live in `services/tools.ts`. `services/api.ts`
-re-exports these functions for existing callers. Data shapes remain in `models/`,
-including auth account/profile types and history query filters. Domain services
-share `RequestOptions` from the request utility for optional cancellation.
+`services/api.ts` is a compatibility export file. Request implementations live
+in the matching domain module:
+
+| Service      | Responsibility                                                                    |
+| ------------ | --------------------------------------------------------------------------------- |
+| `admin.ts`   | Admin summary and analytics                                                       |
+| `auth.ts`    | Sign-in, sign-out, identity and permissions                                       |
+| `agent.ts`   | Agent runs, streaming, approvals and escalation decisions                         |
+| `chat.ts`    | Direct chat streaming and message feedback                                        |
+| `history.ts` | Session creation/details, query history, audit, tool history and session feedback |
+| `search.ts`  | Direct search, source categories and retrieval availability                       |
+| `debug.ts`   | Retrieval inspection, query transforms, health, metrics and captured requests     |
+| `tools.ts`   | Tool registry, provider management, discovery and direct tool streaming           |
+
+Request/response types live in `models/`. Domain services share `RequestOptions`
+from `utils/request.ts` for optional cancellation; `fetchSearchDomains` retains
+its existing `AbortSignal` argument. `utils/modelStream.ts` shares chat/tool
+stream defaults and missing-model error handling. Cancellation retains the
+caller's reason instead of being reclassified as an HTTP failure. Existing API
+imports and direct admin history imports remain compatible.
+
 The provider-management helpers preserve
 the sample `/api-tools` contract (paginated envelopes, header rows, POST updates
 and deletion). They require a backend implementing those endpoints. Current

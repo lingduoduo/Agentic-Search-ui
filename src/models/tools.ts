@@ -173,3 +173,9 @@ export interface GetApiToolProviderResponse extends ApiToolProviderConfiguration
   id: string;
   created_at: number;
 }
+
+export interface ToolHistoryResponse {
+  sessions: ToolSessionSummary[];
+}
+export type ToolApprovalDecision = "approve" | "deny";
+export type ToolEscalationDecision = "retry" | "skip" | "cancel";

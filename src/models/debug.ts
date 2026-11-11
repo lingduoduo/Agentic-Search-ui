@@ -136,3 +136,13 @@ export interface QueryTransformResult {
     keywords?: string[];
   };
 }
+
+export interface ServerHealthResponse {
+  servers: ServerHealth[];
+}
+export interface EvalResultsResponse {
+  results: EvalResultFile[];
+}
+export interface DebugRequestsResponse {
+  requests: RequestSummary[];
+}

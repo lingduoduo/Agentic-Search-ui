@@ -36,7 +36,15 @@ vi.mock("../services/api", () => ({
     paginator: { current_page: 1, page_size: 20, total_page: 0, total_record: 0 },
   }),
   // The /space/datasets page lists the registered corpora.
-  getDatasets: vi.fn().mockResolvedValue([]),
+  getDatasets: vi.fn().mockResolvedValue({
+    list: [],
+    paginator: { current_page: 1, page_size: 20, total_page: 0, total_record: 0 },
+  }),
+  getDataset: vi.fn().mockRejectedValue(new Error("no dataset")),
+  getDatasetDocuments: vi.fn().mockResolvedValue({
+    list: [],
+    paginator: { current_page: 1, page_size: 20, total_page: 0, total_record: 0 },
+  }),
   discoverAdminTools: vi.fn(),
   // The History panel's requests; their results do not matter here.
   getQueryHistory: vi.fn().mockRejectedValue(new Error("no history")),
@@ -584,6 +592,7 @@ describe("page navigation", () => {
     ["/space/sources", "Search sources"],
     ["/space/tools", "Tools"],
     ["/space/datasets", "Datasets"],
+    ["/space/datasets/demo", "demo"],
   ])("shows the route's heading at %s", async (url, title) => {
     window.history.replaceState({}, "", url);
     await renderApp();

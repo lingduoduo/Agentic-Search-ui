@@ -42,6 +42,15 @@ const disliked = history.filter((item) => item.feedback_type === "dislike");
 // out lasts until the next sign-in (any credentials work), as with the backend.
 let signedIn = true;
 const unauthorized = { detail: "Unauthorized" };
+const mockDataset = {
+  name: "demo",
+  path: "data/corpus.jsonl",
+  docs: 20,
+  domain: "retrieval/ML",
+  source: "ML Knowledge Base",
+  available: true,
+  served: null,
+};
 
 export default [
   {
@@ -122,17 +131,27 @@ export default [
   {
     method: "GET",
     path: "/api/datasets",
-    response: [
-      {
-        name: "demo",
-        path: "data/corpus.jsonl",
-        docs: 20,
-        domain: "retrieval/ML",
-        source: "ML Knowledge Base",
-        available: true,
-        served: null,
-      },
-    ],
+    response: {
+      list: [mockDataset],
+      paginator: { current_page: 1, page_size: 20, total_page: 1, total_record: 1 },
+    },
+  },
+  { method: "GET", path: "/api/datasets/demo", response: mockDataset },
+  {
+    method: "GET",
+    path: "/api/datasets/demo/documents",
+    response: {
+      list: [
+        {
+          id: "doc_001",
+          title: "Dense Retrieval with FAISS",
+          contents: "Dense retrieval encodes queries and documents into vectors.",
+          source: "Vector Search Docs",
+          acl: ["public"],
+        },
+      ],
+      paginator: { current_page: 1, page_size: 20, total_page: 1, total_record: 1 },
+    },
   },
   {
     method: "GET",

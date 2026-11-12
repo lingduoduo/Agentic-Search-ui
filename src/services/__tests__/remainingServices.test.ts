@@ -33,6 +33,27 @@ describe("domain service contracts", () => {
       body: undefined,
     },
     {
+      name: "dataset page and search",
+      call: () => data.getDatasets({ current_page: 2, page_size: 20, search_word: "sci fact" }),
+      url: "/api/datasets?current_page=2&page_size=20&search_word=sci+fact",
+      method: "GET",
+      body: undefined,
+    },
+    {
+      name: "dataset details",
+      call: () => data.getDataset("a/b?c"),
+      url: "/api/datasets/a%2Fb%3Fc",
+      method: "GET",
+      body: undefined,
+    },
+    {
+      name: "dataset documents",
+      call: () => data.getDatasetDocuments("a/b", { current_page: 3, search_word: "" }),
+      url: "/api/datasets/a%2Fb/documents?current_page=3",
+      method: "GET",
+      body: undefined,
+    },
+    {
       name: "session details",
       call: () => history.getSession("a/b?c"),
       url: "/api/sessions/a%2Fb%3Fc",
@@ -181,7 +202,12 @@ describe("domain service contracts", () => {
         api.runDebugRetrieval("sparse", { query: "q", top_k: 3 }, { signal }),
     },
     { name: "retrieval status", call: (signal: AbortSignal) => api.getRetrievalStatus({ signal }) },
-    { name: "datasets", call: (signal: AbortSignal) => api.getDatasets({ signal }) },
+    { name: "datasets", call: (signal: AbortSignal) => api.getDatasets({}, { signal }) },
+    { name: "dataset details", call: (signal: AbortSignal) => api.getDataset("d", { signal }) },
+    {
+      name: "dataset documents",
+      call: (signal: AbortSignal) => api.getDatasetDocuments("d", {}, { signal }),
+    },
     {
       name: "search",
       call: (signal: AbortSignal) => api.sendSearchMessage({ search_query: "q" }, { signal }),

@@ -2962,13 +2962,9 @@ p.source-drawer__note {
   font-size: 13px;
 }
 
-/* /space/datasets: reuses the sources catalog grid; its cards are not buttons. */
-.source-card.datasets-catalog__card {
-  cursor: default;
-  &:hover {
-    border-color: var(--line);
-    box-shadow: none;
-  }
+/* /space/datasets: reuses the sources catalog grid; cards link to the detail page. */
+a.source-card {
+  text-decoration: none;
 }
 .datasets-catalog__icon {
   background: var(--assistant-soft);
@@ -2986,6 +2982,35 @@ p.source-drawer__note {
   &:empty {
     display: none;
   }
+}
+.datasets-detail {
+  display: grid;
+  gap: 16px;
+  h3 {
+    margin: 0;
+    font-size: 15px;
+  }
+}
+.datasets-detail__back {
+  justify-self: start;
+  color: var(--muted);
+  font-size: 13px;
+}
+.source-card.datasets-detail__summary {
+  height: auto;
+  cursor: default;
+  &:hover {
+    border-color: var(--line);
+    box-shadow: none;
+  }
+}
+.datasets-detail__table {
+  display: block;
+  overflow-x: auto;
+}
+.datasets-detail__contents {
+  min-width: 240px;
+  color: var(--muted);
 }
 
 /* /space/tools: reuses the sources catalog grid and drawer. */

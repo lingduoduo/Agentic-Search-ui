@@ -1,50 +1,38 @@
-import { useEffect, useState } from "react";
 import { Database } from "lucide-react";
-import { getDatasets } from "../../../services/api";
+import { Link, useSearchParams } from "react-router";
+import { useDatasets } from "../../../hooks/useDataset";
+import { useKeywordSearch } from "../../../hooks/useKeywordSearch";
+import { routePath } from "../../../config/routes";
 import type { DatasetView } from "../../../models";
 import { RetrievalStatus } from "../../../components/RetrievalStatus";
 
-/** `/space/datasets`: the corpora registered for the retrieval server. */
+/** `/space/datasets`: the corpora registered for the retrieval server, a page at a time. */
 export function DatasetsView() {
-  const [datasets, setDatasets] = useState<DatasetView[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [attempt, setAttempt] = useState(0);
-  const [term, setTerm] = useState("");
-
-  // A retry, or leaving the page, aborts the request in flight.
-  useEffect(() => {
-    const controller = new AbortController();
-    setLoading(true);
-    setError("");
-    getDatasets({ signal: controller.signal })
-      .then(setDatasets)
-      .catch((cause: unknown) => {
-        if (controller.signal.aborted) return;
-        setError(cause instanceof Error ? cause.message : "Unable to load datasets.");
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-    return () => controller.abort();
-  }, [attempt]);
-
-  const query = term.trim().toLowerCase();
-  const shown = datasets.filter(
-    (d) => query === "" || `${d.name} ${d.source} ${d.domain ?? ""}`.toLowerCase().includes(query),
-  );
+  // The search lives in the URL (`?search_word=`) and runs on submit.
+  const { query, setQuery, commitKeyword } = useKeywordSearch();
+  const [params] = useSearchParams();
+  const searchWord = params.get("search_word") ?? "";
+  const { datasets, loading, error, hasMore, loadMore, retry } = useDatasets(searchWord);
 
   return (
     <section className="sources-catalog" aria-label="Datasets">
       <div className="sources-catalog__toolbar">
         <RetrievalStatus />
-        <input
-          type="search"
-          aria-label="Find a dataset"
-          placeholder="Find a dataset…"
-          value={term}
-          onChange={(event) => setTerm(event.target.value)}
-        />
+        <form
+          role="search"
+          onSubmit={(event) => {
+            event.preventDefault();
+            commitKeyword(query);
+          }}
+        >
+          <input
+            type="search"
+            aria-label="Find a dataset"
+            placeholder="Find a dataset…"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </form>
       </div>
 
       {error && (
@@ -54,51 +42,75 @@ export function DatasetsView() {
             type="button"
             className="account-retry"
             aria-label="Retry loading datasets"
-            onClick={() => setAttempt((n) => n + 1)}
+            onClick={retry}
           >
             Retry
           </button>
         </div>
       )}
-      {loading && <p role="status">Loading datasets…</p>}
 
       <ul className="sources-catalog__grid">
-        {shown.map((dataset) => (
+        {datasets.map((dataset) => (
           <li key={dataset.name}>
-            <article className="source-card datasets-catalog__card" aria-label={dataset.name}>
-              <span className="source-card__heading">
-                <span className="source-option__icon source-card__icon datasets-catalog__icon">
-                  <Database aria-hidden="true" size={20} />
-                </span>
-                <span>
-                  <strong className="source-option__name">{dataset.source}</strong>
-                  <small>
-                    {[
-                      dataset.name,
-                      dataset.domain,
-                      dataset.docs === null ? "" : `${dataset.docs.toLocaleString()} docs`,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </small>
-                </span>
-              </span>
-              <code className="datasets-catalog__path">{dataset.path ?? "No path"}</code>
-              <span className="datasets-catalog__badges">
-                {dataset.served && <span className="route-pill">Serving</span>}
-                {!dataset.available && (
-                  <span className="route-pill route-pill--degraded">File missing</span>
-                )}
-              </span>
-            </article>
+            <DatasetCard dataset={dataset} />
           </li>
         ))}
       </ul>
-      {!loading && !error && shown.length === 0 && (
+      {loading && <p role="status">Loading datasets…</p>}
+      {!loading && !error && datasets.length === 0 && (
         <p className="sources-catalog__empty">
-          {datasets.length ? "No datasets match." : "No datasets registered."}
+          {searchWord ? "No datasets match." : "No datasets registered."}
         </p>
       )}
+      {hasMore && !loading && (
+        <div className="tools-catalog__more">
+          <button type="button" onClick={loadMore}>
+            Load more
+          </button>
+        </div>
+      )}
     </section>
+  );
+}
+
+function DatasetCard({ dataset }: { dataset: DatasetView }) {
+  return (
+    <Link className="source-card" to={routePath("space-datasets-detail", { name: dataset.name })}>
+      <DatasetHeading dataset={dataset} />
+      <code className="datasets-catalog__path">{dataset.path ?? "No path"}</code>
+      <DatasetBadges dataset={dataset} />
+    </Link>
+  );
+}
+
+/** Icon tile, label and the "name · domain · docs" line, shared by card and detail page. */
+export function DatasetHeading({ dataset }: { dataset: DatasetView }) {
+  return (
+    <span className="source-card__heading">
+      <span className="source-option__icon source-card__icon datasets-catalog__icon">
+        <Database aria-hidden="true" size={20} />
+      </span>
+      <span>
+        <strong className="source-option__name">{dataset.source}</strong>
+        <small>
+          {[
+            dataset.name,
+            dataset.domain,
+            dataset.docs === null ? "" : `${dataset.docs.toLocaleString()} docs`,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </small>
+      </span>
+    </span>
+  );
+}
+
+export function DatasetBadges({ dataset }: { dataset: DatasetView }) {
+  return (
+    <span className="datasets-catalog__badges">
+      {dataset.served && <span className="route-pill">Serving</span>}
+      {!dataset.available && <span className="route-pill route-pill--degraded">File missing</span>}
+    </span>
   );
 }

@@ -112,6 +112,21 @@ export const appRoutes: RouteObject[] = [
             } satisfies RouteHandle,
           },
           {
+            id: "space-datasets-detail",
+            path: "space/datasets/:name",
+            loader: requireAdminLoader,
+            lazy: () =>
+              import("../views/space/datasets/DatasetDetailView").then((m) => ({
+                Component: m.DatasetDetailView,
+              })),
+            handle: {
+              heading: (params) => ({
+                title: params.name ?? "Dataset",
+                description: "The documents in this corpus, as the retrieval server indexes them.",
+              }),
+            } satisfies RouteHandle,
+          },
+          {
             id: "pages-account",
             path: "account",
             lazy: () =>

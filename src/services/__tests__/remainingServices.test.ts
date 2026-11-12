@@ -6,6 +6,7 @@ import * as history from "../history";
 import * as search from "../search";
 import * as debug from "../debug";
 import * as tools from "../tools";
+import * as data from "../data";
 import { RequestError } from "../../utils/request";
 
 const mockFetch = vi.fn();
@@ -17,6 +18,20 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("domain service contracts", () => {
   it.each([
+    {
+      name: "retrieval status",
+      call: () => data.getRetrievalStatus(),
+      url: "/api/retrieval/status",
+      method: "GET",
+      body: undefined,
+    },
+    {
+      name: "datasets",
+      call: () => data.getDatasets(),
+      url: "/api/datasets",
+      method: "GET",
+      body: undefined,
+    },
     {
       name: "session details",
       call: () => history.getSession("a/b?c"),
@@ -166,6 +181,7 @@ describe("domain service contracts", () => {
         api.runDebugRetrieval("sparse", { query: "q", top_k: 3 }, { signal }),
     },
     { name: "retrieval status", call: (signal: AbortSignal) => api.getRetrievalStatus({ signal }) },
+    { name: "datasets", call: (signal: AbortSignal) => api.getDatasets({ signal }) },
     {
       name: "search",
       call: (signal: AbortSignal) => api.sendSearchMessage({ search_query: "q" }, { signal }),

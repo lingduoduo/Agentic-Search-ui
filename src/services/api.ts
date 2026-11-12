@@ -8,4 +8,5 @@ export * from "./history";
 export * from "./search";
 export * from "./debug";
 export * from "./tools";
+export * from "./data";
 export { errorStatus } from "../utils/request";

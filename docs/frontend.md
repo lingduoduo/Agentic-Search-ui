@@ -18,7 +18,8 @@ pages are the apps list, `/space/apps` (`ListView`), one app at
 `/space/apps/:app_id` (`DetailView`: `assist`, `search`, `chat` or `tools`; an
 unknown id shows the not-found page), the search-source catalog at
 `/space/sources` (`SourcesView`), the admin tool registry at `/space/tools`
-(`ToolsView`), `/account` and `/admin`. Signing in lands
+(`ToolsView`), the admin corpus list at `/space/datasets` (`DatasetsView`),
+`/account` and `/admin`. Signing in lands
 on Assistant at `/space/apps/assist`, and `/` redirects there while preserving query parameters. Explicit page links still return to the requested page after sign-in. Public pages, marked
 `handle: { public: true }`, sit under `BlankLayout`, with no sidebar: the sign-in
 page and `NotFoundView` for unknown URLs. Route ids double as route names, and
@@ -89,7 +90,8 @@ its own then.
 Permissions come from `/me/permissions`, not the role text: every user has
 `basic_access` (the four workspaces and `/account`); admins and configured super
 users also have `full_admin_panel_access`, which shows the **Admin** link,
-**Manage tools** and **History**, and allows `/admin` and `/space/tools`. Their
+**Manage tools**, **Datasets** and **History**, and allows `/admin`,
+`/space/tools` and `/space/datasets`. Their
 loaders check the permission before the page fetches any admin data and sends other users to
 `/space/apps/assist`. The backend's `make_require_admin` guards remain the real boundary.
 
@@ -312,5 +314,17 @@ header rows, with the schema checked on blur by
 register. Edit loads the stored configuration (`GET /admin/tools/openapi/{id}`)
 and saves with `PUT`, which rebuilds the provider's tools; **Delete** is in the
 edit dialog, after a confirmation. Saving or deleting reloads from page 1.
+
+**Datasets** (`/space/datasets`, admins only) lists the corpora registered in
+the backend's `data/corpora.json`, from `GET /api/datasets`: each card shows the
+source label results cite, the registered name, domain, document count and the
+file path on the server. **Serving** marks the corpora the in-process retriever
+(`AGENTIC_SEARCH_EMBEDDED_RETRIEVAL`) loaded; with a separate retrieval server
+(port 8001) the API cannot tell which corpus it serves, so no card is marked.
+**File missing** means the registered file is not on disk. The toolbar shows the
+same retrieval badge as Assist and filters by name, label or domain on the
+client. The list is read-only: corpora are built and registered offline (see the
+backend README). Types and calls for the retriever live in `models/data.ts` and
+`services/data.ts`; the dev console's Retrieval Lab keeps its own in `debug.ts`.
 
 Search and Assist share the Sources picker. Search uses `POST /api/agent` with `mode: "search_tool"`, which supports category selection and returns source documents without answer generation. `POST /search/send-search-message` remains available for direct corpus searches. The default All sources selection maps to `web` (unrestricted category), not a request to fan out across every category or provider. Auto selects up to three categories; manual selection has the same limit.

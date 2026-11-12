@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import {
   ChevronsUpDown,
+  Database,
   History,
   LayoutGrid,
   Library,
@@ -41,6 +42,7 @@ const navigationGroups: { label: string; adminOnly?: boolean; items: NavItem[] }
     items: [
       { to: routePath("pages-admin"), label: "Admin", icon: ShieldCheck },
       { to: routePath("space-tools"), label: "Manage tools", icon: Settings2 },
+      { to: routePath("space-datasets"), label: "Datasets", icon: Database },
       { panel: "history", label: "History", title: "Query history audit", icon: History },
     ],
   },

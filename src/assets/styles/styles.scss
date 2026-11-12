@@ -2962,6 +2962,32 @@ p.source-drawer__note {
   font-size: 13px;
 }
 
+/* /space/datasets: reuses the sources catalog grid; its cards are not buttons. */
+.source-card.datasets-catalog__card {
+  cursor: default;
+  &:hover {
+    border-color: var(--line);
+    box-shadow: none;
+  }
+}
+.datasets-catalog__icon {
+  background: var(--assistant-soft);
+}
+.datasets-catalog__path {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 12px;
+}
+.datasets-catalog__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+  &:empty {
+    display: none;
+  }
+}
+
 /* /space/tools: reuses the sources catalog grid and drawer. */
 .tools-catalog__create {
   display: inline-flex;

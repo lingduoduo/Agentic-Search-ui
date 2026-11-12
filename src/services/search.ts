@@ -1,15 +1,5 @@
-import type {
-  RetrievalStatusView,
-  SearchDomainsResponse,
-  SendSearchMessageBody,
-  SearchFullResponse,
-} from "../models";
+import type { SearchDomainsResponse, SendSearchMessageBody, SearchFullResponse } from "../models";
 import { get, post, type RequestOptions } from "../utils/request";
-
-/** Which retrieval server answers queries, and whether it is reachable. */
-export function getRetrievalStatus(init?: RequestOptions): Promise<RetrievalStatusView> {
-  return get<RetrievalStatusView>("/api/retrieval/status", { signal: init?.signal });
-}
 
 export function fetchSearchDomains(signal?: AbortSignal): Promise<SearchDomainsResponse> {
   return get<SearchDomainsResponse>("/api/search-domains", { signal });

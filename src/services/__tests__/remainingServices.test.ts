@@ -185,6 +185,13 @@ describe("domain service contracts", () => {
       body: { title: "T", enabled: false },
     },
     {
+      name: "upload batch status",
+      call: () => data.getDocumentsStatus("kb", "batch/1"),
+      url: "/api/datasets/kb/documents/batch/batch%2F1",
+      method: "GET",
+      body: undefined,
+    },
+    {
       name: "document deletion",
       call: () => data.deleteDocument("kb", "d1"),
       url: "/api/datasets/kb/documents/d1",
@@ -272,6 +279,26 @@ describe("domain service contracts", () => {
     controller.abort(reason);
     await expect(call(controller.signal)).rejects.toBe(reason);
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("document upload", () => {
+  it("posts the files as multipart form data", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(JSON.stringify({ batch: "b1", files: [], done: false })),
+    );
+    const a = new File(["one"], "a.txt", { type: "text/plain" });
+    const b = new File(["{}"], "b.jsonl");
+
+    await expect(data.createDocuments("kb", [a, b])).resolves.toMatchObject({ batch: "b1" });
+
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(url).toBe("/api/datasets/kb/documents");
+    expect(init.method).toBe("POST");
+    expect(init.body).toBeInstanceOf(FormData);
+    expect((init.body as FormData).getAll("files")).toHaveLength(2);
+    // The browser sets the multipart boundary; a JSON Content-Type would break it.
+    expect(new Headers(init.headers).has("Content-Type")).toBe(false);
   });
 });
 

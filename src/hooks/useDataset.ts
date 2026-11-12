@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getDataset, getDatasetDocuments, getDatasets } from "../services/api";
-import type { DatasetDocumentView, DatasetView, Paginator } from "../models";
+import { getDataset, getDatasetDocuments, getDatasets, getDocumentsStatus } from "../services/api";
+import type { DatasetDocumentView, DatasetView, DocumentBatchView, Paginator } from "../models";
 
 export const PAGE_SIZE = 20;
 
@@ -119,4 +119,38 @@ export function useDatasetDocuments(name: string, page: number, searchWord: stri
   }, [name, page, searchWord, attempt]);
 
   return { documents, paginator, loading, error, reload: () => setAttempt((n) => n + 1) };
+}
+
+export const BATCH_POLL_MS = 1000;
+
+/**
+ * Follows an upload batch from the server's first answer until every file is
+ * done, polling once a second. Starts from `accepted`, read once on mount.
+ */
+export function useDocumentBatch(name: string, accepted: DocumentBatchView) {
+  const [batch, setBatch] = useState(accepted);
+  const [error, setError] = useState("");
+  const batchId = accepted.batch;
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const poll = () => {
+      getDocumentsStatus(name, batchId, { signal: controller.signal })
+        .then((view) => {
+          setBatch(view);
+          if (!view.done) timer = setTimeout(poll, BATCH_POLL_MS);
+        })
+        .catch((cause: unknown) => {
+          if (!controller.signal.aborted) setError(messageOf(cause, "Unable to check the upload."));
+        });
+    };
+    poll();
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [name, batchId]);
+
+  return { batch, error };
 }

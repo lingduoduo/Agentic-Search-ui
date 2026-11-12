@@ -8,6 +8,7 @@ import type { DatasetDocumentView } from "../../../models";
 import { DatasetBadges, DatasetHeading } from "./DatasetsView";
 import { DatasetDialog } from "./DatasetDialog";
 import { DocumentDialog } from "./DocumentDialog";
+import { UploadDialog } from "./UploadDialog";
 
 // A new search starts again from the first page.
 const SEARCH_RESETS = ["current_page"] as const;
@@ -32,6 +33,7 @@ export function DatasetDetailView() {
   );
   const [editing, setEditing] = useState(false);
   const [openDocument, setOpenDocument] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   // Documents whose enabled switch is saving.
   const [toggling, setToggling] = useState<ReadonlySet<string>>(new Set());
   const [importing, setImporting] = useState(false);
@@ -147,6 +149,11 @@ export function DatasetDetailView() {
 
       <div className="sources-catalog__toolbar">
         <h3>Documents</h3>
+        {managed && (
+          <button type="button" className="btn-ghost btn-sm" onClick={() => setUploading(true)}>
+            Add documents
+          </button>
+        )}
         <form
           role="search"
           onSubmit={(event) => {
@@ -268,6 +275,9 @@ export function DatasetDetailView() {
           }}
           onDeleted={() => void navigate(routePath("space-datasets"))}
         />
+      )}
+      {uploading && (
+        <UploadDialog datasetName={name} onClose={() => setUploading(false)} onUploaded={changed} />
       )}
       {openDocument && (
         <DocumentDialog

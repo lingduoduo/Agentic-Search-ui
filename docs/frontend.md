@@ -348,8 +348,16 @@ an **Enabled** switch per row (disabled rows stay in the dataset but search does
 not see them) and **Edit**, which loads the document (`getDocument`) to show its
 full text, rename it, enable it or delete it. When a separate retrieval server
 answers (`served` is not true), a note says search sees changes after it
-restarts; the in-process retriever rebuilds at once. Uploading documents, the
-search test and recent queries are not built yet.
+restarts; the in-process retriever rebuilds at once.
+
+**Add documents** (managed datasets) opens `UploadDialog`: up to 20 `.jsonl`,
+`.txt` or `.md` files of at most 10 MB each, checked before uploading with the
+backend's own rules. `.jsonl` lines become documents as written; text files are
+split into passages of about 300 words. `createDocuments` returns a batch at
+once and the backend processes the files in the background; `useDocumentBatch`
+polls `getDocumentsStatus` every second until every file is added or failed
+(a failed file adds nothing and shows why), then the table reloads. The search
+test and recent queries are not built yet.
 
 The hooks in `hooks/useDataset.ts` load this data: `useDatasets` (the appended
 list), `useDataset` (one corpus) and `useDatasetDocuments` (one table page); the

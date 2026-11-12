@@ -3,6 +3,7 @@ import type {
   DatasetDocumentPage,
   DatasetDocumentView,
   DatasetPage,
+  DocumentBatchView,
   DatasetPageParams,
   DatasetView,
   RetrievalStatusView,
@@ -86,4 +87,23 @@ export function updateDocument(
 
 export function deleteDocument(name: string, documentId: string): Promise<void> {
   return del<void>(documentUrl(name, documentId));
+}
+
+/** Upload .jsonl, .txt or .md files; they are processed in the background. */
+export function createDocuments(name: string, files: File[]): Promise<DocumentBatchView> {
+  const body = new FormData();
+  files.forEach((file) => body.append("files", file));
+  return post<DocumentBatchView>(`${datasetUrl(name)}/documents`, { body });
+}
+
+/** How each file of an upload batch is doing. */
+export function getDocumentsStatus(
+  name: string,
+  batch: string,
+  init?: RequestOptions,
+): Promise<DocumentBatchView> {
+  return get<DocumentBatchView>(
+    `${datasetUrl(name)}/documents/batch/${encodeURIComponent(batch)}`,
+    { signal: init?.signal },
+  );
 }

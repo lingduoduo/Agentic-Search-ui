@@ -84,3 +84,21 @@ export interface DatasetDocumentPage {
   list: DatasetDocumentView[];
   paginator: Paginator;
 }
+
+/** One file of an upload batch. */
+export interface UploadFileView {
+  filename: string;
+  /** waiting -> parsing -> completed | error */
+  status: "waiting" | "parsing" | "completed" | "error";
+  /** Why the file was rejected (whole file: none of its documents were added). */
+  error: string | null;
+  document_count: number;
+}
+
+/** An upload's per-file progress (`getDocumentsStatus`). */
+export interface DocumentBatchView {
+  batch: string;
+  files: UploadFileView[];
+  /** Every file is completed or error. */
+  done: boolean;
+}

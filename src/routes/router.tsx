@@ -95,6 +95,23 @@ export const appRoutes: RouteObject[] = [
             } satisfies RouteHandle,
           },
           {
+            id: "space-datasets",
+            path: "space/datasets",
+            // /api/datasets is admin-only (it shows server paths), so the page is too.
+            loader: requireAdminLoader,
+            lazy: () =>
+              import("../views/space/datasets/DatasetsView").then((m) => ({
+                Component: m.DatasetsView,
+              })),
+            handle: {
+              heading: {
+                title: "Datasets",
+                description:
+                  "The corpora registered for the retrieval server, and which ones it is serving.",
+              },
+            } satisfies RouteHandle,
+          },
+          {
             id: "pages-account",
             path: "account",
             lazy: () =>

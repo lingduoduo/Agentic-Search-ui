@@ -6,6 +6,7 @@ export type * from "./history";
 export type * from "./admin";
 export type * from "./tools";
 export type * from "./debug";
+export type * from "./data";
 export type * from "./auth";
 
 export { METRIC_GROUPS } from "./debug";

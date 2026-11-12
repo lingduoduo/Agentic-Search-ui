@@ -35,6 +35,8 @@ vi.mock("../services/api", () => ({
     list: [],
     paginator: { current_page: 1, page_size: 20, total_page: 0, total_record: 0 },
   }),
+  // The /space/datasets page lists the registered corpora.
+  getDatasets: vi.fn().mockResolvedValue([]),
   discoverAdminTools: vi.fn(),
   // The History panel's requests; their results do not matter here.
   getQueryHistory: vi.fn().mockRejectedValue(new Error("no history")),
@@ -581,6 +583,7 @@ describe("page navigation", () => {
     ["/account", "Account"],
     ["/space/sources", "Search sources"],
     ["/space/tools", "Tools"],
+    ["/space/datasets", "Datasets"],
   ])("shows the route's heading at %s", async (url, title) => {
     window.history.replaceState({}, "", url);
     await renderApp();
@@ -644,6 +647,15 @@ describe("page navigation", () => {
       "/space/tools",
     );
     expect(within(nav).queryByRole("link", { name: /^tools$/i })).not.toBeInTheDocument();
+  });
+
+  it("links admins to the datasets page", async () => {
+    await renderApp();
+    const nav = screen.getByRole("navigation", { name: /surfaces/i });
+    expect(within(nav).getByRole("link", { name: "Datasets" })).toHaveAttribute(
+      "href",
+      "/space/datasets",
+    );
   });
 
   it("swaps the page and the URL when a link is clicked", async () => {

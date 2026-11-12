@@ -121,6 +121,21 @@ export default [
   { method: "GET", path: "/admin/tools", response: [] },
   {
     method: "GET",
+    path: "/api/datasets",
+    response: [
+      {
+        name: "demo",
+        path: "data/corpus.jsonl",
+        docs: 20,
+        domain: "retrieval/ML",
+        source: "ML Knowledge Base",
+        available: true,
+        served: null,
+      },
+    ],
+  },
+  {
+    method: "GET",
     path: "/admin/tools/providers",
     response: {
       list: [],

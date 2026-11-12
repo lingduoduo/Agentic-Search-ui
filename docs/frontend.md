@@ -18,7 +18,8 @@ pages are the apps list, `/space/apps` (`ListView`), one app at
 `/space/apps/:app_id` (`DetailView`: `assist`, `search`, `chat` or `tools`; an
 unknown id shows the not-found page), the search-source catalog at
 `/space/sources` (`SourcesView`), the admin tool registry at `/space/tools`
-(`ToolsView`), the admin corpus list at `/space/datasets` (`DatasetsView`),
+(`ToolsView`), the admin corpus list at `/space/datasets` (`DatasetsView`) and one corpus's
+documents at `/space/datasets/:name` (`DatasetDetailView`),
 `/account` and `/admin`. Signing in lands
 on Assistant at `/space/apps/assist`, and `/` redirects there while preserving query parameters. Explicit page links still return to the requested page after sign-in. Public pages, marked
 `handle: { public: true }`, sit under `BlankLayout`, with no sidebar: the sign-in
@@ -315,16 +316,30 @@ register. Edit loads the stored configuration (`GET /admin/tools/openapi/{id}`)
 and saves with `PUT`, which rebuilds the provider's tools; **Delete** is in the
 edit dialog, after a confirmation. Saving or deleting reloads from page 1.
 
-**Datasets** (`/space/datasets`, admins only) lists the corpora registered in
-the backend's `data/corpora.json`, from `GET /api/datasets`: each card shows the
-source label results cite, the registered name, domain, document count and the
-file path on the server. **Serving** marks the corpora the in-process retriever
+**Datasets** (`/space/datasets`, admins only) pages through the corpora
+registered in the backend's `data/corpora.json`, from `GET /api/datasets`
+(20 at a time; **Load more** appends the next page and skips any already shown).
+Each card shows the source label results cite, the registered name, domain,
+document count and the file path on the server, and links to the corpus's page.
+**Serving** marks the corpora the in-process retriever
 (`AGENTIC_SEARCH_EMBEDDED_RETRIEVAL`) loaded; with a separate retrieval server
 (port 8001) the API cannot tell which corpus it serves, so no card is marked.
 **File missing** means the registered file is not on disk. The toolbar shows the
-same retrieval badge as Assist and filters by name, label or domain on the
-client. The list is read-only: corpora are built and registered offline (see the
-backend README). Types and calls for the retriever live in `models/data.ts` and
-`services/data.ts`; the dev console's Retrieval Lab keeps its own in `debug.ts`.
+same retrieval badge as Assist and a search box that filters on the server by
+name, label or domain; it runs on Enter and lives in the URL (`?search_word=`,
+via `useKeywordSearch`).
+
+A corpus's page (`/space/datasets/:name`) shows its card and a table of its
+documents (ID, title, contents, source, access list) from
+`GET /api/datasets/{name}/documents`, 20 rows a page with Prev/Next. The page
+and the search (over titles and contents) are in the URL (`?current_page=`,
+`?search_word=`), and a new search starts again from page 1. A missing file is a
+409 from the API, shown with Retry. Everything is read-only: corpora are built
+and registered offline (see the backend README).
+
+The hooks in `hooks/useDataset.ts` load this data: `useDatasets` (the appended
+list), `useDataset` (one corpus) and `useDatasetDocuments` (one table page).
+Retriever types and calls live in `models/data.ts` and `services/data.ts`; the
+dev console's Retrieval Lab keeps its own in `debug.ts`.
 
 Search and Assist share the Sources picker. Search uses `POST /api/agent` with `mode: "search_tool"`, which supports category selection and returns source documents without answer generation. `POST /search/send-search-message` remains available for direct corpus searches. The default All sources selection maps to `web` (unrestricted category), not a request to fan out across every category or provider. Auto selects up to three categories; manual selection has the same limit.

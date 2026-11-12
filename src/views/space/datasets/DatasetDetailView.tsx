@@ -8,6 +8,7 @@ import type { DatasetDocumentView } from "../../../models";
 import { DatasetBadges, DatasetHeading } from "./DatasetsView";
 import { DatasetDialog } from "./DatasetDialog";
 import { DocumentDialog } from "./DocumentDialog";
+import { SearchTestPanel } from "./SearchTestPanel";
 import { UploadDialog } from "./UploadDialog";
 
 // A new search starts again from the first page.
@@ -146,6 +147,8 @@ export function DatasetDetailView() {
           <span>{actionError}</span>
         </div>
       )}
+
+      {dataset?.available && <SearchTestPanel datasetName={name} />}
 
       <div className="sources-catalog__toolbar">
         <h3>Documents</h3>

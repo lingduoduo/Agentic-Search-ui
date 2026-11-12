@@ -185,6 +185,20 @@ describe("domain service contracts", () => {
       body: { title: "T", enabled: false },
     },
     {
+      name: "search test",
+      call: () => data.hit("a/b", { query: "q", top_k: 3 }),
+      url: "/api/datasets/a%2Fb/hit",
+      method: "POST",
+      body: { query: "q", top_k: 3 },
+    },
+    {
+      name: "recent queries",
+      call: () => data.getDatasetQueries("kb"),
+      url: "/api/datasets/kb/queries",
+      method: "GET",
+      body: undefined,
+    },
+    {
       name: "upload batch status",
       call: () => data.getDocumentsStatus("kb", "batch/1"),
       url: "/api/datasets/kb/documents/batch/batch%2F1",
@@ -267,6 +281,10 @@ describe("domain service contracts", () => {
     {
       name: "document details",
       call: (signal: AbortSignal) => api.getDocument("d", "x", { signal }),
+    },
+    {
+      name: "recent queries",
+      call: (signal: AbortSignal) => api.getDatasetQueries("d", { signal }),
     },
     {
       name: "search",

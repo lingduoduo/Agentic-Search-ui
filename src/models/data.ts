@@ -102,3 +102,34 @@ export interface DocumentBatchView {
   /** Every file is completed or error. */
   done: boolean;
 }
+
+/** A search test against one dataset (`hit`). */
+export interface HitRequest {
+  query: string;
+  /** 1–20; the backend defaults to 5. */
+  top_k?: number;
+}
+
+export interface HitResult {
+  id: string | null;
+  title: string | null;
+  contents: string | null;
+  source: string | null;
+  /** TF-IDF cosine similarity, 0–1. */
+  score: number;
+}
+
+export interface HitResponse {
+  query: string;
+  top_k: number;
+  results: HitResult[];
+  latency_ms: number;
+}
+
+/** A logged search-test query (`getDatasetQueries`), newest first. */
+export interface DatasetQueryView {
+  query: string;
+  top_k: number;
+  result_count: number;
+  created_at: string | null;
+}

@@ -5,7 +5,10 @@ import type {
   DatasetPage,
   DocumentBatchView,
   DatasetPageParams,
+  DatasetQueryView,
   DatasetView,
+  HitRequest,
+  HitResponse,
   RetrievalStatusView,
   UpdateDatasetRequest,
   UpdateDocumentRequest,
@@ -106,4 +109,17 @@ export function getDocumentsStatus(
     `${datasetUrl(name)}/documents/batch/${encodeURIComponent(batch)}`,
     { signal: init?.signal },
   );
+}
+
+/** Search this dataset alone (its enabled documents); the query is logged. */
+export function hit(name: string, body: HitRequest): Promise<HitResponse> {
+  return post<HitResponse>(`${datasetUrl(name)}/hit`, { body: { ...body } });
+}
+
+/** The latest search-test queries, newest first. */
+export function getDatasetQueries(
+  name: string,
+  init?: RequestOptions,
+): Promise<DatasetQueryView[]> {
+  return get<DatasetQueryView[]>(`${datasetUrl(name)}/queries`, { signal: init?.signal });
 }

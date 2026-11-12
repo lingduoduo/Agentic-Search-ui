@@ -41,6 +41,7 @@ vi.mock("../services/api", () => ({
     paginator: { current_page: 1, page_size: 20, total_page: 0, total_record: 0 },
   }),
   getDataset: vi.fn().mockRejectedValue(new Error("no dataset")),
+  getDatasetQueries: vi.fn().mockResolvedValue([]),
   getDatasetDocuments: vi.fn().mockResolvedValue({
     list: [],
     paginator: { current_page: 1, page_size: 20, total_page: 0, total_record: 0 },

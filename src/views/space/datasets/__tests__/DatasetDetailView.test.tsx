@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as api from "../../../../services/api";
 import type { DatasetDocumentPage, DatasetDocumentView } from "../../../../models";
 import { DatasetDetailView } from "../DatasetDetailView";
@@ -73,6 +73,10 @@ const renderView = (url = "/space/datasets/demo") =>
 
 const rows = () => within(screen.getByRole("table")).getAllByRole("row").slice(1);
 
+// The search test panel loads recent queries on mount.
+beforeEach(() => {
+  vi.spyOn(api, "getDatasetQueries").mockResolvedValue([]);
+});
 afterEach(() => vi.restoreAllMocks());
 
 describe("DatasetDetailView", () => {
@@ -204,6 +208,19 @@ describe("DatasetDetailView management", () => {
     vi.spyOn(api, "getDatasetDocuments").mockRejectedValue(new Error("missing"));
     renderView();
     expect(await screen.findByRole("button", { name: "Import to manage" })).toBeDisabled();
+  });
+
+  it("shows the search test only when the corpus file is there", async () => {
+    vi.spyOn(api, "getDataset").mockResolvedValueOnce(dataset);
+    vi.spyOn(api, "getDatasetDocuments").mockResolvedValue(page([]));
+    const { unmount } = renderView();
+    expect(await screen.findByRole("region", { name: "Search test" })).toBeInTheDocument();
+    unmount();
+
+    vi.spyOn(api, "getDataset").mockResolvedValue({ ...dataset, available: false });
+    renderView();
+    await screen.findByRole("button", { name: "Import to manage" });
+    expect(screen.queryByRole("region", { name: "Search test" })).not.toBeInTheDocument();
   });
 
   it("offers Add documents only on a managed dataset", async () => {

@@ -356,8 +356,16 @@ backend's own rules. `.jsonl` lines become documents as written; text files are
 split into passages of about 300 words. `createDocuments` returns a batch at
 once and the backend processes the files in the background; `useDocumentBatch`
 polls `getDocumentsStatus` every second until every file is added or failed
-(a failed file adds nothing and shows why), then the table reloads. The search
-test and recent queries are not built yet.
+(a failed file adds nothing and shows why), then the table reloads.
+
+**Search test** (`SearchTestPanel`, any dataset whose file is on disk) runs a
+query against that dataset alone with `hit`: the backend indexes the dataset's
+enabled documents with TF-IDF for each test, so edits show at once whatever the
+retrieval server serves. Results list title (or id), score (cosine similarity,
+0–1), id, source and the start of the text, with the count and latency. Every
+test is logged; **Recent queries** (`getDatasetQueries`, newest first) run
+again with their result count on click, and a failure to load them only hides
+the list.
 
 The hooks in `hooks/useDataset.ts` load this data: `useDatasets` (the appended
 list), `useDataset` (one corpus) and `useDatasetDocuments` (one table page); the

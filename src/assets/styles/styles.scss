@@ -3038,6 +3038,69 @@ a.source-card {
   color: var(--muted);
   font-size: 0.85rem;
 }
+.datasets-search {
+  display: grid;
+  gap: 12px;
+  h3 {
+    margin: 0;
+    font-size: 15px;
+  }
+}
+.datasets-search__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  input {
+    flex: 1 1 240px;
+    border-color: var(--line);
+    border-radius: 8px;
+  }
+}
+.datasets-search__results ol {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  li {
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  small {
+    color: var(--muted);
+  }
+  p {
+    display: -webkit-box;
+    margin: 6px 0 0;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 13px;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+}
+.datasets-search__result-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.datasets-search__recent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
 .datasets-upload__files {
   display: grid;
   gap: 8px;

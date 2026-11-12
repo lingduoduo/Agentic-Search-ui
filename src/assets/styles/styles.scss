@@ -3038,6 +3038,29 @@ a.source-card {
   color: var(--muted);
   font-size: 0.85rem;
 }
+.datasets-upload__files {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.88rem;
+  li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 12px;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  li[data-status="error"] {
+    border-color: var(--danger, #b91c1c);
+  }
+  small {
+    grid-column: 1 / -1;
+    color: var(--muted);
+  }
+}
 .datasets-detail__table {
   display: block;
   overflow-x: auto;

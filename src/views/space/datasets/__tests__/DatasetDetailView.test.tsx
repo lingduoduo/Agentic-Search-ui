@@ -206,6 +206,20 @@ describe("DatasetDetailView management", () => {
     expect(await screen.findByRole("button", { name: "Import to manage" })).toBeDisabled();
   });
 
+  it("offers Add documents only on a managed dataset", async () => {
+    vi.spyOn(api, "getDataset").mockResolvedValueOnce(dataset);
+    vi.spyOn(api, "getDatasetDocuments").mockResolvedValue(page([]));
+    const { unmount } = renderView();
+    await screen.findByRole("button", { name: "Import to manage" });
+    expect(screen.queryByRole("button", { name: "Add documents" })).not.toBeInTheDocument();
+    unmount();
+
+    vi.spyOn(api, "getDataset").mockResolvedValue(managedDataset);
+    renderView();
+    await userEvent.click(await screen.findByRole("button", { name: "Add documents" }));
+    expect(screen.getByRole("dialog", { name: "Add documents" })).toBeInTheDocument();
+  });
+
   it("says when search sees changes", async () => {
     vi.spyOn(api, "getDataset").mockResolvedValue(managedDataset);
     vi.spyOn(api, "getDatasetDocuments").mockResolvedValue(page([]));

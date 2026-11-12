@@ -1,10 +1,12 @@
-import { Database } from "lucide-react";
-import { Link, useSearchParams } from "react-router";
+import { useState } from "react";
+import { Database, Plus } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { useDatasets } from "../../../hooks/useDataset";
 import { useKeywordSearch } from "../../../hooks/useKeywordSearch";
 import { routePath } from "../../../config/routes";
 import type { DatasetView } from "../../../models";
 import { RetrievalStatus } from "../../../components/RetrievalStatus";
+import { DatasetDialog } from "./DatasetDialog";
 
 /** `/space/datasets`: the corpora registered for the retrieval server, a page at a time. */
 export function DatasetsView() {
@@ -13,11 +15,21 @@ export function DatasetsView() {
   const [params] = useSearchParams();
   const searchWord = params.get("search_word") ?? "";
   const { datasets, loading, error, hasMore, loadMore, retry } = useDatasets(searchWord);
+  const navigate = useNavigate();
+  const [creating, setCreating] = useState(false);
 
   return (
     <section className="sources-catalog" aria-label="Datasets">
       <div className="sources-catalog__toolbar">
         <RetrievalStatus />
+        <button
+          type="button"
+          className="btn-primary tools-catalog__create"
+          onClick={() => setCreating(true)}
+        >
+          <Plus aria-hidden="true" size={16} />
+          Create dataset
+        </button>
         <form
           role="search"
           onSubmit={(event) => {
@@ -69,6 +81,16 @@ export function DatasetsView() {
           </button>
         </div>
       )}
+
+      {creating && (
+        <DatasetDialog
+          mode={{ kind: "create" }}
+          onClose={() => setCreating(false)}
+          onSaved={(dataset) =>
+            void navigate(routePath("space-datasets-detail", { name: dataset.name }))
+          }
+        />
+      )}
     </section>
   );
 }
@@ -109,6 +131,7 @@ export function DatasetHeading({ dataset }: { dataset: DatasetView }) {
 export function DatasetBadges({ dataset }: { dataset: DatasetView }) {
   return (
     <span className="datasets-catalog__badges">
+      {dataset.managed && <span className="route-pill">Managed</span>}
       {dataset.served && <span className="route-pill">Serving</span>}
       {!dataset.available && <span className="route-pill route-pill--degraded">File missing</span>}
     </span>

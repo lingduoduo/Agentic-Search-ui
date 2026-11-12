@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -14,6 +14,9 @@ const demo: DatasetView = {
   source: "ML Knowledge Base",
   available: true,
   served: true,
+  managed: true,
+  description: "Curated ML docs",
+  updated_at: "2026-11-12T00:00:00Z",
 };
 const scifact: DatasetView = {
   name: "scifact",
@@ -23,6 +26,9 @@ const scifact: DatasetView = {
   source: "SciFact Corpus",
   available: false,
   served: false,
+  managed: false,
+  description: null,
+  updated_at: null,
 };
 
 const page = (list: DatasetView[], current_page = 1, total_page = 1): DatasetPage => ({
@@ -65,7 +71,10 @@ describe("DatasetsView", () => {
     expect(card).toHaveTextContent(`scifact · scientific · ${(5183).toLocaleString()} docs`);
     expect(card).toHaveTextContent("data/corpus_scifact.jsonl");
     expect(card).toHaveTextContent("File missing");
-    expect(screen.getByRole("link", { name: /ML Knowledge Base/ })).toHaveTextContent("Serving");
+    const demoCard = screen.getByRole("link", { name: /ML Knowledge Base/ });
+    expect(demoCard).toHaveTextContent("Serving");
+    expect(demoCard).toHaveTextContent("Managed");
+    expect(card).not.toHaveTextContent("Managed");
   });
 
   it("requests the first page with the URL's search word", async () => {
@@ -134,6 +143,54 @@ describe("DatasetsView", () => {
     expect(await screen.findByRole("link", { name: /SciFact/ })).toBeInTheDocument();
     expect(load.mock.calls.map(([params]) => params?.current_page)).toEqual([1, 2, 2]);
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("creates a dataset and opens its page", async () => {
+    vi.spyOn(api, "getDatasets").mockResolvedValue(page([]));
+    const create = vi.spyOn(api, "createDataset").mockResolvedValue({
+      ...demo,
+      name: "team-docs",
+    });
+    render(
+      <MemoryRouter initialEntries={["/space/datasets"]}>
+        <Routes>
+          <Route path="/space/datasets" element={<DatasetsView />} />
+          <Route path="/space/datasets/:name" element={<Search />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Create dataset" }));
+    const dialog = screen.getByRole("dialog", { name: "Create dataset" });
+    await userEvent.type(within(dialog).getByLabelText("Name"), "Team Docs");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Create" }));
+    expect(within(dialog).getByText(/Use lowercase letters/)).toBeInTheDocument();
+    expect(create).not.toHaveBeenCalled();
+
+    await userEvent.clear(within(dialog).getByLabelText("Name"));
+    await userEvent.type(within(dialog).getByLabelText("Name"), "team-docs");
+    await userEvent.type(within(dialog).getByLabelText("Description"), " Team docs ");
+    await userEvent.type(within(dialog).getByLabelText("Source label"), "Team KB");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Create" }));
+
+    expect(create).toHaveBeenCalledWith({
+      name: "team-docs",
+      description: "Team docs",
+      domain: "",
+      source: "Team KB",
+    });
+    expect(await screen.findByTestId("search")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("shows a create error in the dialog", async () => {
+    vi.spyOn(api, "getDatasets").mockResolvedValue(page([]));
+    vi.spyOn(api, "createDataset").mockRejectedValue(new Error("That name is taken."));
+    renderView();
+    await userEvent.click(await screen.findByRole("button", { name: "Create dataset" }));
+    const dialog = screen.getByRole("dialog", { name: "Create dataset" });
+    await userEvent.type(within(dialog).getByLabelText("Name"), "demo");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Create" }));
+    expect(await within(dialog).findByText("That name is taken.")).toBeInTheDocument();
   });
 
   it("shows which retrieval server answers", async () => {

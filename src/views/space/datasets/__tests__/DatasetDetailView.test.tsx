@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -14,6 +14,16 @@ const dataset = {
   source: "ML Knowledge Base",
   available: true,
   served: null,
+  managed: false,
+  description: null,
+  updated_at: null,
+};
+
+const managedDataset = {
+  ...dataset,
+  managed: true,
+  description: "Curated ML docs",
+  updated_at: "2026-11-12T00:00:00Z",
 };
 
 const doc = (id: string, extra: Partial<DatasetDocumentView> = {}): DatasetDocumentView => ({
@@ -22,8 +32,14 @@ const doc = (id: string, extra: Partial<DatasetDocumentView> = {}): DatasetDocum
   contents: `Contents of ${id}`,
   source: "Vector Search Docs",
   acl: ["public"],
+  document_id: null,
+  enabled: true,
+  updated_at: null,
   ...extra,
 });
+
+const managedDoc = (id: string, extra: Partial<DatasetDocumentView> = {}) =>
+  doc(id, { document_id: `row-${id}`, ...extra });
 
 const page = (
   list: DatasetDocumentView[],
@@ -159,5 +175,160 @@ describe("DatasetDetailView", () => {
     await userEvent.click(screen.getByRole("button", { name: "Retry loading the dataset" }));
     expect(await screen.findByText("ML Knowledge Base")).toBeInTheDocument();
     expect(get).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("DatasetDetailView management", () => {
+  it("imports an unmanaged corpus", async () => {
+    vi.spyOn(api, "getDataset")
+      .mockResolvedValueOnce(dataset)
+      .mockResolvedValueOnce(managedDataset);
+    const load = vi.spyOn(api, "getDatasetDocuments").mockResolvedValue(page([doc("a")]));
+    const importIt = vi.spyOn(api, "importDataset").mockResolvedValue(managedDataset);
+    renderView();
+    expect(
+      await screen.findByText("Import this corpus to edit it; its file stays as it is."),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "Enabled" })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Import to manage" }));
+
+    expect(importIt).toHaveBeenCalledWith("demo");
+    expect(await screen.findByRole("button", { name: "Edit dataset" })).toBeInTheDocument();
+    expect(screen.getByText("Curated ML docs")).toBeInTheDocument();
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it("cannot import a corpus whose file is missing", async () => {
+    vi.spyOn(api, "getDataset").mockResolvedValue({ ...dataset, available: false });
+    vi.spyOn(api, "getDatasetDocuments").mockRejectedValue(new Error("missing"));
+    renderView();
+    expect(await screen.findByRole("button", { name: "Import to manage" })).toBeDisabled();
+  });
+
+  it("says when search sees changes", async () => {
+    vi.spyOn(api, "getDataset").mockResolvedValue(managedDataset);
+    vi.spyOn(api, "getDatasetDocuments").mockResolvedValue(page([]));
+    renderView();
+    expect(await screen.findByRole("note")).toHaveTextContent(
+      "Search sees changes after the retrieval server restarts with this corpus.",
+    );
+  });
+
+  it("says nothing when the in-process retriever serves it", async () => {
+    vi.spyOn(api, "getDataset").mockResolvedValue({ ...managedDataset, served: true });
+    vi.spyOn(api, "getDatasetDocuments").mockResolvedValue(page([]));
+    renderView();
+    await screen.findByRole("button", { name: "Edit dataset" });
+    expect(screen.queryByRole("note")).not.toBeInTheDocument();
+  });
+
+  it("enables and disables a document from its row", async () => {
+    vi.spyOn(api, "getDataset").mockResolvedValue(managedDataset);
+    vi.spyOn(api, "getDatasetDocuments")
+      .mockResolvedValueOnce(page([managedDoc("a"), managedDoc("b", { enabled: false })]))
+      .mockResolvedValueOnce(page([managedDoc("a", { enabled: false }), managedDoc("b")]));
+    const update = vi.spyOn(api, "updateDocument").mockResolvedValue(managedDoc("a"));
+    renderView();
+    const a = await screen.findByRole("checkbox", { name: "Enable Title a" });
+    expect(a).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Enable Title b" })).not.toBeChecked();
+    expect(rows()[1]).toHaveClass("datasets-detail__row--disabled");
+
+    await userEvent.click(a);
+
+    expect(update).toHaveBeenCalledWith("demo", "row-a", { enabled: false });
+    await waitFor(() =>
+      expect(screen.getByRole("checkbox", { name: "Enable Title a" })).not.toBeChecked(),
+    );
+  });
+
+  it("shows an error when a switch fails", async () => {
+    vi.spyOn(api, "getDataset").mockResolvedValue(managedDataset);
+    vi.spyOn(api, "getDatasetDocuments").mockResolvedValue(page([managedDoc("a")]));
+    vi.spyOn(api, "updateDocument").mockRejectedValue(new Error("Document not found."));
+    renderView();
+    await userEvent.click(await screen.findByRole("checkbox", { name: "Enable Title a" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Document not found.");
+  });
+
+  it("edits a document: renames it, disables it, or deletes it", async () => {
+    vi.spyOn(api, "getDataset").mockResolvedValue(managedDataset);
+    const load = vi.spyOn(api, "getDatasetDocuments").mockResolvedValue(page([managedDoc("a")]));
+    vi.spyOn(api, "getDocument").mockResolvedValue(
+      managedDoc("a", { contents: "The full text of a." }),
+    );
+    const update = vi.spyOn(api, "updateDocument").mockResolvedValue(managedDoc("a"));
+    const remove = vi.spyOn(api, "deleteDocument").mockResolvedValue(undefined);
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    renderView();
+
+    await userEvent.click(await screen.findByRole("button", { name: "Edit Title a" }));
+    let dialog = screen.getByRole("dialog", { name: "Document" });
+    expect(await within(dialog).findByText("The full text of a.")).toBeInTheDocument();
+    expect(api.getDocument).toHaveBeenCalledWith("demo", "row-a", expect.anything());
+    await userEvent.clear(within(dialog).getByLabelText("Title"));
+    await userEvent.type(within(dialog).getByLabelText("Title"), "Renamed");
+    await userEvent.click(within(dialog).getByRole("checkbox"));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(update).toHaveBeenCalledWith("demo", "row-a", { title: "Renamed", enabled: false });
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit Title a" }));
+    dialog = screen.getByRole("dialog", { name: "Document" });
+    await within(dialog).findByText("The full text of a.");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+    expect(remove).toHaveBeenCalledWith("demo", "row-a");
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(load).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not save a blank document title", async () => {
+    vi.spyOn(api, "getDataset").mockResolvedValue(managedDataset);
+    vi.spyOn(api, "getDatasetDocuments").mockResolvedValue(page([managedDoc("a")]));
+    vi.spyOn(api, "getDocument").mockResolvedValue(managedDoc("a"));
+    const update = vi.spyOn(api, "updateDocument");
+    renderView();
+    await userEvent.click(await screen.findByRole("button", { name: "Edit Title a" }));
+    const dialog = screen.getByRole("dialog", { name: "Document" });
+    await userEvent.clear(await within(dialog).findByLabelText("Title"));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(within(dialog).getByText("A document needs a title.")).toBeInTheDocument();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("edits the dataset and deletes it, returning to the list", async () => {
+    vi.spyOn(api, "getDataset").mockResolvedValue(managedDataset);
+    vi.spyOn(api, "getDatasetDocuments").mockResolvedValue(page([]));
+    const update = vi
+      .spyOn(api, "updateDataset")
+      .mockResolvedValue({ ...managedDataset, domain: "nlp" });
+    const remove = vi.spyOn(api, "deleteDataset").mockResolvedValue(undefined);
+    const confirm = vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValue(true);
+    renderView();
+
+    await userEvent.click(await screen.findByRole("button", { name: "Edit dataset" }));
+    let dialog = screen.getByRole("dialog", { name: "Edit dataset" });
+    expect(within(dialog).getByLabelText("Name")).toBeDisabled();
+    expect(within(dialog).getByLabelText("Source label")).toHaveValue("ML Knowledge Base");
+    await userEvent.clear(within(dialog).getByLabelText("Domain"));
+    await userEvent.type(within(dialog).getByLabelText("Domain"), "nlp");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(update).toHaveBeenCalledWith("demo", {
+      description: "Curated ML docs",
+      domain: "nlp",
+      source: "ML Knowledge Base",
+    });
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit dataset" }));
+    dialog = screen.getByRole("dialog", { name: "Edit dataset" });
+    await userEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+    expect(remove).not.toHaveBeenCalled(); // the first confirm was cancelled
+    await userEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+    expect(remove).toHaveBeenCalledWith("demo");
+    expect(confirm).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(screen.queryByRole("table")).not.toBeInTheDocument());
+    expect(screen.queryByRole("region", { name: "Dataset demo" })).not.toBeInTheDocument();
   });
 });

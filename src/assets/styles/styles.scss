@@ -3004,6 +3004,40 @@ a.source-card {
     box-shadow: none;
   }
 }
+.datasets-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  small {
+    margin-left: auto;
+  }
+}
+.datasets-detail__note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.datasets-detail__row--disabled td {
+  opacity: 0.55;
+}
+.datasets-detail__toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  font-size: 0.88rem;
+}
+.datasets-detail__full-text {
+  max-height: 240px;
+  margin: 0;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
 .datasets-detail__table {
   display: block;
   overflow-x: auto;

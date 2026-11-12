@@ -85,7 +85,7 @@ export function useDataset(name: string) {
     return () => controller.abort();
   }, [name, attempt]);
 
-  return { dataset, error, retry: () => setAttempt((n) => n + 1) };
+  return { dataset, error, reload: () => setAttempt((n) => n + 1) };
 }
 
 /** One page of a dataset's documents; each page replaces the last (a table, not a feed). */
@@ -118,5 +118,5 @@ export function useDatasetDocuments(name: string, page: number, searchWord: stri
     return () => controller.abort();
   }, [name, page, searchWord, attempt]);
 
-  return { documents, paginator, loading, error, retry: () => setAttempt((n) => n + 1) };
+  return { documents, paginator, loading, error, reload: () => setAttempt((n) => n + 1) };
 }

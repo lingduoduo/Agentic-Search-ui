@@ -334,11 +334,27 @@ documents (ID, title, contents, source, access list) from
 `GET /api/datasets/{name}/documents`, 20 rows a page with Prev/Next. The page
 and the search (over titles and contents) are in the URL (`?current_page=`,
 `?search_word=`), and a new search starts again from page 1. A missing file is a
-409 from the API, shown with Retry. Everything is read-only: corpora are built
-and registered offline (see the backend README).
+409 from the API, shown with Retry.
+
+Datasets can be managed. **Create dataset** (list toolbar) makes an empty
+dataset; its name is the corpus key search uses, so it is checked against the
+backend's rule (lowercase letters, digits, `-`, `_`) and fixed once created. A
+**Managed** dataset keeps its documents in the backend's store; a corpus that was
+only registered offline shows **Import to manage**, which copies its documents
+in and leaves its file alone. On a managed dataset's page, **Edit dataset**
+changes the description, source label and domain, and deletes it after a
+confirmation (an imported corpus goes back to its original file). The table adds
+an **Enabled** switch per row (disabled rows stay in the dataset but search does
+not see them) and **Edit**, which loads the document (`getDocument`) to show its
+full text, rename it, enable it or delete it. When a separate retrieval server
+answers (`served` is not true), a note says search sees changes after it
+restarts; the in-process retriever rebuilds at once. Uploading documents, the
+search test and recent queries are not built yet.
 
 The hooks in `hooks/useDataset.ts` load this data: `useDatasets` (the appended
-list), `useDataset` (one corpus) and `useDatasetDocuments` (one table page).
+list), `useDataset` (one corpus) and `useDatasetDocuments` (one table page); the
+last two return `reload` for after a change. `DatasetDialog` and
+`DocumentDialog` call the management functions in `services/data.ts` directly.
 Retriever types and calls live in `models/data.ts` and `services/data.ts`; the
 dev console's Retrieval Lab keeps its own in `debug.ts`.
 

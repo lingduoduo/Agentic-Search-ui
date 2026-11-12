@@ -142,6 +142,55 @@ describe("domain service contracts", () => {
       method: "GET",
       body: undefined,
     },
+    {
+      name: "dataset creation",
+      call: () => data.createDataset({ name: "kb", description: "Docs" }),
+      url: "/api/datasets",
+      method: "POST",
+      body: { name: "kb", description: "Docs" },
+    },
+    {
+      name: "dataset update",
+      call: () => data.updateDataset("a/b", { domain: null }),
+      url: "/api/datasets/a%2Fb",
+      method: "PATCH",
+      body: { domain: null },
+    },
+    {
+      name: "dataset deletion",
+      call: () => data.deleteDataset("kb"),
+      url: "/api/datasets/kb",
+      method: "DELETE",
+      body: undefined,
+    },
+    {
+      name: "dataset import",
+      call: () => data.importDataset("demo"),
+      url: "/api/datasets/demo/import",
+      method: "POST",
+      body: undefined,
+    },
+    {
+      name: "document details",
+      call: () => data.getDocument("kb", "a/b"),
+      url: "/api/datasets/kb/documents/a%2Fb",
+      method: "GET",
+      body: undefined,
+    },
+    {
+      name: "document update",
+      call: () => data.updateDocument("kb", "d1", { title: "T", enabled: false }),
+      url: "/api/datasets/kb/documents/d1",
+      method: "PATCH",
+      body: { title: "T", enabled: false },
+    },
+    {
+      name: "document deletion",
+      call: () => data.deleteDocument("kb", "d1"),
+      url: "/api/datasets/kb/documents/d1",
+      method: "DELETE",
+      body: undefined,
+    },
   ])("preserves $name", async ({ call, url, method, body }) => {
     mockFetch.mockResolvedValue(new Response("{}"));
     await call();
@@ -207,6 +256,10 @@ describe("domain service contracts", () => {
     {
       name: "dataset documents",
       call: (signal: AbortSignal) => api.getDatasetDocuments("d", {}, { signal }),
+    },
+    {
+      name: "document details",
+      call: (signal: AbortSignal) => api.getDocument("d", "x", { signal }),
     },
     {
       name: "search",

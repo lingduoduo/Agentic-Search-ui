@@ -23,6 +23,32 @@ export interface DatasetView {
   available: boolean;
   /** Loaded by the in-process retriever; null when a separate retrieval server answers. */
   served: boolean | null;
+  /** Its documents live in the backend's store and can be edited; otherwise import it first. */
+  managed: boolean;
+  /** Managed datasets only. */
+  description: string | null;
+  updated_at: string | null;
+}
+
+export interface CreateDatasetRequest {
+  /** The corpus key: lowercase letters, digits, `-` and `_`; fixed once created. */
+  name: string;
+  description?: string;
+  domain?: string | null;
+  source?: string | null;
+}
+
+/** Only the fields sent change; a blank domain or source clears it. */
+export interface UpdateDatasetRequest {
+  description?: string;
+  domain?: string | null;
+  source?: string | null;
+}
+
+/** Rename and/or enable a document of a managed dataset. */
+export interface UpdateDocumentRequest {
+  title?: string;
+  enabled?: boolean;
 }
 
 /** Query for the paged lists: `GET /api/datasets` and a corpus's documents. */
@@ -38,14 +64,20 @@ export interface DatasetPage {
   paginator: Paginator;
 }
 
-/** One document in a corpus's .jsonl file. */
+/** One document of a corpus. */
 export interface DatasetDocumentView {
+  /** The corpus id search results cite. */
   id: string | null;
+  /** The store's id, for the document calls; null for an unmanaged corpus. */
+  document_id: string | null;
   title: string | null;
   contents: string | null;
   /** The document's own source, else its corpus's label. */
   source: string | null;
   acl: string[];
+  /** Disabled documents stay in the dataset but search does not see them. */
+  enabled: boolean;
+  updated_at: string | null;
 }
 
 export interface DatasetDocumentPage {

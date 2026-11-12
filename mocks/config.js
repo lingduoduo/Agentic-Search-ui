@@ -50,6 +50,9 @@ const mockDataset = {
   source: "ML Knowledge Base",
   available: true,
   served: null,
+  managed: false,
+  description: null,
+  updated_at: null,
 };
 
 export default [
@@ -148,6 +151,9 @@ export default [
           contents: "Dense retrieval encodes queries and documents into vectors.",
           source: "Vector Search Docs",
           acl: ["public"],
+          document_id: null,
+          enabled: true,
+          updated_at: null,
         },
       ],
       paginator: { current_page: 1, page_size: 20, total_page: 1, total_record: 1 },

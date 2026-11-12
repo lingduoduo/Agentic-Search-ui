@@ -98,9 +98,9 @@ backend repo's `bin/run_web_stack.sh` starts all of it, using this checkout from
 
 ### Layout
 
-- `src/routes/router.tsx` — the route tree: named routes (ids), one `guard` loader honoring `handle.public`, lazy pages; `/space/apps` lists the apps, `/space/apps/:app_id` opens one, `/space/sources` is the search-source catalog, `/space/tools` (admin) is the tool registry, and `/space/datasets` (admin) lists the retrieval corpora, with `/space/datasets/:name` showing one corpus's documents
+- `src/routes/router.tsx` — the route tree: named routes (ids), one `guard` loader honoring `handle.public`, lazy pages; `/space/apps` lists the apps, `/space/apps/:app_id` opens one, `/space/sources` is the search-source catalog, `/space/tools` (admin) is the tool registry, and `/space/datasets` (admin) manages the retrieval corpora, with `/space/datasets/:name` showing one corpus's documents
 - `src/App.tsx` — app root: creates the router and renders `RouterProvider`
-- `src/views/` — one `*View` component per route, each owning its state: `auth/` (login + session guard), `errors/` (`ErrorView`, `NotFoundView`), `layouts/` (`DefaultLayout`: guarded, sidebar + heading; `BlankLayout`: public pages), `pages/` (Account, Admin), `space/apps/` (`ListView`, `DetailView` and the four app views), `space/sources/` (`SourcesView`), `space/tools/` (`ToolsView`), `space/datasets/` (`DatasetsView`, `DatasetDetailView`)
+- `src/views/` — one `*View` component per route, each owning its state: `auth/` (login + session guard), `errors/` (`ErrorView`, `NotFoundView`), `layouts/` (`DefaultLayout`: guarded, sidebar + heading; `BlankLayout`: public pages), `pages/` (Account, Admin), `space/apps/` (`ListView`, `DetailView` and the four app views), `space/sources/` (`SourcesView`), `space/tools/` (`ToolsView`), `space/datasets/` (`DatasetsView`, `DatasetDetailView`, plus `DatasetDialog` and `DocumentDialog`)
 - `src/components/` — panels, each independently tested (`__tests__/` beside them)
 - `src/services/api.ts` — every backend call, including the SSE stream (`streamAgent`), built on `src/utils/request.ts` (fetch wrapper: JSON bodies, `{detail}` errors, 401 sign-out, timeout, SSE)
 - `nginx/` + `Dockerfile` — production image: nginx serves `dist/` and proxies the backend prefixes to `BACKEND_URL`

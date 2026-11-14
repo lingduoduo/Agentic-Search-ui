@@ -56,6 +56,7 @@ export function useDatasets(searchWord: string) {
   const hasMore = paginator !== null && paginator.current_page < paginator.total_page;
   return {
     datasets,
+    reload: () => fetchPage(1),
     paginator,
     loading,
     error,

@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as api from "../../../../services/api";
 import type { DatasetPage, DatasetView } from "../../../../models";
-import { DatasetsView } from "../DatasetsView";
+import { ListView } from "../ListView";
 
 const demo: DatasetView = {
   name: "demo",
@@ -48,7 +48,7 @@ const renderView = (url = "/space/datasets") =>
           path="/space/datasets"
           element={
             <>
-              <DatasetsView />
+              <ListView />
               <Search />
             </>
           }
@@ -62,7 +62,7 @@ beforeEach(() => {
 });
 afterEach(() => vi.restoreAllMocks());
 
-describe("DatasetsView", () => {
+describe("ListView", () => {
   it("links each corpus to its page, with its label, name, domain, size and path", async () => {
     vi.spyOn(api, "getDatasets").mockResolvedValue(page([demo, scifact]));
     renderView();
@@ -75,6 +75,52 @@ describe("DatasetsView", () => {
     expect(demoCard).toHaveTextContent("Serving");
     expect(demoCard).toHaveTextContent("Managed");
     expect(card).not.toHaveTextContent("Managed");
+  });
+
+  it("shows descriptions and only offers settings for managed datasets", async () => {
+    vi.spyOn(api, "getDatasets").mockResolvedValue(page([demo, scifact]));
+    renderView();
+    expect(await screen.findByText("Curated ML docs")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Settings for ML Knowledge Base" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Settings for SciFact Corpus" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("edits from the list and refreshes the dataset after saving", async () => {
+    vi.spyOn(api, "getDatasets")
+      .mockResolvedValueOnce(page([demo]))
+      .mockResolvedValue(page([{ ...demo, description: "Updated docs" }]));
+    vi.spyOn(api, "updateDataset").mockResolvedValue({ ...demo, description: "Updated docs" });
+    renderView();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Settings for ML Knowledge Base" }),
+    );
+    const dialog = screen.getByRole("dialog", { name: "Edit dataset" });
+    await userEvent.clear(within(dialog).getByLabelText("Description"));
+    await userEvent.type(within(dialog).getByLabelText("Description"), "Updated docs");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(await screen.findByText("Updated docs")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("deletes from settings and refreshes the list", async () => {
+    vi.spyOn(api, "getDatasets")
+      .mockResolvedValueOnce(page([demo]))
+      .mockResolvedValue(page([]));
+    vi.spyOn(api, "deleteDataset").mockResolvedValue(undefined);
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    renderView();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Settings for ML Knowledge Base" }),
+    );
+    await userEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", { name: "Delete" }),
+    );
+    expect(await screen.findByText("No datasets registered.")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("requests the first page with the URL's search word", async () => {
@@ -154,7 +200,7 @@ describe("DatasetsView", () => {
     render(
       <MemoryRouter initialEntries={["/space/datasets"]}>
         <Routes>
-          <Route path="/space/datasets" element={<DatasetsView />} />
+          <Route path="/space/datasets" element={<ListView />} />
           <Route path="/space/datasets/:name" element={<Search />} />
         </Routes>
       </MemoryRouter>,

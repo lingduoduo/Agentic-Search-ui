@@ -7,6 +7,18 @@ export function DatasetHeading({ dataset }: { dataset: DatasetView }) {
     <span className="source-card__heading">
       <span className="source-option__icon source-card__icon datasets-catalog__icon">
         <Database aria-hidden="true" size={20} />
+        <img
+          key={dataset.name}
+          src={`https://picsum.photos/seed/${encodeURIComponent(dataset.name)}/400`}
+          alt=""
+          width={40}
+          height={40}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={(event) => {
+            event.currentTarget.hidden = true;
+          }}
+        />
       </span>
       <span>
         <strong className="source-option__name">{dataset.source}</strong>

@@ -2975,7 +2975,16 @@ a.source-card {
   text-decoration: none;
 }
 .datasets-catalog__icon {
+  position: relative;
+  overflow: hidden;
   background: var(--assistant-soft);
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 }
 .datasets-catalog__path {
   overflow-wrap: anywhere;

@@ -1,8 +1,21 @@
 import { Database } from "lucide-react";
 import type { DatasetView } from "../../../models";
 
-/** Icon tile, label and the "name · domain · docs" line, shared by card and detail page. */
-export function DatasetHeading({ dataset }: { dataset: DatasetView }) {
+/** Dataset identity and status, shared by the catalog and detail page. */
+export function DatasetSummary({ dataset }: { dataset: DatasetView }) {
+  return (
+    <>
+      <DatasetHeading dataset={dataset} />
+      {dataset.description && (
+        <span className="source-card__description">{dataset.description}</span>
+      )}
+      <code className="datasets-catalog__path">{dataset.path ?? "No path"}</code>
+      <DatasetBadges dataset={dataset} />
+    </>
+  );
+}
+
+function DatasetHeading({ dataset }: { dataset: DatasetView }) {
   return (
     <span className="source-card__heading">
       <span className="source-option__icon source-card__icon datasets-catalog__icon">
@@ -20,7 +33,7 @@ export function DatasetHeading({ dataset }: { dataset: DatasetView }) {
           }}
         />
       </span>
-      <span>
+      <span className="datasets-catalog__identity">
         <strong className="source-option__name">{dataset.source}</strong>
         <small>
           {[
@@ -36,7 +49,7 @@ export function DatasetHeading({ dataset }: { dataset: DatasetView }) {
   );
 }
 
-export function DatasetBadges({ dataset }: { dataset: DatasetView }) {
+function DatasetBadges({ dataset }: { dataset: DatasetView }) {
   return (
     <span className="datasets-catalog__badges">
       {dataset.managed && <span className="route-pill">Managed</span>}

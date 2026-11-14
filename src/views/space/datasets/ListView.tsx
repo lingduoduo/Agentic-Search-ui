@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Search, Settings } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { useDatasets } from "../../../hooks/useDataset";
 import { useKeywordSearch } from "../../../hooks/useKeywordSearch";
 import { routePath } from "../../../config/routes";
 import type { DatasetDialogMode } from "./DatasetDialog";
-import { DatasetBadges, DatasetHeading } from "./DatasetSummary";
+import { DatasetSummary } from "./DatasetSummary";
 import { RetrievalStatus } from "../../../components/RetrievalStatus";
 import { DatasetDialog } from "./DatasetDialog";
 
@@ -25,8 +25,25 @@ export function ListView() {
   };
 
   return (
-    <section className="sources-catalog" aria-label="Datasets">
-      <div className="sources-catalog__toolbar">
+    <section className="sources-catalog datasets-catalog" aria-label="Datasets">
+      <div className="sources-catalog__toolbar datasets-catalog__toolbar">
+        <form
+          role="search"
+          className="datasets-catalog__search"
+          onSubmit={(event) => {
+            event.preventDefault();
+            commitKeyword(query);
+          }}
+        >
+          <Search aria-hidden="true" size={16} />
+          <input
+            type="search"
+            aria-label="Find a dataset"
+            placeholder="Find a dataset…"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </form>
         <RetrievalStatus />
         <button
           type="button"
@@ -36,21 +53,6 @@ export function ListView() {
           <Plus aria-hidden="true" size={16} />
           Create dataset
         </button>
-        <form
-          role="search"
-          onSubmit={(event) => {
-            event.preventDefault();
-            commitKeyword(query);
-          }}
-        >
-          <input
-            type="search"
-            aria-label="Find a dataset"
-            placeholder="Find a dataset…"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-        </form>
       </div>
 
       {error && (
@@ -67,28 +69,24 @@ export function ListView() {
         </div>
       )}
 
-      <ul className="sources-catalog__grid">
+      <ul className="sources-catalog__grid datasets-catalog__grid" aria-busy={loading}>
         {datasets.map((dataset) => (
           <li key={dataset.name}>
-            <article className="source-card">
+            <article className="source-card datasets-catalog__card">
               <Link
                 className="datasets-catalog__link"
                 to={routePath("space-datasets-detail", { name: dataset.name })}
               >
-                <DatasetHeading dataset={dataset} />
-                {dataset.description && (
-                  <span className="source-card__description">{dataset.description}</span>
-                )}
-                <code className="datasets-catalog__path">{dataset.path ?? "No path"}</code>
-                <DatasetBadges dataset={dataset} />
+                <DatasetSummary dataset={dataset} />
               </Link>
               {dataset.managed && (
                 <button
                   type="button"
-                  className="btn-ghost btn-sm"
+                  className="btn-ghost btn-sm datasets-catalog__settings"
                   aria-label={`Settings for ${dataset.source}`}
                   onClick={() => setDialog({ kind: "edit", dataset })}
                 >
+                  <Settings aria-hidden="true" size={14} />
                   Settings
                 </button>
               )}

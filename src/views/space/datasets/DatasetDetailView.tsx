@@ -5,7 +5,7 @@ import { useKeywordSearch } from "../../../hooks/useKeywordSearch";
 import { routePath } from "../../../config/routes";
 import { importDataset, updateDocument } from "../../../services/api";
 import type { DatasetDocumentView } from "../../../models";
-import { DatasetBadges, DatasetHeading } from "./DatasetSummary";
+import { DatasetSummary } from "./DatasetSummary";
 import { DatasetDialog } from "./DatasetDialog";
 import { DocumentDialog } from "./DocumentDialog";
 import { SearchTestPanel } from "./SearchTestPanel";
@@ -107,12 +107,7 @@ export function DatasetDetailView() {
       )}
       {dataset && (
         <div className="source-card datasets-detail__summary">
-          <DatasetHeading dataset={dataset} />
-          {dataset.description && (
-            <span className="source-card__description">{dataset.description}</span>
-          )}
-          <code className="datasets-catalog__path">{dataset.path ?? "No path"}</code>
-          <DatasetBadges dataset={dataset} />
+          <DatasetSummary dataset={dataset} />
           <div className="datasets-detail__actions">
             {managed ? (
               <button type="button" className="btn-ghost btn-sm" onClick={() => setEditing(true)}>

@@ -1,22 +1,28 @@
 import { useState } from "react";
-import { Database, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { useDatasets } from "../../../hooks/useDataset";
 import { useKeywordSearch } from "../../../hooks/useKeywordSearch";
 import { routePath } from "../../../config/routes";
-import type { DatasetView } from "../../../models";
+import type { DatasetDialogMode } from "./DatasetDialog";
+import { DatasetBadges, DatasetHeading } from "./DatasetSummary";
 import { RetrievalStatus } from "../../../components/RetrievalStatus";
 import { DatasetDialog } from "./DatasetDialog";
 
 /** `/space/datasets`: the corpora registered for the retrieval server, a page at a time. */
-export function DatasetsView() {
+export function ListView() {
   // The search lives in the URL (`?search_word=`) and runs on submit.
   const { query, setQuery, commitKeyword } = useKeywordSearch();
   const [params] = useSearchParams();
   const searchWord = params.get("search_word") ?? "";
-  const { datasets, loading, error, hasMore, loadMore, retry } = useDatasets(searchWord);
+  const { datasets, loading, error, hasMore, loadMore, retry, reload } = useDatasets(searchWord);
   const navigate = useNavigate();
-  const [creating, setCreating] = useState(false);
+  const [dialog, setDialog] = useState<DatasetDialogMode | null>(null);
+  const closeDialog = () => setDialog(null);
+  const refresh = () => {
+    closeDialog();
+    reload();
+  };
 
   return (
     <section className="sources-catalog" aria-label="Datasets">
@@ -25,7 +31,7 @@ export function DatasetsView() {
         <button
           type="button"
           className="btn-primary tools-catalog__create"
-          onClick={() => setCreating(true)}
+          onClick={() => setDialog({ kind: "create" })}
         >
           <Plus aria-hidden="true" size={16} />
           Create dataset
@@ -64,7 +70,29 @@ export function DatasetsView() {
       <ul className="sources-catalog__grid">
         {datasets.map((dataset) => (
           <li key={dataset.name}>
-            <DatasetCard dataset={dataset} />
+            <article className="source-card">
+              <Link
+                className="datasets-catalog__link"
+                to={routePath("space-datasets-detail", { name: dataset.name })}
+              >
+                <DatasetHeading dataset={dataset} />
+                {dataset.description && (
+                  <span className="source-card__description">{dataset.description}</span>
+                )}
+                <code className="datasets-catalog__path">{dataset.path ?? "No path"}</code>
+                <DatasetBadges dataset={dataset} />
+              </Link>
+              {dataset.managed && (
+                <button
+                  type="button"
+                  className="btn-ghost btn-sm"
+                  aria-label={`Settings for ${dataset.source}`}
+                  onClick={() => setDialog({ kind: "edit", dataset })}
+                >
+                  Settings
+                </button>
+              )}
+            </article>
           </li>
         ))}
       </ul>
@@ -82,58 +110,19 @@ export function DatasetsView() {
         </div>
       )}
 
-      {creating && (
+      {dialog && (
         <DatasetDialog
-          mode={{ kind: "create" }}
-          onClose={() => setCreating(false)}
-          onSaved={(dataset) =>
-            void navigate(routePath("space-datasets-detail", { name: dataset.name }))
-          }
+          mode={dialog}
+          onClose={closeDialog}
+          onSaved={(dataset) => {
+            if (dialog.kind === "create") {
+              closeDialog();
+              void navigate(routePath("space-datasets-detail", { name: dataset.name }));
+            } else refresh();
+          }}
+          onDeleted={refresh}
         />
       )}
     </section>
-  );
-}
-
-function DatasetCard({ dataset }: { dataset: DatasetView }) {
-  return (
-    <Link className="source-card" to={routePath("space-datasets-detail", { name: dataset.name })}>
-      <DatasetHeading dataset={dataset} />
-      <code className="datasets-catalog__path">{dataset.path ?? "No path"}</code>
-      <DatasetBadges dataset={dataset} />
-    </Link>
-  );
-}
-
-/** Icon tile, label and the "name · domain · docs" line, shared by card and detail page. */
-export function DatasetHeading({ dataset }: { dataset: DatasetView }) {
-  return (
-    <span className="source-card__heading">
-      <span className="source-option__icon source-card__icon datasets-catalog__icon">
-        <Database aria-hidden="true" size={20} />
-      </span>
-      <span>
-        <strong className="source-option__name">{dataset.source}</strong>
-        <small>
-          {[
-            dataset.name,
-            dataset.domain,
-            dataset.docs === null ? "" : `${dataset.docs.toLocaleString()} docs`,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-        </small>
-      </span>
-    </span>
-  );
-}
-
-export function DatasetBadges({ dataset }: { dataset: DatasetView }) {
-  return (
-    <span className="datasets-catalog__badges">
-      {dataset.managed && <span className="route-pill">Managed</span>}
-      {dataset.served && <span className="route-pill">Serving</span>}
-      {!dataset.available && <span className="route-pill route-pill--degraded">File missing</span>}
-    </span>
   );
 }

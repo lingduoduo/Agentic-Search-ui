@@ -18,7 +18,7 @@ pages are the apps list, `/space/apps` (`ListView`), one app at
 `/space/apps/:app_id` (`DetailView`: `assist`, `search`, `chat` or `tools`; an
 unknown id shows the not-found page), the search-source catalog at
 `/space/sources` (`SourcesView`), the admin tool registry at `/space/tools`
-(`ToolsView`), the admin corpus list at `/space/datasets` (`DatasetsView`) and one corpus's
+(`ToolsView`), the admin corpus list at `/space/datasets` (`ListView`) and one corpus's
 documents at `/space/datasets/:name` (`DatasetDetailView`),
 `/account` and `/admin`. Signing in lands
 on Assistant at `/space/apps/assist`, and `/` redirects there while preserving query parameters. Explicit page links still return to the requested page after sign-in. Public pages, marked

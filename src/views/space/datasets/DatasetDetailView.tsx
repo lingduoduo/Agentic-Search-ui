@@ -5,7 +5,7 @@ import { useKeywordSearch } from "../../../hooks/useKeywordSearch";
 import { routePath } from "../../../config/routes";
 import { importDataset, updateDocument } from "../../../services/api";
 import type { DatasetDocumentView } from "../../../models";
-import { DatasetBadges, DatasetHeading } from "./DatasetsView";
+import { DatasetBadges, DatasetHeading } from "./DatasetSummary";
 import { DatasetDialog } from "./DatasetDialog";
 import { DocumentDialog } from "./DocumentDialog";
 import { SearchTestPanel } from "./SearchTestPanel";

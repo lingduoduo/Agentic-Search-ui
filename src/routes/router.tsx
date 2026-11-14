@@ -100,8 +100,8 @@ export const appRoutes: RouteObject[] = [
             // /api/datasets is admin-only (it shows server paths), so the page is too.
             loader: requireAdminLoader,
             lazy: () =>
-              import("../views/space/datasets/DatasetsView").then((m) => ({
-                Component: m.DatasetsView,
+              import("../views/space/datasets/ListView").then((m) => ({
+                Component: m.ListView,
               })),
             handle: {
               heading: {

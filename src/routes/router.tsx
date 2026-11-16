@@ -112,6 +112,18 @@ export const appRoutes: RouteObject[] = [
             } satisfies RouteHandle,
           },
           {
+            id: "space-datasets-documents-create",
+            path: "space/datasets/:name/documents/create",
+            loader: requireAdminLoader,
+            lazy: () =>
+              import("../views/space/datasets/CreateView").then((m) => ({
+                Component: m.CreateView,
+              })),
+            handle: {
+              heading: { title: "Add files", description: "Upload documents to this dataset." },
+            } satisfies RouteHandle,
+          },
+          {
             id: "space-datasets-detail",
             path: "space/datasets/:name",
             loader: requireAdminLoader,

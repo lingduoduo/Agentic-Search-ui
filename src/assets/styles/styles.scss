@@ -3290,3 +3290,32 @@ a.source-card {
 .tool-table input {
   width: 100%;
 }
+
+.datasets-document-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  &::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--muted);
+  }
+  &[data-enabled="true"]::before {
+    background: var(--success, #15803d);
+  }
+}
+
+.datasets-upload__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding-left: 20px;
+  color: var(--muted);
+  [aria-current="step"] {
+    color: var(--text);
+    font-weight: 600;
+  }
+}

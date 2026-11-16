@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import * as api from "../../../../services/api";
 import type { DocumentBatchView, UploadFileView } from "../../../../models";
 import { BATCH_POLL_MS } from "../../../../hooks/useDataset";
-import { MAX_BYTES, MAX_FILES, UploadDialog, checkFiles } from "../UploadDialog";
+import { MAX_BYTES, MAX_FILES, UploadDialog, checkFiles } from "../documents/UploadDialog";
 
 const file = (name: string, size = 3) => new File(["x".repeat(size)], name);
 

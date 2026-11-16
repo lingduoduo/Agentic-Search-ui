@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Plus, Search, Settings } from "lucide-react";
+import { Plus, Settings } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { useDatasets } from "../../../hooks/useDataset";
-import { useKeywordSearch } from "../../../hooks/useKeywordSearch";
+import { KeywordSearch } from "../../../components/KeywordSearch";
 import { routePath } from "../../../config/routes";
 import type { DatasetDialogMode } from "./DatasetDialog";
 import { DatasetSummary } from "./DatasetSummary";
@@ -12,7 +12,6 @@ import { DatasetDialog } from "./DatasetDialog";
 /** `/space/datasets`: the corpora registered for the retrieval server, a page at a time. */
 export function ListView() {
   // The search lives in the URL (`?search_word=`) and runs on submit.
-  const { query, setQuery, commitKeyword } = useKeywordSearch();
   const [params] = useSearchParams();
   const searchWord = params.get("search_word") ?? "";
   const { datasets, loading, error, hasMore, loadMore, retry, reload } = useDatasets(searchWord);
@@ -27,23 +26,11 @@ export function ListView() {
   return (
     <section className="sources-catalog datasets-catalog" aria-label="Datasets">
       <div className="sources-catalog__toolbar datasets-catalog__toolbar">
-        <form
-          role="search"
+        <KeywordSearch
+          label="Find a dataset"
+          placeholder="Find a dataset…"
           className="datasets-catalog__search"
-          onSubmit={(event) => {
-            event.preventDefault();
-            commitKeyword(query);
-          }}
-        >
-          <Search aria-hidden="true" size={16} />
-          <input
-            type="search"
-            aria-label="Find a dataset"
-            placeholder="Find a dataset…"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-        </form>
+        />
         <RetrievalStatus />
         <button
           type="button"

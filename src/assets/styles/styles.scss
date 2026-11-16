@@ -2967,9 +2967,20 @@ p.source-drawer__note {
   justify-content: flex-end;
 }
 .datasets-catalog__search {
-  position: relative;
   flex: 1 1 240px;
   margin-right: auto;
+}
+.keyword-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.keyword-search__field {
+  position: relative;
+  flex: 1 1 180px;
+  min-width: 0;
   svg {
     position: absolute;
     top: 50%;
@@ -2979,6 +2990,7 @@ p.source-drawer__note {
     transform: translateY(-50%);
   }
   input {
+    box-sizing: border-box;
     width: 100%;
     padding-left: 36px;
   }
@@ -3317,5 +3329,20 @@ a.source-card {
   [aria-current="step"] {
     color: var(--text);
     font-weight: 600;
+  }
+}
+
+.table-pagination {
+  flex-wrap: wrap;
+  button[aria-current="page"] {
+    color: var(--text);
+    border-color: currentColor;
+    opacity: 1;
+    font-weight: 600;
+  }
+  label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
   }
 }

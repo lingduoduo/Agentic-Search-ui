@@ -425,3 +425,90 @@ describe("document list sample consolidation", () => {
     expect(screen.getByRole("button", { name: "Delete Title a" })).toBeEnabled();
   });
 });
+
+describe("document table pagination", () => {
+  it("jumps to numbered pages and shows the server total", async () => {
+    vi.spyOn(api, "getDataset").mockResolvedValue(dataset);
+    const load = vi
+      .spyOn(api, "getDatasetDocuments")
+      .mockResolvedValueOnce({
+        ...page([doc("a")], 1, 5),
+        paginator: { current_page: 1, page_size: 20, total_page: 5, total_record: 95 },
+      })
+      .mockResolvedValueOnce({
+        ...page([doc("c")], 3, 5),
+        paginator: { current_page: 3, page_size: 20, total_page: 5, total_record: 95 },
+      });
+    renderView("/space/datasets/demo?search_word=docs&filter=all");
+    await userEvent.click(await screen.findByRole("button", { name: "Go to page 3" }));
+    expect(await screen.findByText("Title c")).toBeInTheDocument();
+    expect(screen.getByText("95 documents")).toBeInTheDocument();
+    expect(screen.getByTestId("search")).toHaveTextContent(
+      "search_word=docs&filter=all&current_page=3",
+    );
+    expect(load).toHaveBeenLastCalledWith(
+      "demo",
+      { current_page: 3, page_size: 20, search_word: "docs" },
+      expect.anything(),
+    );
+  });
+
+  it("changes page size through the URL and resets the current page", async () => {
+    vi.spyOn(api, "getDataset").mockResolvedValue(dataset);
+    const load = vi.spyOn(api, "getDatasetDocuments").mockResolvedValue(page([doc("a")], 2, 3));
+    renderView("/space/datasets/demo?current_page=2&search_word=docs&filter=all");
+    await userEvent.selectOptions(
+      await screen.findByRole("combobox", { name: "Documents per page" }),
+      "50",
+    );
+    await waitFor(() =>
+      expect(load).toHaveBeenLastCalledWith(
+        "demo",
+        { current_page: 1, page_size: 50, search_word: "docs" },
+        expect.anything(),
+      ),
+    );
+    expect(screen.getByTestId("search")).toHaveTextContent(
+      "search_word=docs&filter=all&page_size=50",
+    );
+    await userEvent.clear(screen.getByRole("searchbox", { name: "Find a document" }));
+    await userEvent.type(screen.getByRole("searchbox", { name: "Find a document" }), "new{Enter}");
+    await waitFor(() =>
+      expect(load).toHaveBeenLastCalledWith(
+        "demo",
+        { current_page: 1, page_size: 50, search_word: "new" },
+        expect.anything(),
+      ),
+    );
+  });
+
+  it("returns to the last remaining page after deleting its only row", async () => {
+    vi.spyOn(api, "getDataset").mockResolvedValue(managedDataset);
+    vi.spyOn(api, "getDatasetDocuments")
+      .mockResolvedValueOnce(page([managedDoc("last")], 2, 2))
+      .mockResolvedValueOnce(page([], 2, 1))
+      .mockResolvedValueOnce(page([managedDoc("first")], 1, 1));
+    vi.spyOn(api, "deleteDocument").mockResolvedValue(undefined);
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    renderView("/space/datasets/demo?current_page=2");
+    await userEvent.click(await screen.findByRole("button", { name: "Delete Title last" }));
+    expect(await screen.findByText("Title first")).toBeInTheDocument();
+    expect(screen.getByTestId("search")).toBeEmptyDOMElement();
+  });
+});
+
+it("clears a document keyword and resets its page while keeping other table filters", async () => {
+  vi.spyOn(api, "getDataset").mockResolvedValue(dataset);
+  const load = vi.spyOn(api, "getDatasetDocuments").mockResolvedValue(page([doc("a")], 2, 3));
+  renderView("/space/datasets/demo?search_word=docs&current_page=2&page_size=50&filter=all");
+  await userEvent.click(await screen.findByRole("button", { name: "Clear search" }));
+  await waitFor(() =>
+    expect(load).toHaveBeenLastCalledWith(
+      "demo",
+      { current_page: 1, page_size: 50, search_word: "" },
+      expect.anything(),
+    ),
+  );
+  expect(screen.getByTestId("search")).toHaveTextContent("?page_size=50&filter=all");
+  expect(screen.getByRole("searchbox", { name: "Find a document" })).toHaveValue("");
+});

@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { useDatasetDocuments } from "../../../../hooks/useDataset";
-import { useKeywordSearch } from "../../../../hooks/useKeywordSearch";
+import { TablePagination } from "../../../../components/TablePagination";
+import { useTablePagination } from "../../../../hooks/useTablePagination";
+import { KeywordSearch } from "../../../../components/KeywordSearch";
 import { updateDocument } from "../../../../services/api";
 import type { DatasetDocumentView } from "../../../../models";
 import { routePath } from "../../../../config/routes";
@@ -28,15 +30,14 @@ export function ListView({
   available: boolean;
   onChanged: () => void;
 }) {
-  const [params, setParams] = useSearchParams();
+  const [params] = useSearchParams();
   const searchWord = params.get("search_word") ?? "";
-  const requested = Number(params.get("current_page"));
-  const page = Number.isInteger(requested) && requested > 0 ? requested : 1;
-  const { query, setQuery, commitKeyword } = useKeywordSearch(SEARCH_RESETS);
+  const { page, pageSize, goTo, setPageSize } = useTablePagination();
   const { documents, paginator, loading, error, reload } = useDatasetDocuments(
     name,
     page,
     searchWord,
+    pageSize,
   );
   const [openDocument, setOpenDocument] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
@@ -45,14 +46,11 @@ export function ListView({
   // Documents whose enabled switch is saving.
   const [toggling, setToggling] = useState<ReadonlySet<string>>(new Set());
   const [actionError, setActionError] = useState("");
-  const totalPages = paginator?.total_page ?? 0;
-
-  const goTo = (next: number) => {
-    const nextParams = new URLSearchParams(params);
-    if (next > 1) nextParams.set("current_page", String(next));
-    else nextParams.delete("current_page");
-    setParams(nextParams);
-  };
+  useEffect(() => {
+    if (!loading && !error && paginator && page > Math.max(1, paginator.total_page)) {
+      goTo(Math.max(1, paginator.total_page), true);
+    }
+  }, [loading, error, paginator, page, goTo]);
 
   const changed = () => {
     reload();
@@ -124,21 +122,11 @@ export function ListView({
             </Link>
           </>
         )}
-        <form
-          role="search"
-          onSubmit={(event) => {
-            event.preventDefault();
-            commitKeyword(query);
-          }}
-        >
-          <input
-            type="search"
-            aria-label="Find a document"
-            placeholder="Find a document…"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-        </form>
+        <KeywordSearch
+          label="Find a document"
+          placeholder="Find a document…"
+          resets={SEARCH_RESETS}
+        />
       </div>
 
       {error && (
@@ -253,22 +241,15 @@ export function ListView({
         </table>
       )}
 
-      {totalPages > 1 && (
-        <nav className="qh-pagination" aria-label="Document pages">
-          <button type="button" disabled={loading || page <= 1} onClick={() => goTo(page - 1)}>
-            ‹ Prev
-          </button>
-          <span>
-            Page {page} of {totalPages}
-          </span>
-          <button
-            type="button"
-            disabled={loading || page >= totalPages}
-            onClick={() => goTo(page + 1)}
-          >
-            Next ›
-          </button>
-        </nav>
+      {paginator && (paginator.total_record > 0 || page > 1) && (
+        <TablePagination
+          paginator={paginator}
+          page={page}
+          pageSize={pageSize}
+          loading={loading}
+          onPageChange={goTo}
+          onPageSizeChange={setPageSize}
+        />
       )}
 
       {testing && available && (

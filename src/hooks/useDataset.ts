@@ -30,6 +30,7 @@ export function useDatasets(searchWord: string) {
         { signal: controller.signal },
       )
         .then((res) => {
+          if (controller.signal.aborted) return;
           setDatasets((prev) => {
             if (page === 1) return res.list;
             // The manifest can change between pages; never show a dataset twice.
@@ -90,11 +91,18 @@ export function useDataset(name: string) {
 }
 
 /** One page of a dataset's documents; each page replaces the last (a table, not a feed). */
-export function useDatasetDocuments(name: string, page: number, searchWord: string) {
+export function useDatasetDocuments(
+  name: string,
+  page: number,
+  searchWord: string,
+  pageSize = PAGE_SIZE,
+) {
   const [documents, setDocuments] = useState<DatasetDocumentView[]>([]);
   const [paginator, setPaginator] = useState<Paginator | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const requestKey = JSON.stringify([name, page, searchWord, pageSize]);
+  const [loadedRequest, setLoadedRequest] = useState("");
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
@@ -103,10 +111,12 @@ export function useDatasetDocuments(name: string, page: number, searchWord: stri
     setError("");
     getDatasetDocuments(
       name,
-      { current_page: page, page_size: PAGE_SIZE, search_word: searchWord },
+      { current_page: page, page_size: pageSize, search_word: searchWord },
       { signal: controller.signal },
     )
       .then((res) => {
+        if (controller.signal.aborted) return;
+        setLoadedRequest(requestKey);
         setDocuments(res.list);
         setPaginator(res.paginator);
       })
@@ -117,9 +127,15 @@ export function useDatasetDocuments(name: string, page: number, searchWord: stri
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [name, page, searchWord, attempt]);
+  }, [name, page, searchWord, pageSize, requestKey, attempt]);
 
-  return { documents, paginator, loading, error, reload: () => setAttempt((n) => n + 1) };
+  return {
+    documents: loadedRequest === requestKey ? documents : [],
+    paginator: loadedRequest === requestKey ? paginator : null,
+    loading,
+    error,
+    reload: () => setAttempt((n) => n + 1),
+  };
 }
 
 export const BATCH_POLL_MS = 1000;

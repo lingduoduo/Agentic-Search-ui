@@ -55,6 +55,46 @@ const mockDataset = {
   updated_at: null,
 };
 
+const mockDocuments = [
+  {
+    id: "doc_001",
+    title: "Dense Retrieval with FAISS",
+    contents: "Dense retrieval encodes queries and documents into vectors.",
+    source: "Vector Search Docs",
+    acl: ["public"],
+    document_id: null,
+    enabled: true,
+    updated_at: null,
+  },
+];
+
+// Match the backend's keyword + page contract; filter the whole collection first.
+function searchPage(req, items, fields) {
+  const params = new URL(req.url, "http://localhost").searchParams;
+  const keyword = (params.get("search_word") ?? "").trim().toLowerCase();
+  const requestedPage = Number(params.get("current_page"));
+  const requestedSize = Number(params.get("page_size"));
+  const current_page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const page_size = Number.isSafeInteger(requestedSize) && requestedSize > 0 ? requestedSize : 20;
+  const matches = items.filter((item) =>
+    fields.some((field) =>
+      String(item[field] ?? "")
+        .toLowerCase()
+        .includes(keyword),
+    ),
+  );
+  const start = (current_page - 1) * page_size;
+  return {
+    list: matches.slice(start, start + page_size),
+    paginator: {
+      current_page,
+      page_size,
+      total_record: matches.length,
+      total_page: Math.ceil(matches.length / page_size),
+    },
+  };
+}
+
 export default [
   {
     method: "GET",
@@ -134,30 +174,13 @@ export default [
   {
     method: "GET",
     path: "/api/datasets",
-    response: {
-      list: [mockDataset],
-      paginator: { current_page: 1, page_size: 20, total_page: 1, total_record: 1 },
-    },
+    response: (req) => searchPage(req, [mockDataset], ["name", "source", "domain"]),
   },
   { method: "GET", path: "/api/datasets/demo", response: mockDataset },
   {
     method: "GET",
     path: "/api/datasets/demo/documents",
-    response: {
-      list: [
-        {
-          id: "doc_001",
-          title: "Dense Retrieval with FAISS",
-          contents: "Dense retrieval encodes queries and documents into vectors.",
-          source: "Vector Search Docs",
-          acl: ["public"],
-          document_id: null,
-          enabled: true,
-          updated_at: null,
-        },
-      ],
-      paginator: { current_page: 1, page_size: 20, total_page: 1, total_record: 1 },
-    },
+    response: (req) => searchPage(req, mockDocuments, ["title", "contents"]),
   },
   {
     method: "GET",

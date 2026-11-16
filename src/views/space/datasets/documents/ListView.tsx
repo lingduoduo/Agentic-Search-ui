@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router";
+import { Link, useLocation, useSearchParams } from "react-router";
 import { useDatasetDocuments } from "../../../../hooks/useDataset";
 import { TablePagination } from "../../../../components/TablePagination";
 import { useTablePagination } from "../../../../hooks/useTablePagination";
@@ -30,6 +30,7 @@ export function ListView({
   available: boolean;
   onChanged: () => void;
 }) {
+  const location = useLocation();
   const [params] = useSearchParams();
   const searchWord = params.get("search_word") ?? "";
   const { page, pageSize, goTo, setPageSize } = useTablePagination();
@@ -116,7 +117,12 @@ export function ListView({
             </button>
             <Link
               className="btn-ghost btn-sm"
-              to={routePath("space-datasets-documents-create", { name })}
+              to={{
+                pathname: routePath("space-datasets-documents-create", { name }),
+                search: location.search,
+                hash: location.hash,
+              }}
+              state={location.state}
             >
               Add files
             </Link>

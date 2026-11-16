@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { routePath } from "../../../config/routes";
 import { useDataset } from "../../../hooks/useDataset";
 import { UploadForm } from "./documents/UploadForm";
@@ -7,12 +7,17 @@ import { UploadForm } from "./documents/UploadForm";
 export function CreateView() {
   const name = useParams().name ?? "";
   const navigate = useNavigate();
+  const location = useLocation();
   const { dataset, error, reload } = useDataset(name);
-  const back = routePath("space-datasets-detail", { name });
+  const back = {
+    pathname: routePath("space-datasets-documents-list", { name }),
+    search: location.search,
+    hash: location.hash,
+  };
 
   return (
     <section className="datasets-detail" aria-label="Add files">
-      <Link className="datasets-detail__back" to={back}>
+      <Link className="datasets-detail__back" to={back} state={location.state}>
         ← Back to documents
       </Link>
       <h2>Add files</h2>
@@ -30,7 +35,7 @@ export function CreateView() {
           key={name}
           datasetName={name}
           review
-          onClose={() => void navigate(back)}
+          onClose={() => void navigate(back, { state: location.state })}
           onUploaded={reload}
         />
       ) : (

@@ -41,3 +41,16 @@ it("ignores a late response from an older keyword search", async () => {
   await act(async () => finishOld(page("old")));
   expect(result.current.datasets[0]?.name).toBe("new");
 });
+
+it("hides results from the previous keyword while a new search is pending", async () => {
+  vi.spyOn(api, "getDatasets")
+    .mockResolvedValueOnce(page("old"))
+    .mockImplementationOnce(() => new Promise(() => {}));
+  const { result, rerender } = renderHook(({ keyword }) => useDatasets(keyword), {
+    initialProps: { keyword: "old" },
+  });
+  await waitFor(() => expect(result.current.datasets[0]?.name).toBe("old"));
+  rerender({ keyword: "new" });
+  expect(result.current.datasets).toEqual([]);
+  expect(result.current.paginator).toBeNull();
+});

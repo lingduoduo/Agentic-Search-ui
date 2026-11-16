@@ -23,7 +23,7 @@ function renderView() {
     <MemoryRouter initialEntries={["/space/datasets/demo/documents/create"]}>
       <Routes>
         <Route path="/space/datasets/:name/documents/create" element={<CreateView />} />
-        <Route path="/space/datasets/:name" element={<p>Document list</p>} />
+        <Route path="/space/datasets/:name/documents" element={<p>Document list</p>} />
       </Routes>
     </MemoryRouter>,
   );

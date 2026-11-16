@@ -1,9 +1,9 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
-import { createDocuments } from "../../../services/api";
-import type { DocumentBatchView } from "../../../models";
-import { useDocumentBatch } from "../../../hooks/useDataset";
-import { useFocusTrap } from "../../../hooks/useFocusTrap";
+import { createDocuments } from "../../../../services/api";
+import type { DocumentBatchView } from "../../../../models";
+import { useDocumentBatch } from "../../../../hooks/useDataset";
+import { Dialog } from "../Dialog";
 
 // Mirrors the backend's limits, so a bad pick is caught before uploading.
 const EXTENSIONS = [".jsonl", ".txt", ".md"];
@@ -44,13 +44,10 @@ export function UploadDialog({
   /** Once every file is processed, so the table reloads. */
   onUploaded: () => void;
 }) {
-  const titleId = useId();
-  const panel = useRef<HTMLDivElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [accepted, setAccepted] = useState<DocumentBatchView | null>(null);
-  useFocusTrap(panel, onClose);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -71,62 +68,47 @@ export function UploadDialog({
   }
 
   return (
-    <div className="tool-modal-overlay" onClick={onClose}>
-      <div
-        ref={panel}
-        className="tool-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="tool-modal-header">
-          <h3 id={titleId}>Add documents</h3>
-          <button type="button" className="btn-ghost btn-sm" aria-label="Close" onClick={onClose}>
-            ✕
-          </button>
-        </div>
-        {accepted ? (
-          <BatchProgress datasetName={datasetName} accepted={accepted} onDone={onUploaded}>
-            <div className="form-actions">
-              <button type="button" className="btn-ghost" onClick={onClose}>
-                Close
-              </button>
-            </div>
-          </BatchProgress>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            <div className="tool-field">
-              <label htmlFor="upload-dialog-files">Files</label>
-              <input
-                id="upload-dialog-files"
-                type="file"
-                multiple
-                accept={EXTENSIONS.join(",")}
-                onChange={(event) => {
-                  setFiles(Array.from(event.target.files ?? []));
-                  setError("");
-                }}
-              />
-              <span className="tool-field-desc">
-                .jsonl: one document per line with contents (or text), and optional id, title and
-                metadata. .txt and .md: split into passages of about 300 words. Up to {MAX_FILES}{" "}
-                files, 10 MB each.
-              </span>
-            </div>
-            {error && <p className="form-error">{error}</p>}
-            <div className="form-actions">
-              <button type="submit" className="btn-primary" disabled={uploading}>
-                {uploading ? "Uploading…" : "Upload"}
-              </button>
-              <button type="button" className="btn-ghost" onClick={onClose}>
-                Cancel
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-    </div>
+    <Dialog title="Add documents" onClose={onClose}>
+      {accepted ? (
+        <BatchProgress datasetName={datasetName} accepted={accepted} onDone={onUploaded}>
+          <div className="form-actions">
+            <button type="button" className="btn-ghost" onClick={onClose}>
+              Close
+            </button>
+          </div>
+        </BatchProgress>
+      ) : (
+        <form onSubmit={handleSubmit}>
+          <div className="tool-field">
+            <label htmlFor="upload-dialog-files">Files</label>
+            <input
+              id="upload-dialog-files"
+              type="file"
+              multiple
+              accept={EXTENSIONS.join(",")}
+              onChange={(event) => {
+                setFiles(Array.from(event.target.files ?? []));
+                setError("");
+              }}
+            />
+            <span className="tool-field-desc">
+              .jsonl: one document per line with contents (or text), and optional id, title and
+              metadata. .txt and .md: split into passages of about 300 words. Up to {MAX_FILES}{" "}
+              files, 10 MB each.
+            </span>
+          </div>
+          {error && <p className="form-error">{error}</p>}
+          <div className="form-actions">
+            <button type="submit" className="btn-primary" disabled={uploading}>
+              {uploading ? "Uploading…" : "Upload"}
+            </button>
+            <button type="button" className="btn-ghost" onClick={onClose}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+    </Dialog>
   );
 }
 

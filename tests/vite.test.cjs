@@ -246,3 +246,29 @@ test("named environments load backend settings without exposing them to the brow
     fs.rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test("knowledge-base mock searches filter before pagination and return matching totals", async () => {
+  const { default: routes } = await import("../mocks/config.js");
+  const response = (path, query) => {
+    const route = routes.find((route) => route.path === path && route.method === "GET");
+    return typeof route.response === "function"
+      ? route.response({ url: path + query })
+      : route.response;
+  };
+  const datasets = response("/api/datasets", "?search_word=%20KNOWLEDGE%20");
+  assert.equal(datasets.list[0].name, "demo");
+  assert.equal(datasets.paginator.total_record, 1);
+  const missing = response("/api/datasets", "?search_word=absent");
+  assert.deepEqual(missing.list, []);
+  assert.equal(missing.paginator.total_record, 0);
+  const docs = response("/api/datasets/demo/documents", "?search_word=VECTORS&page_size=10");
+  assert.equal(docs.list[0].id, "doc_001");
+  assert.equal(docs.paginator.page_size, 10);
+  const second = response(
+    "/api/datasets/demo/documents",
+    "?search_word=faiss&current_page=2&page_size=10",
+  );
+  assert.deepEqual(second.list, []);
+  assert.equal(second.paginator.current_page, 2);
+  assert.equal(second.paginator.total_record, 1);
+});

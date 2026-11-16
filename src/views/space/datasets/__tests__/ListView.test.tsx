@@ -250,3 +250,19 @@ describe("ListView", () => {
     expect(await screen.findByText("retrieval · 127.0.0.1:8001 · up")).toBeInTheDocument();
   });
 });
+
+it("submits a trimmed dataset keyword with the search button and clears it", async () => {
+  const load = vi.spyOn(api, "getDatasets").mockResolvedValue(page([]));
+  renderView("/space/datasets?filter=managed");
+  await screen.findByText("No datasets registered.");
+  await userEvent.type(screen.getByRole("searchbox", { name: "Find a dataset" }), "  ML  ");
+  expect(load).toHaveBeenCalledTimes(1);
+  await userEvent.click(screen.getByRole("button", { name: "Search" }));
+  expect(await screen.findByText("No datasets match.")).toBeInTheDocument();
+  expect(screen.getByTestId("search")).toHaveTextContent("?filter=managed&search_word=ML");
+  expect(screen.getByRole("searchbox", { name: "Find a dataset" })).toHaveValue("ML");
+  await userEvent.click(screen.getByRole("button", { name: "Clear search" }));
+  expect(await screen.findByText("No datasets registered.")).toBeInTheDocument();
+  expect(screen.getByTestId("search")).toHaveTextContent("?filter=managed");
+  expect(screen.getByRole("searchbox", { name: "Find a dataset" })).toHaveValue("");
+});

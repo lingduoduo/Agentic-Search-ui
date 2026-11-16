@@ -36,5 +36,5 @@ export function useKeywordSearch(resets: readonly string[] = NO_RESETS) {
     [params, navigate, hash, keyword, resets],
   );
 
-  return { query, setQuery, commitKeyword };
+  return { keyword, query, setQuery, commitKeyword };
 }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Plus, Settings } from "lucide-react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { useDatasets } from "../../../hooks/useDataset";
 import { KeywordSearch } from "../../../components/KeywordSearch";
 import { routePath } from "../../../config/routes";
@@ -16,6 +16,8 @@ export function ListView() {
   const searchWord = params.get("search_word") ?? "";
   const { datasets, loading, error, hasMore, loadMore, retry, reload } = useDatasets(searchWord);
   const navigate = useNavigate();
+  const location = useLocation();
+  const navigationState = { catalog: { search: location.search, hash: location.hash } };
   const [dialog, setDialog] = useState<DatasetDialogMode | null>(null);
   const closeDialog = () => setDialog(null);
   const refresh = () => {
@@ -62,7 +64,8 @@ export function ListView() {
             <article className="source-card datasets-catalog__card">
               <Link
                 className="datasets-catalog__link"
-                to={routePath("space-datasets-detail", { name: dataset.name })}
+                state={navigationState}
+                to={routePath("space-datasets-documents-list", { name: dataset.name })}
               >
                 <DatasetSummary dataset={dataset} />
               </Link>
@@ -102,7 +105,9 @@ export function ListView() {
           onSaved={(dataset) => {
             if (dialog.kind === "create") {
               closeDialog();
-              void navigate(routePath("space-datasets-detail", { name: dataset.name }));
+              void navigate(routePath("space-datasets-documents-list", { name: dataset.name }), {
+                state: navigationState,
+              });
             } else refresh();
           }}
           onDeleted={refresh}

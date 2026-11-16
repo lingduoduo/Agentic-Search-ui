@@ -67,6 +67,9 @@ describe("routes", () => {
 
   it.each([
     ["/space/apps", "space-apps-list"],
+    ["/space/datasets/demo/documents", "space-datasets-documents-list"],
+    ["/space/datasets/demo/documents/create", "space-datasets-documents-create"],
+    ["/space/datasets/demo", "space-datasets-detail"],
     ["/space/apps/chat", "space-apps-detail"],
     ["/account", "pages-account"],
     ["/admin", "pages-admin"],

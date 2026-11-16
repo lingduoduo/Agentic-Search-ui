@@ -67,7 +67,7 @@ describe("ListView", () => {
     vi.spyOn(api, "getDatasets").mockResolvedValue(page([demo, scifact]));
     renderView();
     const card = await screen.findByRole("link", { name: /SciFact Corpus/ });
-    expect(card).toHaveAttribute("href", "/space/datasets/scifact");
+    expect(card).toHaveAttribute("href", "/space/datasets/scifact/documents");
     expect(card).toHaveTextContent(`scifact · scientific · ${(5183).toLocaleString()} docs`);
     expect(card).toHaveTextContent("data/corpus_scifact.jsonl");
     expect(card).toHaveTextContent("File missing");
@@ -201,7 +201,7 @@ describe("ListView", () => {
       <MemoryRouter initialEntries={["/space/datasets"]}>
         <Routes>
           <Route path="/space/datasets" element={<ListView />} />
-          <Route path="/space/datasets/:name" element={<Search />} />
+          <Route path="/space/datasets/:name/documents" element={<Search />} />
         </Routes>
       </MemoryRouter>,
     );

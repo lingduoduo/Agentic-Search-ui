@@ -12,6 +12,7 @@ const messageOf = (cause: unknown, fallback: string) =>
  * 1; `loadMore` appends the next page. A newer request aborts an older one.
  */
 export function useDatasets(searchWord: string) {
+  const [loadedKeyword, setLoadedKeyword] = useState<string | null>(null);
   const [datasets, setDatasets] = useState<DatasetView[]>([]);
   const [paginator, setPaginator] = useState<Paginator | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,6 +32,7 @@ export function useDatasets(searchWord: string) {
       )
         .then((res) => {
           if (controller.signal.aborted) return;
+          setLoadedKeyword(searchWord);
           setDatasets((prev) => {
             if (page === 1) return res.list;
             // The manifest can change between pages; never show a dataset twice.
@@ -56,12 +58,12 @@ export function useDatasets(searchWord: string) {
 
   const hasMore = paginator !== null && paginator.current_page < paginator.total_page;
   return {
-    datasets,
+    datasets: loadedKeyword === searchWord ? datasets : [],
     reload: () => fetchPage(1),
-    paginator,
+    paginator: loadedKeyword === searchWord ? paginator : null,
     loading,
     error,
-    hasMore,
+    hasMore: loadedKeyword === searchWord && hasMore,
     loadMore: () => {
       if (!loading && hasMore) fetchPage(paginator.current_page + 1);
     },
@@ -72,6 +74,7 @@ export function useDatasets(searchWord: string) {
 
 /** One dataset's details. */
 export function useDataset(name: string) {
+  const [loadedName, setLoadedName] = useState<string | null>(null);
   const [dataset, setDataset] = useState<DatasetView | null>(null);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
@@ -80,14 +83,22 @@ export function useDataset(name: string) {
     const controller = new AbortController();
     setError("");
     getDataset(name, { signal: controller.signal })
-      .then(setDataset)
+      .then((result) => {
+        if (controller.signal.aborted) return;
+        setLoadedName(name);
+        setDataset(result);
+      })
       .catch((cause: unknown) => {
         if (!controller.signal.aborted) setError(messageOf(cause, "Unable to load the dataset."));
       });
     return () => controller.abort();
   }, [name, attempt]);
 
-  return { dataset, error, reload: () => setAttempt((n) => n + 1) };
+  return {
+    dataset: loadedName === name ? dataset : null,
+    error,
+    reload: () => setAttempt((n) => n + 1),
+  };
 }
 
 /** One page of a dataset's documents; each page replaces the last (a table, not a feed). */

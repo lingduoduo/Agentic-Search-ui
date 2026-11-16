@@ -5,7 +5,7 @@ const NO_RESETS: readonly string[] = [];
 
 /**
  * Keep an editable draft and a URL keyword synchronized on submission/navigation.
- * `resets` names other URL params a new keyword clears, such as a page number.
+ * `resets` names other URL params a submitted search clears, such as a page number.
  */
 export function useKeywordSearch(resets: readonly string[] = NO_RESETS) {
   const [params] = useSearchParams();
@@ -27,13 +27,13 @@ export function useKeywordSearch(resets: readonly string[] = NO_RESETS) {
       const nextParams = new URLSearchParams(params);
       if (normalized) nextParams.set("search_word", normalized);
       else nextParams.delete("search_word");
-      if (normalized !== keyword) resets.forEach((name) => nextParams.delete(name));
+      resets.forEach((name) => nextParams.delete(name));
       if (nextParams.toString() !== params.toString()) {
         void navigate({ search: nextParams.toString(), hash });
       }
       return normalized;
     },
-    [params, navigate, hash, keyword, resets],
+    [params, navigate, hash, resets],
   );
 
   return { keyword, query, setQuery, commitKeyword };

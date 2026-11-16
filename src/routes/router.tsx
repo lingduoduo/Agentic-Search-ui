@@ -124,8 +124,8 @@ export const appRoutes: RouteObject[] = [
             } satisfies RouteHandle,
           },
           {
-            id: "space-datasets-detail",
-            path: "space/datasets/:name",
+            id: "space-datasets-documents-list",
+            path: "space/datasets/:name/documents",
             loader: requireAdminLoader,
             lazy: () =>
               import("../views/space/datasets/DatasetDetailView").then((m) => ({
@@ -137,6 +137,16 @@ export const appRoutes: RouteObject[] = [
                 description: "The documents in this corpus, as the retrieval server indexes them.",
               }),
             } satisfies RouteHandle,
+          },
+          {
+            // Keep existing bookmarks while using the document-list route for new links.
+            id: "space-datasets-detail",
+            path: "space/datasets/:name",
+            loader: requireAdminLoader,
+            lazy: () =>
+              import("../views/space/datasets/DatasetDetailView").then((m) => ({
+                Component: m.LegacyDatasetRedirect,
+              })),
           },
           {
             id: "pages-account",

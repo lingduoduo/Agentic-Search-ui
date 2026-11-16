@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router";
 import { useDataset } from "../../../hooks/useDataset";
 import { routePath } from "../../../config/routes";
 import { importDataset } from "../../../services/api";
@@ -10,9 +10,32 @@ import { ListView as DocumentListView } from "./documents/ListView";
 const messageOf = (cause: unknown, fallback: string) =>
   cause instanceof Error ? cause.message : fallback;
 
-/** `/space/datasets/:name`: one corpus and its documents, a table page at a time. */
+/** Older detail bookmarks keep the complete URL and catalog return state. */
+export function LegacyDatasetRedirect() {
+  const { name = "" } = useParams();
+  const location = useLocation();
+  return (
+    <Navigate
+      replace
+      to={{
+        pathname: routePath("space-datasets-documents-list", { name }),
+        search: location.search,
+        hash: location.hash,
+      }}
+      state={location.state}
+    />
+  );
+}
+
+/** One corpus and its documents; switching corpora resets local dialogs and actions. */
 export function DatasetDetailView() {
   const name = useParams().name ?? "";
+  return <DatasetDetails key={name} name={name} />;
+}
+
+function DatasetDetails({ name }: { name: string }) {
+  const location = useLocation();
+  const catalog = location.state?.catalog;
   const navigate = useNavigate();
   const { dataset, error: datasetError, reload: reloadDataset } = useDataset(name);
   const [documentRevision, setDocumentRevision] = useState(0);
@@ -37,7 +60,14 @@ export function DatasetDetailView() {
 
   return (
     <section className="datasets-detail" aria-label={`Dataset ${name}`}>
-      <Link className="datasets-detail__back" to={routePath("space-datasets")}>
+      <Link
+        className="datasets-detail__back"
+        to={{
+          pathname: routePath("space-datasets"),
+          search: typeof catalog?.search === "string" ? catalog.search : "",
+          hash: typeof catalog?.hash === "string" ? catalog.hash : "",
+        }}
+      >
         ← All datasets
       </Link>
 

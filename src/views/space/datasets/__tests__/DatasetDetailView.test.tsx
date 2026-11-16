@@ -214,13 +214,18 @@ describe("DatasetDetailView management", () => {
     vi.spyOn(api, "getDataset").mockResolvedValueOnce(dataset);
     vi.spyOn(api, "getDatasetDocuments").mockResolvedValue(page([]));
     const { unmount } = renderView();
-    expect(await screen.findByRole("region", { name: "Search test" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Search test" })).not.toBeInTheDocument();
+    await userEvent.click(await screen.findByRole("button", { name: "Retrieval Test" }));
+    const dialog = screen.getByRole("dialog", { name: "Retrieval Test" });
+    expect(within(dialog).getByRole("region", { name: "Search test" })).toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     unmount();
 
     vi.spyOn(api, "getDataset").mockResolvedValue({ ...dataset, available: false });
     renderView();
     await screen.findByRole("button", { name: "Import to manage" });
-    expect(screen.queryByRole("region", { name: "Search test" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Retrieval Test" })).not.toBeInTheDocument();
   });
 
   it("offers Add documents only on a managed dataset", async () => {
@@ -361,5 +366,62 @@ describe("DatasetDetailView management", () => {
     expect(confirm).toHaveBeenCalledTimes(2);
     await waitFor(() => expect(screen.queryByRole("table")).not.toBeInTheDocument());
     expect(screen.queryByRole("region", { name: "Dataset demo" })).not.toBeInTheDocument();
+  });
+});
+
+describe("document list sample consolidation", () => {
+  it("shows page positions, character counts and enabled status from real document fields", async () => {
+    vi.spyOn(api, "getDataset").mockResolvedValue(managedDataset);
+    vi.spyOn(api, "getDatasetDocuments").mockResolvedValue(
+      page(
+        [
+          managedDoc("a", { contents: "x".repeat(1200) }),
+          managedDoc("b", { enabled: false, contents: null }),
+        ],
+        2,
+        3,
+      ),
+    );
+    renderView("/space/datasets/demo?current_page=2");
+    await screen.findByRole("table");
+    expect(within(rows()[0]).getByText("21")).toBeInTheDocument();
+    expect(within(rows()[0]).getByText("1.2k")).toBeInTheDocument();
+    expect(within(rows()[0]).getByText("Available")).toBeInTheDocument();
+    expect(within(rows()[1]).getByText("22")).toBeInTheDocument();
+    expect(
+      within(rows()[1]).getByText("—", { selector: '[data-column="characters"]' }),
+    ).toBeInTheDocument();
+    expect(within(rows()[1]).getByText("Disabled")).toBeInTheDocument();
+  });
+
+  it("confirms row deletion and refreshes the documents and dataset summary", async () => {
+    vi.spyOn(api, "getDataset")
+      .mockResolvedValueOnce(managedDataset)
+      .mockResolvedValue({ ...managedDataset, docs: 0 });
+    vi.spyOn(api, "getDatasetDocuments")
+      .mockResolvedValueOnce(page([managedDoc("a")]))
+      .mockResolvedValue(page([]));
+    const remove = vi.spyOn(api, "deleteDocument").mockResolvedValue(undefined);
+    vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValue(true);
+    renderView();
+    await userEvent.click(await screen.findByRole("button", { name: "Delete Title a" }));
+    expect(remove).not.toHaveBeenCalled();
+    expect(screen.getByText("Title a")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Delete Title a" }));
+    expect(await screen.findByText("This dataset has no documents.")).toBeInTheDocument();
+    expect(await screen.findByText("demo · retrieval/ML · 0 docs")).toBeInTheDocument();
+    expect(remove).toHaveBeenCalledWith("demo", "row-a");
+  });
+
+  it("keeps the row and reports a failed deletion", async () => {
+    vi.spyOn(api, "getDataset").mockResolvedValue(managedDataset);
+    vi.spyOn(api, "getDatasetDocuments").mockResolvedValue(page([managedDoc("a")]));
+    vi.spyOn(api, "deleteDocument").mockRejectedValue(new Error("Unable to delete this document."));
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    renderView();
+    await userEvent.click(await screen.findByRole("button", { name: "Delete Title a" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Unable to delete this document.");
+    expect(screen.getByText("Title a")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete Title a" })).toBeEnabled();
   });
 });

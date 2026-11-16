@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { deleteDocument, getDocument, updateDocument } from "../../../../services/api";
+import { getDocument, updateDocument } from "../../../../services/api";
 import type { DatasetDocumentView } from "../../../../models";
 import { Dialog } from "../Dialog";
+import { confirmDeleteDocument } from "./deleteDocument";
 
 const messageOf = (cause: unknown, fallback: string) =>
   cause instanceof Error ? cause.message : fallback;
@@ -66,12 +67,13 @@ export function DocumentDialog({
   }
 
   async function handleDelete() {
-    if (!window.confirm("Delete this document? To keep it but hide it from search, disable it."))
-      return;
     setSaving(true);
     setError("");
     try {
-      await deleteDocument(datasetName, documentId);
+      if (!(await confirmDeleteDocument(datasetName, documentId))) {
+        setSaving(false);
+        return;
+      }
       onChanged();
       onClose();
     } catch (cause) {

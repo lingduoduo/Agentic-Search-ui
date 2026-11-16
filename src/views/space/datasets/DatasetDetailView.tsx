@@ -6,7 +6,6 @@ import { importDataset } from "../../../services/api";
 import { DatasetSummary } from "./DatasetSummary";
 import { DatasetDialog } from "./DatasetDialog";
 import { ListView as DocumentListView } from "./documents/ListView";
-import { SearchTestPanel } from "./SearchTestPanel";
 
 const messageOf = (cause: unknown, fallback: string) =>
   cause instanceof Error ? cause.message : fallback;
@@ -93,12 +92,11 @@ export function DatasetDetailView() {
         </div>
       )}
 
-      {dataset?.available && <SearchTestPanel datasetName={name} />}
-
       <DocumentListView
         key={`${name}:${documentRevision}`}
         datasetName={name}
         managed={managed}
+        available={dataset?.available ?? false}
         onChanged={reloadDataset}
       />
 

@@ -9,6 +9,7 @@ export const ROUTE_PATHS = {
   "space-sources": "/space/sources",
   "space-tools": "/space/tools",
   "space-datasets": "/space/datasets",
+  "space-datasets-documents-create": "/space/datasets/:name/documents/create",
   "space-datasets-detail": "/space/datasets/:name",
   "pages-account": "/account",
   "pages-admin": "/admin",

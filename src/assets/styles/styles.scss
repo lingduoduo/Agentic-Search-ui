@@ -2377,6 +2377,100 @@ option:disabled,
   }
 }
 
+/* Dark navy gallery panel, after the "Portfolio Highlights" card of the creator dashboard. */
+.artwork-list {
+  margin-top: 32px;
+  padding: 20px;
+  border: 1px solid rgb(99 125 255 / 0.16);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #0f1a3d 0%, #0a1230 100%);
+  color: #e6ebff;
+}
+
+.artwork-list__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  span {
+    color: #5b8cff;
+    font-size: 14px;
+    font-weight: 500;
+  }
+}
+
+.artwork-list__items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.artwork-card {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+
+  figcaption {
+    color: #9aa6c8;
+    font-size: 13px;
+  }
+}
+
+.artwork-card__frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  aspect-ratio: 4 / 5;
+  background: #141f47;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  /* Darken the bottom so the title over the image stays legible. */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 45%, rgb(6 10 30 / 0.85) 100%);
+  }
+  &:hover img {
+    transform: scale(1.04);
+  }
+}
+
+.artwork-card__title {
+  position: absolute;
+  z-index: 1;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-shadow: 0 1px 6px rgb(0 0 0 / 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .artwork-card__frame img {
+    transition: none;
+  }
+}
+
 .account-details dl {
   display: grid;
   grid-template-columns: max-content 1fr;

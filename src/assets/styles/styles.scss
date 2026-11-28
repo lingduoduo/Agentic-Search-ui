@@ -1,18 +1,35 @@
 :root {
-  color-scheme: light;
-  --bg: #ffffff;
-  --panel: #ffffff;
-  --panel-soft: #f8fafc;
-  --ink: #111827;
-  --muted: #526078;
-  --line: #dce1e8;
-  --accent: #1941e8;
-  --accent-strong: #1535bd;
-  --amber: #a16207;
-  --rose: #dc2626;
-  --assistant: #0d9488;
-  --assistant-soft: #f1f5f9;
+  /* Dark navy, after the creator-dashboard reference. */
+  color-scheme: dark;
+  --bg: #070c22;
+  --panel: #0c1431;
+  --panel-soft: #0f1a3d;
+  --ink: #e6ebff;
+  --muted: #95a1c6;
+  --line: #1f2a54;
+  --line-strong: #2f3d72;
+  /* Text, links and borders; lighter for text on a tinted background. */
+  --accent: #6b93ff;
+  --accent-strong: #9db6ff;
+  --accent-soft: #18265c;
+  /* Button fills behind white text. */
+  --accent-fill: #3563f0;
+  --accent-fill-hover: #2a52d6;
+  --amber: #f5b544;
+  --rose: #f87171;
+  --assistant: #2dd4bf;
+  --assistant-soft: #13204a;
   --shadow: none;
+  /* Names older components read, with light fallbacks until now. */
+  --border: var(--line);
+  --surface: var(--panel);
+  --surface-strong: #17224a;
+  --warning-bg: #3a2c0c;
+  --warning-fg: #fcd34d;
+  --danger: #f87171;
+  --danger-fg: #fca5a5;
+  --success: #16a34a;
+  --color-accent: var(--accent);
 }
 
 * {
@@ -97,21 +114,21 @@ h3 {
 }
 
 .status-pill {
-  background: #eef2ff;
+  background: var(--accent-soft);
   color: var(--accent-strong);
 }
 
 .route-pill {
-  background: #eef1f6;
-  color: #46506a;
+  background: var(--surface-strong);
+  color: var(--muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   cursor: default;
 }
 
 /* A degraded route (its preferred backend was unavailable) reads amber. */
 .route-pill--degraded {
-  background: #fdf0d5;
-  color: #8a5a00;
+  background: var(--warning-bg);
+  color: var(--warning-fg);
 }
 
 /* A degraded answer (the model was unavailable) carries the same amber. */
@@ -122,8 +139,8 @@ h3 {
   padding: 3px 9px;
   font-size: 12px;
   font-weight: 600;
-  background: #fdf0d5;
-  color: #8a5a00;
+  background: var(--warning-bg);
+  color: var(--warning-fg);
 }
 
 .icon-button,
@@ -143,7 +160,7 @@ h3 {
   padding: 0 12px;
   background: var(--panel);
   color: var(--ink);
-  border: 1px solid var(--ink);
+  border: 1px solid var(--line-strong);
 }
 
 .composer {
@@ -153,9 +170,9 @@ h3 {
 textarea,
 input {
   width: 100%;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--line-strong);
   border-radius: 4px;
-  background: #fff;
+  background: var(--panel-soft);
   color: var(--ink);
 }
 
@@ -226,21 +243,21 @@ select {
 
 select {
   width: 100%;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--line-strong);
   border-radius: 4px;
-  background: #fff;
+  background: var(--panel-soft);
   color: var(--ink);
 }
 
 option:disabled,
 .disabled-option {
-  color: #9aa3a5;
-  background: #eef1ef;
+  color: var(--muted);
+  background: var(--surface-strong);
 }
 
 .composer button[type="submit"] {
   padding: 0 18px;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: #fff;
 }
 
@@ -325,7 +342,7 @@ option:disabled,
   border: 1px solid var(--line);
   border-radius: 4px;
   padding: 12px;
-  background: #fff;
+  background: var(--panel-soft);
   display: grid;
   gap: 8px;
 }
@@ -345,17 +362,17 @@ option:disabled,
 }
 
 .admin-card-title span[data-tone="good"] {
-  background: #eef2ff;
+  background: var(--accent-soft);
   color: var(--accent-strong);
 }
 
 .admin-card-title span[data-tone="watch"] {
-  background: #f1f5f9;
+  background: var(--surface-strong);
   color: var(--amber);
 }
 
 .admin-card-title span[data-tone="neutral"] {
-  background: #edf1f2;
+  background: var(--surface-strong);
   color: var(--muted);
 }
 
@@ -387,7 +404,7 @@ option:disabled,
 
 .count {
   margin-left: auto;
-  background: #f1f5f9;
+  background: var(--surface-strong);
   color: var(--amber);
 }
 
@@ -398,7 +415,7 @@ option:disabled,
 
 .source-meta span,
 .source-tags span {
-  background: #eef2ff;
+  background: var(--accent-soft);
   color: var(--accent-strong);
 }
 
@@ -685,16 +702,16 @@ option:disabled,
 }
 
 .dislike-badge[data-tone="good"] {
-  background: #d1fae5;
-  color: #065f46;
+  background: rgb(34 197 94 / 16%);
+  color: #86efac;
 }
 .dislike-badge[data-tone="watch"] {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--warning-bg);
+  color: var(--warning-fg);
 }
 .dislike-badge[data-tone="bad"] {
-  background: #fee2e2;
-  color: #991b1b;
+  background: rgb(248 113 113 / 16%);
+  color: #fca5a5;
 }
 
 .top-dislikes {
@@ -795,7 +812,7 @@ option:disabled,
 }
 
 .icon-button.active {
-  background: #eef2ff;
+  background: var(--accent-soft);
   color: var(--accent);
   border-color: var(--accent);
 }
@@ -814,7 +831,7 @@ option:disabled,
 /* Shared button variants */
 
 .btn-primary {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: #fff;
   border: none;
   border-radius: 7px;
@@ -850,7 +867,7 @@ option:disabled,
 }
 
 .btn-run {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: #fff;
   border: none;
   border-radius: 7px;
@@ -1229,7 +1246,7 @@ option:disabled,
   margin-left: auto;
   background: none;
   border: none;
-  color: rgb(71, 85, 105);
+  color: var(--muted);
   cursor: pointer;
   font-size: 0.65rem;
   padding: 0;
@@ -1561,13 +1578,13 @@ option:disabled,
 .request-trace__bar {
   display: block;
   height: 100%;
-  background: #2563eb;
+  background: var(--accent);
 }
 .request-trace__row--failed .request-trace__bar {
   background: var(--danger, #b91c1c);
 }
 .request-trace__row--skipped .request-trace__bar {
-  background: #9ca3af;
+  background: var(--muted);
 }
 .request-trace__dur {
   font-size: 0.72rem;
@@ -1669,9 +1686,9 @@ option:disabled,
 .tool-approval-card {
   width: 100%;
   padding: 1rem;
-  border: 1px solid #d6a84b;
+  border: 1px solid rgb(214 168 75 / 50%);
   border-radius: 4px;
-  background: #fffbeb;
+  background: var(--warning-bg);
 }
 
 .tool-approval-header,
@@ -1734,7 +1751,7 @@ option:disabled,
 
 .tool-approval-actions button:first-child {
   border-color: var(--accent);
-  background: var(--accent);
+  background: var(--accent-fill);
   color: #fff;
 }
 
@@ -1837,7 +1854,7 @@ option:disabled,
 
 /* The corner nearest the avatar stays tight, pointing the bubble at it. */
 .turn--user .turn__content {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: #fff;
   border: 1px solid var(--accent-strong);
   border-top-right-radius: 4px;
@@ -1939,7 +1956,7 @@ option:disabled,
   padding: 0 18px;
   border: 0;
   border-radius: 4px;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: #fff;
   font-weight: 600;
   cursor: pointer;
@@ -2167,7 +2184,7 @@ option:disabled,
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
-  box-shadow: 0 8px 24px rgb(15 23 42 / 12%);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 45%);
 }
 .app-sidebar__avatar {
   display: inline-flex;
@@ -2177,7 +2194,7 @@ option:disabled,
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--accent-strong);
+  background: var(--accent-fill-hover);
   color: #fff;
   font-size: 14px;
   font-weight: 600;
@@ -2253,7 +2270,7 @@ option:disabled,
   }
   &[aria-current="page"],
   &[aria-pressed="true"] {
-    background: #eef2ff;
+    background: var(--accent-soft);
     color: var(--accent-strong);
     font-weight: 600;
     /* The "filled" icon variant for the active entry. */
@@ -2302,10 +2319,10 @@ option:disabled,
 .login-card__dev-hint {
   margin: 0 0 24px;
   padding: 8px 12px;
-  border: 1px solid #fde68a;
+  border: 1px solid rgb(253 230 138 / 30%);
   border-radius: 6px;
-  background: #fffbeb;
-  color: #92400e;
+  background: var(--warning-bg);
+  color: var(--warning-fg);
   font-size: 14px;
 
   a {
@@ -2326,13 +2343,13 @@ option:disabled,
     min-height: 40px;
     border: 0;
     border-radius: 4px;
-    background: var(--accent);
+    background: var(--accent-fill);
     color: #fff;
     font-weight: 600;
     cursor: pointer;
   }
   button:hover {
-    background: var(--accent-strong);
+    background: var(--accent-fill-hover);
   }
   input:focus-visible {
     outline: 2px solid var(--accent);
@@ -2595,7 +2612,7 @@ option:disabled,
 
 input::placeholder,
 textarea::placeholder {
-  color: #7b8494;
+  color: #6f7ca6;
 }
 
 button,
@@ -2668,7 +2685,7 @@ input[type="checkbox"] {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface, #fff);
-  box-shadow: 0 12px 32px rgb(0 0 0 / 12%);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 45%);
 }
 .source-picker__popover > input {
   width: 100%;
@@ -2707,7 +2724,7 @@ input[type="checkbox"] {
     }
     &[aria-pressed="true"] {
       border-color: var(--accent);
-      background: #eef2ff;
+      background: var(--accent-soft);
       color: var(--accent-strong);
       font-weight: 600;
     }
@@ -2755,7 +2772,7 @@ input[type="checkbox"] {
     background: var(--panel-soft);
   }
   &:has(input:checked) {
-    background: #eef2ff;
+    background: var(--accent-soft);
   }
   &:has(input:disabled) {
     cursor: not-allowed;
@@ -2895,7 +2912,7 @@ input[type="checkbox"] {
     box-shadow 0.15s;
   &:hover {
     border-color: var(--accent);
-    box-shadow: 0 6px 18px rgb(15 23 42 / 8%);
+    box-shadow: 0 6px 18px rgb(0 0 0 / 45%);
   }
   &:focus-visible {
     outline: 2px solid var(--accent);
@@ -2943,7 +2960,7 @@ input[type="checkbox"] {
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgb(15 23 42 / 30%);
+  background: rgb(0 0 0 / 55%);
 }
 .source-drawer {
   position: absolute;
@@ -2954,7 +2971,7 @@ input[type="checkbox"] {
   padding: 20px;
   overflow-y: auto;
   background: var(--panel-soft);
-  box-shadow: -12px 0 32px rgb(15 23 42 / 12%);
+  box-shadow: -12px 0 32px rgb(0 0 0 / 45%);
   > p {
     margin-top: 12px;
     color: var(--muted);
@@ -3025,13 +3042,13 @@ input[type="checkbox"] {
   margin-top: 16px;
   padding: 8px 14px;
   border-radius: 8px;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: #fff;
   font-size: 14px;
   font-weight: 500;
   text-decoration: none;
   &:hover {
-    background: var(--accent-strong);
+    background: var(--accent-fill-hover);
   }
   &:focus-visible {
     outline: 2px solid var(--accent);

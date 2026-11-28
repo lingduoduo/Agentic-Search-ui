@@ -5,8 +5,11 @@ The React 19.1 + Vite + TypeScript + SCSS frontend for
 single-page app that opens **Assistant** directly at `/space/apps/assist`.
 The optional apps list (`/space/apps`) opens four apps at
 `/space/apps/:app_id`: **Assistant** (`assist`), **Search** (`search`), **Chat**
-(`chat`), and **Tools** (`tools`). It talks to the
-FastAPI backend over same-origin HTTP and SSE.
+(`chat`), and **Tools** (`tools`), above an **Artworks** gallery. Signed-in
+users also get the search-source catalog (`/space/sources`); admins get the
+tool registry (`/space/tools`), the retrieval datasets (`/space/datasets`) and
+the admin dashboard (`/admin`). It talks to the FastAPI backend over
+same-origin HTTP and SSE.
 
 ## Develop
 
@@ -184,20 +187,24 @@ src/
 │   ├── images/       # Photos, illustrations, and other images
 │   └── styles/       # Shared SCSS and Tailwind CSS entry points
 ├── components/       # Reusable UI, admin panels, and debug inspectors
-├── config/           # Route definitions and search constants
+├── config/           # Route definitions, search constants, and the artworks list
+├── hooks/            # Shared hooks: datasets, search domains, keyword search, pagination, focus trap
+├── images/           # Artworks shown on the apps list, named `Title-Artist.webp`
 ├── models/           # Domain API/UI types, shared response envelopes, and index.ts
 ├── routes/           # React Router navigation and routing exports
 ├── services/         # Domain HTTP/SSE requests; api.ts re-exports the public API
-├── static/           # Reserved for static assets
 ├── store/            # Redux Toolkit store: the signed-in account
-├── storybook/        # Reserved for component stories
 ├── utils/            # Domain selection, tool grouping, and schema helpers
 └── views/
     ├── auth/         # LoginView and the session guard (session.ts)
     ├── errors/       # ErrorView (route errors) and NotFoundView
     ├── layouts/      # DefaultLayout (signed in: sidebar + heading), BlankLayout (public)
     ├── pages/        # AccountView, AdminView
-    └── space/apps/   # ListView, DetailView, and AssistView, SearchView, ChatView, ToolAgentView
+    └── space/
+        ├── apps/     # ListView, DetailView, and AssistView, SearchView, ChatView, ToolAgentView
+        ├── sources/  # SourcesView: the search-source catalog
+        ├── tools/    # ToolsView: the admin tool registry
+        └── datasets/ # ListView, DatasetDetailView, CreateView and their dialogs
 ```
 
 `main.tsx` loads `assets/styles/tailwind.css` and `assets/styles/styles.scss`
@@ -206,8 +213,10 @@ and renders React Router’s `RouterProvider`. `routes/router.tsx` defines the
 route tree, following the same logic as a Vue Router setup:
 
 - **Named routes.** Each route's `id` is its name (`auth-login`,
-  `space-apps-list`, `space-apps-detail`, `pages-account`, `pages-admin`), and
-  `routePath(name, params)` in `config/routes.ts` builds its URL.
+  `space-apps-list`, `space-apps-detail`, `space-sources`, `space-tools`,
+  `space-datasets`, `pages-account`, `pages-admin`, and the others in
+  `ROUTE_PATHS`), and `routePath(name, params)` in `config/routes.ts` builds
+  its URL.
 - **One guard.** The root route's loader, `guard` in `views/auth/session.ts`,
   runs before every navigation (like `beforeEach`). Routes marked
   `handle: { public: true }` need no session, and the sign-in page sends a
@@ -216,10 +225,13 @@ route tree, following the same logic as a Vue Router setup:
 - **Two layouts** from `views/layouts/`, which leave URLs unchanged:
   `DefaultLayout` (sidebar plus the page heading from `handle.heading`) holds the
   signed-in pages: `/space/apps` (`ListView`), `/space/apps/:app_id`
-  (`DetailView`, which shows the app and 404s an unknown id), `/account` and
-  `/admin`. `BlankLayout` holds the public pages: `/auth/login` and
-  `NotFoundView` for any other URL.
-- **Lazy pages.** Each page's code loads the first time it opens.
+  (`DetailView`, which shows the app and 404s an unknown id), `/space/sources`,
+  the admin-only `/space/tools` and `/space/datasets` (with
+  `/space/datasets/:name/documents` for one corpus), `/account` and `/admin`.
+  `BlankLayout` holds the public pages: `/auth/login` and `NotFoundView` for
+  any other URL.
+- **Lazy pages.** Each page's code loads the first time it opens, except
+  `NotFoundView`, which `ErrorView` already bundles for loader 404s.
 
 `/` redirects to `/space/apps/assist`, preserving query parameters.
 Assistant and Search read `?search_word=` into their query inputs and update it on
@@ -228,8 +240,10 @@ input; Discover or Enter commits the keyword without changing the agent message.
 Other query parameters and the hash are preserved when submitting. `components/NavLink.tsx` wraps React Router’s
 active navigation links.
 
-The interface uses a shared left sidebar, a page workspace, white surfaces,
-and blue primary actions. On small screens the sidebar becomes compact top
+The interface uses a dark navy theme: a shared left sidebar, a page workspace,
+navy surfaces, light text, and blue primary actions. Its colours are the
+variables at the top of `assets/styles/styles.scss`; links and borders use
+`--accent`, and buttons with white text use the deeper `--accent-fill`. On small screens the sidebar becomes compact top
 navigation. Every page requires signing in at `/auth/login`, after which the user lands on
 Assistant, `/space/apps/assist`, with the sidebar (or returns to the requested page); admins also get the
 `/admin` page with the admin overview and analytics.
@@ -240,12 +254,21 @@ file does not include it in the build. Reference images from components and
 fonts or background images with relative `url(...)` paths in SCSS. Empty asset
 folders contain `.gitkeep` files so the structure is retained in Git.
 
+The exception is `src/images/`: `config/artworks.ts` picks up every `*.webp`
+there with `import.meta.glob`, so adding a file adds it to the Artworks gallery
+on `/space/apps`. The title and artist come from the filename,
+`Title-Artist.webp`, split on the first hyphen (so "Jean-Honoré Fragonard"
+stays whole). Spell each artist the same way in every file so the artist count
+is right, and keep images at most 1200px wide:
+
+```bash
+cwebp -q 80 -resize 1200 0 painting.png -o "src/images/Primavera-Sandro Botticelli.webp"
+```
+
 UI and service tests live in `__tests__/` directories alongside the code they
 cover. Vite configuration checks live in `tests/vite.test.cjs`.
 Component state stays with its owning page or component; only the signed-in
-account is shared, in the Redux store under `store/`. `static/`
-and `storybook/` are empty placeholders in the local layout; Git will track
-them once files are added.
+account is shared, in the Redux store under `store/`.
 
 When extending the app, put backend requests in the matching `services/` module (using the
 `get` / `post` / `stream` helpers from `utils/request.ts`), shared
@@ -277,7 +300,7 @@ provider listing, register, validate, read, update and delete an OpenAPI
 provider, invoke), and the dev console uses `/api/debug/tools`.
 A tool's `provider_id` is the OpenAPI provider's id, the MCP server's configured
 name, or null for built-ins; only OpenAPI providers can be deleted.
-Route screens in `views/pages/` and `views/space/apps/` compose these pieces inside a layout from `views/layouts/`.
+Route screens in `views/pages/` and `views/space/` compose these pieces inside a layout from `views/layouts/`.
 
 ## Check
 

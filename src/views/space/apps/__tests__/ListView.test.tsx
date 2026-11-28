@@ -6,14 +6,14 @@ import { ListView } from "../ListView";
 
 describe("parseArtworkName", () => {
   it("splits title and artist on the first hyphen", () => {
-    expect(parseArtworkName("../images/Primavera-Sandro Botticelli.png")).toEqual({
+    expect(parseArtworkName("../images/Primavera-Sandro Botticelli.webp")).toEqual({
       title: "Primavera",
       artist: "Sandro Botticelli",
     });
   });
 
   it("keeps hyphens inside the artist name", () => {
-    expect(parseArtworkName("The Swing-Jean-Honoré Fragonard.png")).toEqual({
+    expect(parseArtworkName("The Swing-Jean-Honoré Fragonard.webp")).toEqual({
       title: "The Swing",
       artist: "Jean-Honoré Fragonard",
     });
@@ -30,6 +30,8 @@ describe("ListView", () => {
 
     const gallery = screen.getByRole("region", { name: "Artworks" });
     expect(within(gallery).getAllByRole("listitem")).toHaveLength(13);
+    // One spelling per artist, so the count does not split anyone in two.
+    expect(within(gallery).getByText("13 works · 8 artists")).toBeInTheDocument();
 
     const venus = within(gallery).getByRole("img", {
       name: "The Birth of Venus by Sandro Botticelli",

@@ -184,12 +184,11 @@ src/
 ├── assets/
 │   ├── fonts/        # Local web fonts
 │   ├── icons/        # SVG and other icon assets
-│   ├── images/       # Photos, illustrations, and other images
+│   ├── images/       # Images, including the artworks (`Title-Artist.webp`) on the apps list
 │   └── styles/       # Shared SCSS and Tailwind CSS entry points
 ├── components/       # Reusable UI, admin panels, and debug inspectors
 ├── config/           # Route definitions, search constants, and the artworks list
 ├── hooks/            # Shared hooks: datasets, search domains, keyword search, pagination, focus trap
-├── images/           # Artworks shown on the apps list, named `Title-Artist.webp`
 ├── models/           # Domain API/UI types, shared response envelopes, and index.ts
 ├── routes/           # React Router navigation and routing exports
 ├── services/         # Domain HTTP/SSE requests; api.ts re-exports the public API
@@ -254,15 +253,15 @@ file does not include it in the build. Reference images from components and
 fonts or background images with relative `url(...)` paths in SCSS. Empty asset
 folders contain `.gitkeep` files so the structure is retained in Git.
 
-The exception is `src/images/`: `config/artworks.ts` picks up every `*.webp`
-there with `import.meta.glob`, so adding a file adds it to the Artworks gallery
+The exception is `.webp` files in `src/assets/images/`: `config/artworks.ts`
+picks up every one with `import.meta.glob`, so adding a file adds it to the Artworks gallery
 on `/space/apps`. The title and artist come from the filename,
 `Title-Artist.webp`, split on the first hyphen (so "Jean-Honoré Fragonard"
 stays whole). Spell each artist the same way in every file so the artist count
 is right, and keep images at most 1200px wide:
 
 ```bash
-cwebp -q 80 -resize 1200 0 painting.png -o "src/images/Primavera-Sandro Botticelli.webp"
+cwebp -q 80 -resize 1200 0 painting.png -o "src/assets/images/Primavera-Sandro Botticelli.webp"
 ```
 
 UI and service tests live in `__tests__/` directories alongside the code they

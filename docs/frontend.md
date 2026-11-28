@@ -31,7 +31,7 @@ which `ErrorView` already bundles for loader 404s.
 Below its app cards, the apps list shows an **Artworks** gallery: a dark navy
 panel of image tiles, each with the title over the image and the artist
 beneath, under a count of works and artists. `src/config/artworks.ts` picks up
-every `src/images/*.webp` at build time and reads the title and artist from the
+every `src/assets/images/*.webp` at build time and reads the title and artist from the
 filename, `Title-Artist.webp`, split on the first hyphen so hyphenated artist
 names stay whole. To add a work, drop in a file named that way; keep the
 artist's spelling identical across files so the artist count stays right, and

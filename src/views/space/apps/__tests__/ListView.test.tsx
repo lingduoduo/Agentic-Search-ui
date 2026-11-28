@@ -6,7 +6,7 @@ import { ListView } from "../ListView";
 
 describe("parseArtworkName", () => {
   it("splits title and artist on the first hyphen", () => {
-    expect(parseArtworkName("../images/Primavera-Sandro Botticelli.webp")).toEqual({
+    expect(parseArtworkName("../assets/images/Primavera-Sandro Botticelli.webp")).toEqual({
       title: "Primavera",
       artist: "Sandro Botticelli",
     });

@@ -1,5 +1,5 @@
-/** Each image in src/images, named `Title-Artist.png`, resolved to its served URL. */
-const images = import.meta.glob<string>("../images/*.png", {
+/** Each image in src/images, named `Title-Artist.webp`, resolved to its served URL. */
+const images = import.meta.glob<string>("../images/*.webp", {
   eager: true,
   query: "?url",
   import: "default",
@@ -7,12 +7,12 @@ const images = import.meta.glob<string>("../images/*.png", {
 
 export type Artwork = { title: string; artist: string; src: string };
 
-/** Title and artist from a `Title-Artist.png` path; artists may contain hyphens. */
+/** Title and artist from a `Title-Artist.webp` path; artists may contain hyphens. */
 export function parseArtworkName(path: string): { title: string; artist: string } {
   const name = path
     .split("/")
     .pop()!
-    .replace(/\.png$/, "");
+    .replace(/\.webp$/, "");
   const dash = name.indexOf("-");
   return { title: name.slice(0, dash), artist: name.slice(dash + 1) };
 }

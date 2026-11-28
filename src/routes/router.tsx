@@ -3,6 +3,7 @@ import type { RouteObject } from "react-router";
 import { DefaultLayout } from "../views/layouts/DefaultLayout";
 import { BlankLayout } from "../views/layouts/BlankLayout";
 import { ErrorView } from "../views/errors/ErrorView";
+import { NotFoundView } from "../views/errors/NotFoundView";
 import { DEFAULT_ROUTE, findApp, routePath } from "../config/routes";
 import type { RouteHandle } from "../config/routes";
 import {
@@ -186,8 +187,8 @@ export const appRoutes: RouteObject[] = [
           {
             id: "not-found",
             path: "*",
-            lazy: () =>
-              import("../views/errors/NotFoundView").then((m) => ({ Component: m.NotFoundView })),
+            // Static: ErrorView already bundles it for loader 404s.
+            Component: NotFoundView,
             handle: { public: true } satisfies RouteHandle,
           },
         ],

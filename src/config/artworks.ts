@@ -1,5 +1,5 @@
-/** Each image in src/images, named `Title-Artist.webp`, resolved to its served URL. */
-const images = import.meta.glob<string>("../images/*.webp", {
+/** Each image in src/assets/images, named `Title-Artist.webp`, resolved to its served URL. */
+const images = import.meta.glob<string>("../assets/images/*.webp", {
   eager: true,
   query: "?url",
   import: "default",

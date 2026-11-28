@@ -25,8 +25,19 @@ on Assistant at `/space/apps/assist`, and `/` redirects there while preserving q
 `handle: { public: true }`, sit under `BlankLayout`, with no sidebar: the sign-in
 page and `NotFoundView` for unknown URLs. Route ids double as route names, and
 `routePath(name, params)` in `src/config/routes.ts` builds URLs from them. Each
-page's code is loaded lazily, the first time it opens.
-The app uses a dark navy theme (its colours are the variables at the top of `src/assets/styles/styles.scss`). The sidebar uses a navy inner panel in a slightly lighter rail and one entry per page (Workspace: Assistant, Apps, Sources; permission-gated Administration: Admin plus the panel toggles) declared in one table in `AppSidebar`. Assistant is available directly; the optional Apps page opens the other apps. Sidebar page links match exactly, so the directory is not also highlighted inside Assistant. The active entry's icon is drawn filled. The footer card shows the current profile name, email and avatar (or initial); clicking it opens a menu with Account and Sign out (closed by Escape or a click outside). On small screens it becomes wrapping top navigation. Account-verification errors include a Retry button that revalidates the existing route guard; no second account fetch is started by the layout.
+page's code is loaded lazily, the first time it opens, except `NotFoundView`,
+which `ErrorView` already bundles for loader 404s.
+
+Below its app cards, the apps list shows an **Artworks** gallery: a dark navy
+panel of image tiles, each with the title over the image and the artist
+beneath, under a count of works and artists. `src/config/artworks.ts` picks up
+every `src/images/*.webp` at build time and reads the title and artist from the
+filename, `Title-Artist.webp`, split on the first hyphen so hyphenated artist
+names stay whole. To add a work, drop in a file named that way; keep the
+artist's spelling identical across files so the artist count stays right, and
+resize to at most 1200px wide (for example
+`cwebp -q 80 -resize 1200 0 in.png -o "Title-Artist.webp"`).
+The sidebar uses a white inner panel in a gray rail and one entry per page (Workspace: Assistant, Apps, Sources; permission-gated Administration: Admin plus the panel toggles) declared in one table in `AppSidebar`. Assistant is available directly; the optional Apps page opens the other apps. Sidebar page links match exactly, so the directory is not also highlighted inside Assistant. The active entry's icon is drawn filled. The footer card shows the current profile name, email and avatar (or initial); clicking it opens a menu with Account and Sign out (closed by Escape or a click outside). On small screens it becomes wrapping top navigation. Account-verification errors include a Retry button that revalidates the existing route guard; no second account fetch is started by the layout.
 
 `src/main.tsx` mounts `src/App.tsx`, which creates one router with
 `createAppRouter()` and renders `RouterProvider`. `src/config/routes.ts` holds

@@ -40,19 +40,44 @@ export type SourceCategory = {
 };
 
 export const SOURCE_CATEGORIES: SourceCategory[] = [
-  { category: "research", name: "Research", icon: FlaskConical, background: "#ede9fe" },
-  { category: "news", name: "News & social", icon: Newspaper, background: "#fee2e2" },
-  { category: "code", name: "Code & data", icon: Code2, background: "#e0f2fe" },
-  { category: "government", name: "Government & law", icon: Landmark, background: "#e2e8f0" },
-  { category: "business", name: "Business & money", icon: TrendingUp, background: "#dcfce7" },
-  { category: "places", name: "Places & events", icon: MapPin, background: "#fef3c7" },
+  {
+    category: "research",
+    name: "Research",
+    icon: FlaskConical,
+    background: "rgb(167 139 250 / 18%)",
+  },
+  {
+    category: "news",
+    name: "News & social",
+    icon: Newspaper,
+    background: "rgb(248 113 113 / 18%)",
+  },
+  { category: "code", name: "Code & data", icon: Code2, background: "rgb(56 189 248 / 18%)" },
+  {
+    category: "government",
+    name: "Government & law",
+    icon: Landmark,
+    background: "rgb(148 163 184 / 18%)",
+  },
+  {
+    category: "business",
+    name: "Business & money",
+    icon: TrendingUp,
+    background: "rgb(74 222 128 / 18%)",
+  },
+  {
+    category: "places",
+    name: "Places & events",
+    icon: MapPin,
+    background: "rgb(251 191 36 / 18%)",
+  },
 ];
 
 const OTHER: SourceCategory = {
   category: "other",
   name: "Other",
   icon: Shapes,
-  background: "#f1f5f9",
+  background: "rgb(148 163 184 / 12%)",
 };
 
 // Each backend domain's family and icon. Names are DOMAIN_REGISTRY's keys.
@@ -87,7 +112,8 @@ export const familyOf = (key: string | undefined) =>
 /** How to draw one domain: its label, icon and its family's tile color. */
 export function domainStyle(name: string) {
   if (name === "web") return { label: "All sources", icon: Globe, background: OTHER.background };
-  if (name === "auto") return { label: "Auto", icon: Sparkles, background: "#eef2ff" };
+  if (name === "auto")
+    return { label: "Auto", icon: Sparkles, background: "rgb(107 147 255 / 18%)" };
   const meta = DOMAIN_META[name];
   const category = familyOf(meta?.category);
   return {
